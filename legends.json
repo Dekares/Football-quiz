@@ -1,0 +1,821 @@
+[
+  {
+    "name": "Ronaldinho",
+    "first_name": "Ronaldo",
+    "last_name": "de Assis Moreira",
+    "country": "Brazil",
+    "position": "Attack",
+    "date_of_birth": "1980-03-21",
+    "highest_market_value": 80000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/big/3373-1515762355.jpg?lm=1",
+    "clubs": [
+      {"name": "Grêmio Foot-Ball Porto Alegrense", "club_id": 210, "from": "1998-07-01", "to": "2001-07-01"},
+      {"name": "Paris Saint-Germain Football Club", "club_id": 583, "from": "2001-07-01", "to": "2003-07-19"},
+      {"name": "Futbol Club Barcelona", "club_id": 131, "from": "2003-07-19", "to": "2008-07-15"},
+      {"name": "Associazione Calcio Milan", "club_id": 5, "from": "2008-07-15", "to": "2011-01-09"},
+      {"name": "Clube de Regatas do Flamengo", "club_id": 614, "from": "2011-01-09", "to": "2012-06-01"},
+      {"name": "Clube Atlético Mineiro", "club_id": 330, "from": "2012-06-01", "to": "2014-07-01"},
+      {"name": "Querétaro Fútbol Club", "club_id": 7849, "from": "2014-09-12", "to": "2015-06-01"},
+      {"name": "Fluminense Football Club", "club_id": 2462, "from": "2015-07-01", "to": "2015-09-01"}
+    ]
+  },
+  {
+    "name": "Zinedine Zidane",
+    "first_name": "Zinedine",
+    "last_name": "Zidane",
+    "country": "France",
+    "position": "Midfield",
+    "date_of_birth": "1972-06-23",
+    "highest_market_value": 75000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/3111-1478769687.jpg?lm=1",
+    "clubs": [
+      {"name": "Association Sportive de Cannes Football", "club_id": 1423, "from": "1989-07-01", "to": "1992-07-01"},
+      {"name": "Girondins de Bordeaux", "club_id": 185, "from": "1992-07-01", "to": "1996-07-01"},
+      {"name": "Juventus Football Club", "club_id": 506, "from": "1996-07-01", "to": "2001-07-09"},
+      {"name": "Real Madrid Club de Fútbol", "club_id": 418, "from": "2001-07-09", "to": "2006-05-07"}
+    ]
+  },
+  {
+    "name": "Thierry Henry",
+    "first_name": "Thierry",
+    "last_name": "Henry",
+    "country": "France",
+    "position": "Attack",
+    "date_of_birth": "1977-08-17",
+    "highest_market_value": 70000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/3207-1683199668.jpg?lm=1",
+    "clubs": [
+      {"name": "Association Sportive de Monaco Football Club", "club_id": 162, "from": "1994-07-01", "to": "1999-01-03"},
+      {"name": "Juventus Football Club", "club_id": 506, "from": "1999-01-03", "to": "1999-08-03"},
+      {"name": "Arsenal Football Club", "club_id": 11, "from": "1999-08-03", "to": "2007-06-25"},
+      {"name": "Futbol Club Barcelona", "club_id": 131, "from": "2007-06-25", "to": "2010-07-14"},
+      {"name": "New York Red Bulls", "club_id": 210, "from": "2010-07-14", "to": "2014-12-01"}
+    ]
+  },
+  {
+    "name": "Xavi",
+    "first_name": "Xavier",
+    "last_name": "Hernández Creus",
+    "country": "Spain",
+    "position": "Midfield",
+    "date_of_birth": "1980-01-25",
+    "highest_market_value": 65000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/7607-1476882942.jpg?lm=1",
+    "clubs": [
+      {"name": "Futbol Club Barcelona", "club_id": 131, "from": "1998-07-01", "to": "2015-06-06"},
+      {"name": "Al Sadd Sports Club", "club_id": 17651, "from": "2015-06-06", "to": "2019-05-01"}
+    ]
+  },
+  {
+    "name": "Andrés Iniesta",
+    "first_name": "Andrés",
+    "last_name": "Iniesta",
+    "country": "Spain",
+    "position": "Midfield",
+    "date_of_birth": "1984-05-11",
+    "highest_market_value": 70000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/7600-1685447666.jpg?lm=1",
+    "clubs": [
+      {"name": "Futbol Club Barcelona", "club_id": 131, "from": "2002-07-01", "to": "2018-05-20"},
+      {"name": "Vissel Kobe", "club_id": 7352, "from": "2018-07-01", "to": "2023-07-01"},
+      {"name": "Emirates Club", "club_id": 11945, "from": "2023-10-01", "to": "2024-05-01"}
+    ]
+  },
+  {
+    "name": "David Beckham",
+    "first_name": "David",
+    "last_name": "Beckham",
+    "country": "England",
+    "position": "Midfield",
+    "date_of_birth": "1975-05-02",
+    "highest_market_value": 45000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/3139-1746174990.jpg?lm=1",
+    "clubs": [
+      {"name": "Manchester United Football Club", "club_id": 985, "from": "1993-07-01", "to": "2003-07-01"},
+      {"name": "Real Madrid Club de Fútbol", "club_id": 418, "from": "2003-07-01", "to": "2007-07-01"},
+      {"name": "LA Galaxy", "club_id": 3407, "from": "2007-07-01", "to": "2012-12-01"},
+      {"name": "Associazione Calcio Milan", "club_id": 5, "from": "2009-01-01", "to": "2009-06-30"},
+      {"name": "Associazione Calcio Milan", "club_id": 5, "from": "2010-01-01", "to": "2010-06-30"},
+      {"name": "Paris Saint-Germain Football Club", "club_id": 583, "from": "2013-01-31", "to": "2013-05-18"}
+    ]
+  },
+  {
+    "name": "Andrea Pirlo",
+    "first_name": "Andrea",
+    "last_name": "Pirlo",
+    "country": "Italy",
+    "position": "Midfield",
+    "date_of_birth": "1979-05-19",
+    "highest_market_value": 40000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/5817-1454934952.jpg?lm=1",
+    "clubs": [
+      {"name": "Brescia Calcio", "club_id": 1028, "from": "1995-07-01", "to": "1998-07-01"},
+      {"name": "Football Club Internazionale Milano S.p.A.", "club_id": 46, "from": "1998-07-01", "to": "2001-07-01"},
+      {"name": "Brescia Calcio", "club_id": 1028, "from": "1999-07-01", "to": "2001-07-01"},
+      {"name": "Associazione Calcio Milan", "club_id": 5, "from": "2001-07-01", "to": "2011-07-01"},
+      {"name": "Juventus Football Club", "club_id": 506, "from": "2011-07-01", "to": "2015-07-01"},
+      {"name": "New York City Football Club", "club_id": 27261, "from": "2015-07-01", "to": "2017-12-01"}
+    ]
+  },
+  {
+    "name": "Steven Gerrard",
+    "first_name": "Steven",
+    "last_name": "Gerrard",
+    "country": "England",
+    "position": "Midfield",
+    "date_of_birth": "1980-05-30",
+    "highest_market_value": 50000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/s_3109_31_2013_01_16_1.jpg?lm=1",
+    "clubs": [
+      {"name": "Liverpool Football Club", "club_id": 31, "from": "1998-07-01", "to": "2015-06-01"},
+      {"name": "LA Galaxy", "club_id": 3407, "from": "2015-07-01", "to": "2016-11-01"}
+    ]
+  },
+  {
+    "name": "Frank Lampard",
+    "first_name": "Frank",
+    "last_name": "Lampard",
+    "country": "England",
+    "position": "Midfield",
+    "date_of_birth": "1978-06-20",
+    "highest_market_value": 45000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/big/3163-1674475335.jpg?lm=1",
+    "clubs": [
+      {"name": "West Ham United Football Club", "club_id": 379, "from": "1996-07-01", "to": "2001-06-14"},
+      {"name": "Chelsea Football Club", "club_id": 631, "from": "2001-06-14", "to": "2014-06-30"},
+      {"name": "Manchester City Football Club", "club_id": 281, "from": "2014-08-01", "to": "2015-01-01"},
+      {"name": "New York City Football Club", "club_id": 27261, "from": "2015-01-01", "to": "2017-01-01"}
+    ]
+  },
+  {
+    "name": "Didier Drogba",
+    "first_name": "Didier",
+    "last_name": "Drogba",
+    "country": "Ivory Coast",
+    "position": "Attack",
+    "date_of_birth": "1978-03-11",
+    "highest_market_value": 45000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/3924-1683633427.jpg?lm=1",
+    "clubs": [
+      {"name": "Le Mans Football Club", "club_id": 1082, "from": "2001-07-01", "to": "2002-01-01"},
+      {"name": "En Avant de Guingamp", "club_id": 855, "from": "2002-01-01", "to": "2003-07-01"},
+      {"name": "Olympique de Marseille", "club_id": 244, "from": "2003-07-01", "to": "2004-07-20"},
+      {"name": "Chelsea Football Club", "club_id": 631, "from": "2004-07-20", "to": "2012-06-01"},
+      {"name": "Shanghai Shenhua", "club_id": 7488, "from": "2012-07-01", "to": "2013-01-01"},
+      {"name": "Galatasaray Spor Kulübü", "club_id": 141, "from": "2013-01-28", "to": "2014-06-01"},
+      {"name": "Chelsea Football Club", "club_id": 631, "from": "2014-07-01", "to": "2015-06-01"},
+      {"name": "Montreal Impact", "club_id": 3509, "from": "2015-07-01", "to": "2018-11-01"}
+    ]
+  },
+  {
+    "name": "Ronaldo Nazário",
+    "first_name": "Ronaldo",
+    "last_name": "Luís Nazário de Lima",
+    "country": "Brazil",
+    "position": "Attack",
+    "date_of_birth": "1976-09-18",
+    "highest_market_value": 80000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/3140-1489417571.jpg?lm=1",
+    "clubs": [
+      {"name": "Cruzeiro Esporte Clube", "club_id": 609, "from": "1993-07-01", "to": "1994-07-01"},
+      {"name": "PSV Eindhoven", "club_id": 383, "from": "1994-08-01", "to": "1996-07-01"},
+      {"name": "Futbol Club Barcelona", "club_id": 131, "from": "1996-07-01", "to": "1997-07-01"},
+      {"name": "Football Club Internazionale Milano S.p.A.", "club_id": 46, "from": "1997-07-01", "to": "2002-08-31"},
+      {"name": "Real Madrid Club de Fútbol", "club_id": 418, "from": "2002-08-31", "to": "2007-01-01"},
+      {"name": "Associazione Calcio Milan", "club_id": 5, "from": "2007-01-01", "to": "2008-02-01"},
+      {"name": "Sport Club Corinthians Paulista", "club_id": 199, "from": "2009-01-01", "to": "2011-02-14"}
+    ]
+  },
+  {
+    "name": "Luís Figo",
+    "first_name": "Luís",
+    "last_name": "Figo",
+    "country": "Portugal",
+    "position": "Attack",
+    "date_of_birth": "1972-11-04",
+    "highest_market_value": 60000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/3446-1570440028.jpg?lm=1",
+    "clubs": [
+      {"name": "Sporting Clube de Portugal", "club_id": 336, "from": "1990-07-01", "to": "1995-07-01"},
+      {"name": "Futbol Club Barcelona", "club_id": 131, "from": "1995-07-01", "to": "2000-07-24"},
+      {"name": "Real Madrid Club de Fútbol", "club_id": 418, "from": "2000-07-24", "to": "2005-07-01"},
+      {"name": "Football Club Internazionale Milano S.p.A.", "club_id": 46, "from": "2005-07-01", "to": "2009-05-31"}
+    ]
+  },
+  {
+    "name": "Pavel Nedvěd",
+    "first_name": "Pavel",
+    "last_name": "Nedvěd",
+    "country": "Czech Republic",
+    "position": "Midfield",
+    "date_of_birth": "1972-08-30",
+    "highest_market_value": 42000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/3603-1570438744.jpg?lm=1",
+    "clubs": [
+      {"name": "AC Sparta Praha", "club_id": 197, "from": "1992-07-01", "to": "1996-07-01"},
+      {"name": "Società Sportiva Lazio S.p.A.", "club_id": 398, "from": "1996-07-01", "to": "2001-07-01"},
+      {"name": "Juventus Football Club", "club_id": 506, "from": "2001-07-01", "to": "2009-06-01"}
+    ]
+  },
+  {
+    "name": "Alessandro Del Piero",
+    "first_name": "Alessandro",
+    "last_name": "Del Piero",
+    "country": "Italy",
+    "position": "Attack",
+    "date_of_birth": "1974-11-09",
+    "highest_market_value": 55000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/4289-1683631011.jpg?lm=1",
+    "clubs": [
+      {"name": "Calcio Padova", "club_id": 2150, "from": "1991-07-01", "to": "1993-07-01"},
+      {"name": "Juventus Football Club", "club_id": 506, "from": "1993-07-01", "to": "2012-06-30"},
+      {"name": "Sydney FC", "club_id": 4538, "from": "2012-09-01", "to": "2014-05-01"},
+      {"name": "Delhi Dynamos FC", "club_id": 23408, "from": "2014-10-01", "to": "2014-12-01"}
+    ]
+  },
+  {
+    "name": "Francesco Totti",
+    "first_name": "Francesco",
+    "last_name": "Totti",
+    "country": "Italy",
+    "position": "Attack",
+    "date_of_birth": "1976-09-27",
+    "highest_market_value": 55000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/5958-1448466835.jpg?lm=1",
+    "clubs": [
+      {"name": "Associazione Sportiva Roma", "club_id": 12, "from": "1993-07-01", "to": "2017-05-28"}
+    ]
+  },
+  {
+    "name": "Andriy Shevchenko",
+    "first_name": "Andriy",
+    "last_name": "Shevchenko",
+    "country": "Ukraine",
+    "position": "Attack",
+    "date_of_birth": "1976-09-29",
+    "highest_market_value": 50000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/3522-1570438190.jpg?lm=1",
+    "clubs": [
+      {"name": "Dynamo Kyiv", "club_id": 338, "from": "1994-07-01", "to": "1999-07-01"},
+      {"name": "Associazione Calcio Milan", "club_id": 5, "from": "1999-07-01", "to": "2006-05-31"},
+      {"name": "Chelsea Football Club", "club_id": 631, "from": "2006-05-31", "to": "2009-08-01"},
+      {"name": "Associazione Calcio Milan", "club_id": 5, "from": "2008-01-01", "to": "2008-06-30"},
+      {"name": "Dynamo Kyiv", "club_id": 338, "from": "2009-08-01", "to": "2012-07-01"}
+    ]
+  },
+  {
+    "name": "Rivaldo",
+    "first_name": "Rivaldo",
+    "last_name": "Vítor Borba Ferreira",
+    "country": "Brazil",
+    "position": "Attack",
+    "date_of_birth": "1972-04-19",
+    "highest_market_value": 60000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/3372-1588239928.jpg?lm=1",
+    "clubs": [
+      {"name": "Sport Club do Recife", "club_id": 1607, "from": "1991-07-01", "to": "1993-07-01"},
+      {"name": "Sport Club Corinthians Paulista", "club_id": 199, "from": "1993-07-01", "to": "1994-07-01"},
+      {"name": "SE Palmeiras", "club_id": 1023, "from": "1994-07-01", "to": "1996-07-01"},
+      {"name": "RC Deportivo de La Coruña", "club_id": 897, "from": "1996-07-01", "to": "1997-07-01"},
+      {"name": "Futbol Club Barcelona", "club_id": 131, "from": "1997-07-01", "to": "2002-07-01"},
+      {"name": "Associazione Calcio Milan", "club_id": 5, "from": "2002-07-01", "to": "2004-06-01"},
+      {"name": "Cruzeiro Esporte Clube", "club_id": 609, "from": "2004-06-01", "to": "2004-12-01"},
+      {"name": "Olympiacos Piraeus", "club_id": 397, "from": "2004-12-01", "to": "2007-07-01"},
+      {"name": "AEK Athens", "club_id": 1562, "from": "2007-07-01", "to": "2008-01-01"},
+      {"name": "Bunyodkor", "club_id": 7100, "from": "2008-01-01", "to": "2010-07-01"}
+    ]
+  },
+  {
+    "name": "Raúl",
+    "first_name": "Raúl",
+    "last_name": "González Blanco",
+    "country": "Spain",
+    "position": "Attack",
+    "date_of_birth": "1977-06-27",
+    "highest_market_value": 55000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/7349-1570439548.jpg?lm=1",
+    "clubs": [
+      {"name": "Real Madrid Club de Fútbol", "club_id": 418, "from": "1994-07-01", "to": "2010-07-28"},
+      {"name": "FC Schalke 04", "club_id": 33, "from": "2010-07-28", "to": "2012-07-01"},
+      {"name": "Al Sadd Sports Club", "club_id": 17651, "from": "2012-07-01", "to": "2014-06-01"},
+      {"name": "New York Cosmos", "club_id": 6559, "from": "2014-11-01", "to": "2015-11-01"}
+    ]
+  },
+  {
+    "name": "Roberto Carlos",
+    "first_name": "Roberto",
+    "last_name": "Carlos da Silva Rocha",
+    "country": "Brazil",
+    "position": "Defender",
+    "date_of_birth": "1973-04-10",
+    "highest_market_value": 45000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/7518-1726487760.jpg?lm=1",
+    "clubs": [
+      {"name": "SE Palmeiras", "club_id": 1023, "from": "1993-07-01", "to": "1995-07-01"},
+      {"name": "Football Club Internazionale Milano S.p.A.", "club_id": 46, "from": "1995-07-01", "to": "1996-07-01"},
+      {"name": "Real Madrid Club de Fútbol", "club_id": 418, "from": "1996-07-01", "to": "2007-06-30"},
+      {"name": "Fenerbahçe Spor Kulübü", "club_id": 36, "from": "2007-07-01", "to": "2009-06-30"},
+      {"name": "Sport Club Corinthians Paulista", "club_id": 199, "from": "2010-01-01", "to": "2010-06-30"},
+      {"name": "Akhisar Belediyespor", "club_id": 1549, "from": "2013-07-01", "to": "2014-01-01"},
+      {"name": "Anzhi Makhachkala", "club_id": 5765, "from": "2011-07-01", "to": "2012-06-30"}
+    ]
+  },
+  {
+    "name": "Kaká",
+    "first_name": "Ricardo",
+    "last_name": "Izecson dos Santos Leite",
+    "country": "Brazil",
+    "position": "Midfield",
+    "date_of_birth": "1982-04-22",
+    "highest_market_value": 65000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/3366-1683638749.jpg?lm=1",
+    "clubs": [
+      {"name": "São Paulo Futebol Clube", "club_id": 585, "from": "2001-01-01", "to": "2003-07-01"},
+      {"name": "Associazione Calcio Milan", "club_id": 5, "from": "2003-07-01", "to": "2009-06-08"},
+      {"name": "Real Madrid Club de Fútbol", "club_id": 418, "from": "2009-06-08", "to": "2013-09-02"},
+      {"name": "Associazione Calcio Milan", "club_id": 5, "from": "2013-09-02", "to": "2014-06-30"},
+      {"name": "Orlando City Soccer Club", "club_id": 9498, "from": "2015-01-01", "to": "2017-12-01"}
+    ]
+  },
+  {
+    "name": "Samuel Eto'o",
+    "first_name": "Samuel",
+    "last_name": "Eto'o Fils",
+    "country": "Cameroon",
+    "position": "Attack",
+    "date_of_birth": "1981-03-10",
+    "highest_market_value": 55000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/4257-1683640611.jpg?lm=1",
+    "clubs": [
+      {"name": "Real Madrid Club de Fútbol", "club_id": 418, "from": "1997-07-01", "to": "2000-07-01"},
+      {"name": "Real Club Deportivo Mallorca", "club_id": 237, "from": "2000-07-01", "to": "2004-07-01"},
+      {"name": "Futbol Club Barcelona", "club_id": 131, "from": "2004-07-01", "to": "2009-07-27"},
+      {"name": "Football Club Internazionale Milano S.p.A.", "club_id": 46, "from": "2009-07-27", "to": "2011-08-23"},
+      {"name": "Anzhi Makhachkala", "club_id": 5765, "from": "2011-08-23", "to": "2013-08-29"},
+      {"name": "Chelsea Football Club", "club_id": 631, "from": "2013-08-29", "to": "2014-06-30"},
+      {"name": "Everton Football Club", "club_id": 29, "from": "2014-08-26", "to": "2015-01-19"},
+      {"name": "UC Sampdoria", "club_id": 1038, "from": "2015-01-19", "to": "2015-07-01"},
+      {"name": "Antalyaspor", "club_id": 639, "from": "2015-07-01", "to": "2018-06-01"},
+      {"name": "Konyaspor", "club_id": 1484, "from": "2018-07-01", "to": "2019-07-01"}
+    ]
+  },
+  {
+    "name": "Michael Ballack",
+    "first_name": "Michael",
+    "last_name": "Ballack",
+    "country": "Germany",
+    "position": "Midfield",
+    "date_of_birth": "1976-09-26",
+    "highest_market_value": 50000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/63-1461310873.jpg?lm=1",
+    "clubs": [
+      {"name": "Chemnitzer FC", "club_id": 69, "from": "1995-07-01", "to": "1997-07-01"},
+      {"name": "1. FC Kaiserslautern", "club_id": 56, "from": "1997-07-01", "to": "1999-07-01"},
+      {"name": "Bayer 04 Leverkusen", "club_id": 15, "from": "1999-07-01", "to": "2002-07-01"},
+      {"name": "FC Bayern München", "club_id": 27, "from": "2002-07-01", "to": "2006-06-30"},
+      {"name": "Chelsea Football Club", "club_id": 631, "from": "2006-07-01", "to": "2010-06-30"},
+      {"name": "Bayer 04 Leverkusen", "club_id": 15, "from": "2010-07-01", "to": "2012-06-30"}
+    ]
+  },
+  {
+    "name": "Patrick Vieira",
+    "first_name": "Patrick",
+    "last_name": "Vieira",
+    "country": "France",
+    "position": "Midfield",
+    "date_of_birth": "1976-06-23",
+    "highest_market_value": 45000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/3183-1458213441.jpg?lm=1",
+    "clubs": [
+      {"name": "Associazione Calcio Milan", "club_id": 5, "from": "1995-07-01", "to": "1996-08-14"},
+      {"name": "Arsenal Football Club", "club_id": 11, "from": "1996-08-14", "to": "2005-07-15"},
+      {"name": "Juventus Football Club", "club_id": 506, "from": "2005-07-15", "to": "2006-07-07"},
+      {"name": "Football Club Internazionale Milano S.p.A.", "club_id": 46, "from": "2006-07-07", "to": "2010-01-08"},
+      {"name": "Manchester City Football Club", "club_id": 281, "from": "2010-01-08", "to": "2011-07-01"}
+    ]
+  },
+  {
+    "name": "Fabio Cannavaro",
+    "first_name": "Fabio",
+    "last_name": "Cannavaro",
+    "country": "Italy",
+    "position": "Defender",
+    "date_of_birth": "1973-09-13",
+    "highest_market_value": 35000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/5775-1454933483.jpg?lm=1",
+    "clubs": [
+      {"name": "Società Sportiva Calcio Napoli", "club_id": 6195, "from": "1993-07-01", "to": "1995-07-01"},
+      {"name": "Parma Calcio 1913", "club_id": 130, "from": "1995-07-01", "to": "2002-07-01"},
+      {"name": "Football Club Internazionale Milano S.p.A.", "club_id": 46, "from": "2002-07-01", "to": "2004-07-01"},
+      {"name": "Juventus Football Club", "club_id": 506, "from": "2004-07-01", "to": "2006-07-01"},
+      {"name": "Real Madrid Club de Fútbol", "club_id": 418, "from": "2006-07-01", "to": "2009-07-01"},
+      {"name": "Juventus Football Club", "club_id": 506, "from": "2009-07-01", "to": "2010-05-01"},
+      {"name": "Al-Ahli Saudi FC", "club_id": 18558, "from": "2010-09-01", "to": "2011-07-01"}
+    ]
+  },
+  {
+    "name": "Carles Puyol",
+    "first_name": "Carles",
+    "last_name": "Puyol",
+    "country": "Spain",
+    "position": "Defender",
+    "date_of_birth": "1978-04-13",
+    "highest_market_value": 30000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/7594-1684225860.jpeg?lm=1",
+    "clubs": [
+      {"name": "Futbol Club Barcelona", "club_id": 131, "from": "1999-07-01", "to": "2014-05-18"}
+    ]
+  },
+  {
+    "name": "Paolo Maldini",
+    "first_name": "Paolo",
+    "last_name": "Maldini",
+    "country": "Italy",
+    "position": "Defender",
+    "date_of_birth": "1968-06-26",
+    "highest_market_value": 35000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/5803-1570438594.jpg?lm=1",
+    "clubs": [
+      {"name": "Associazione Calcio Milan", "club_id": 5, "from": "1985-07-01", "to": "2009-05-31"}
+    ]
+  },
+  {
+    "name": "Ryan Giggs",
+    "first_name": "Ryan",
+    "last_name": "Giggs",
+    "country": "Wales",
+    "position": "Midfield",
+    "date_of_birth": "1973-11-29",
+    "highest_market_value": 30000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/3406-1589198838.jpg?lm=1",
+    "clubs": [
+      {"name": "Manchester United Football Club", "club_id": 985, "from": "1991-07-01", "to": "2014-05-06"}
+    ]
+  },
+  {
+    "name": "Paul Scholes",
+    "first_name": "Paul",
+    "last_name": "Scholes",
+    "country": "England",
+    "position": "Midfield",
+    "date_of_birth": "1974-11-16",
+    "highest_market_value": 30000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/3397-1595498527.jpg?lm=1",
+    "clubs": [
+      {"name": "Manchester United Football Club", "club_id": 985, "from": "1994-07-01", "to": "2013-05-19"}
+    ]
+  },
+  {
+    "name": "Gabriel Batistuta",
+    "first_name": "Gabriel",
+    "last_name": "Batistuta",
+    "country": "Argentina",
+    "position": "Attack",
+    "date_of_birth": "1969-02-01",
+    "highest_market_value": 40000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/5959-1570439708.jpg?lm=1",
+    "clubs": [
+      {"name": "Newell's Old Boys", "club_id": 1286, "from": "1988-07-01", "to": "1989-07-01"},
+      {"name": "Club Atlético River Plate", "club_id": 209, "from": "1989-07-01", "to": "1991-07-01"},
+      {"name": "ACF Fiorentina", "club_id": 430, "from": "1991-07-01", "to": "2000-06-01"},
+      {"name": "Associazione Sportiva Roma", "club_id": 12, "from": "2000-06-01", "to": "2003-01-01"},
+      {"name": "Al-Arabi SC", "club_id": 17652, "from": "2003-07-01", "to": "2005-03-01"}
+    ]
+  },
+  {
+    "name": "Gianluigi Buffon",
+    "first_name": "Gianluigi",
+    "last_name": "Buffon",
+    "country": "Italy",
+    "position": "Goalkeeper",
+    "date_of_birth": "1978-01-28",
+    "highest_market_value": 40000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/5023-1713425275.jpg?lm=1",
+    "clubs": [
+      {"name": "Parma Calcio 1913", "club_id": 130, "from": "1995-07-01", "to": "2001-07-03"},
+      {"name": "Juventus Football Club", "club_id": 506, "from": "2001-07-03", "to": "2018-06-30"},
+      {"name": "Paris Saint-Germain Football Club", "club_id": 583, "from": "2018-07-06", "to": "2019-06-30"},
+      {"name": "Juventus Football Club", "club_id": 506, "from": "2019-07-15", "to": "2021-06-30"},
+      {"name": "Parma Calcio 1913", "club_id": 130, "from": "2021-07-01", "to": "2023-08-01"}
+    ]
+  },
+  {
+    "name": "Gerard Piqué",
+    "first_name": "Gerard",
+    "last_name": "Piqué",
+    "country": "Spain",
+    "position": "Defender",
+    "date_of_birth": "1987-02-02",
+    "highest_market_value": 50000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/18944-1667548226.jpg?lm=1",
+    "clubs": [
+      {"name": "Manchester United Football Club", "club_id": 985, "from": "2004-07-01", "to": "2008-05-27"},
+      {"name": "Real Zaragoza", "club_id": 301, "from": "2006-08-31", "to": "2007-06-30"},
+      {"name": "Futbol Club Barcelona", "club_id": 131, "from": "2008-05-27", "to": "2022-11-03"}
+    ]
+  },
+  {
+    "name": "John Terry",
+    "first_name": "John",
+    "last_name": "Terry",
+    "country": "England",
+    "position": "Defender",
+    "date_of_birth": "1980-12-07",
+    "highest_market_value": 35000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/3160-1719152925.jpg?lm=1",
+    "clubs": [
+      {"name": "Chelsea Football Club", "club_id": 631, "from": "1998-07-01", "to": "2017-05-21"},
+      {"name": "Aston Villa Football Club", "club_id": 405, "from": "2017-07-03", "to": "2018-10-15"}
+    ]
+  },
+  {
+    "name": "Clarence Seedorf",
+    "first_name": "Clarence",
+    "last_name": "Seedorf",
+    "country": "Netherlands",
+    "position": "Midfield",
+    "date_of_birth": "1976-04-01",
+    "highest_market_value": 35000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/s_4168_537_2013_05_22_1.jpg?lm=1",
+    "clubs": [
+      {"name": "AFC Ajax Amsterdam", "club_id": 610, "from": "1993-07-01", "to": "1995-07-01"},
+      {"name": "UC Sampdoria", "club_id": 1038, "from": "1995-07-01", "to": "1996-07-01"},
+      {"name": "Real Madrid Club de Fútbol", "club_id": 418, "from": "1996-07-01", "to": "2000-01-01"},
+      {"name": "Football Club Internazionale Milano S.p.A.", "club_id": 46, "from": "2000-01-01", "to": "2002-01-01"},
+      {"name": "Associazione Calcio Milan", "club_id": 5, "from": "2002-01-01", "to": "2012-01-14"},
+      {"name": "Botafogo de Futebol e Regatas", "club_id": 537, "from": "2012-01-14", "to": "2014-06-01"}
+    ]
+  },
+  {
+    "name": "Dennis Bergkamp",
+    "first_name": "Dennis",
+    "last_name": "Bergkamp",
+    "country": "Netherlands",
+    "position": "Attack",
+    "date_of_birth": "1969-05-10",
+    "highest_market_value": 30000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/3187-1683297206.jpg?lm=1",
+    "clubs": [
+      {"name": "AFC Ajax Amsterdam", "club_id": 610, "from": "1986-07-01", "to": "1993-07-01"},
+      {"name": "Football Club Internazionale Milano S.p.A.", "club_id": 46, "from": "1993-07-01", "to": "1995-06-20"},
+      {"name": "Arsenal Football Club", "club_id": 11, "from": "1995-06-20", "to": "2006-05-17"}
+    ]
+  },
+  {
+    "name": "Robin van Persie",
+    "first_name": "Robin",
+    "last_name": "van Persie",
+    "country": "Netherlands",
+    "position": "Attack",
+    "date_of_birth": "1983-08-06",
+    "highest_market_value": 45000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/4380-1707301752.jpg?lm=1",
+    "clubs": [
+      {"name": "Feyenoord Rotterdam", "club_id": 234, "from": "2001-07-01", "to": "2004-05-18"},
+      {"name": "Arsenal Football Club", "club_id": 11, "from": "2004-05-18", "to": "2012-08-17"},
+      {"name": "Manchester United Football Club", "club_id": 985, "from": "2012-08-17", "to": "2015-07-14"},
+      {"name": "Fenerbahçe Spor Kulübü", "club_id": 36, "from": "2015-07-14", "to": "2018-01-22"},
+      {"name": "Feyenoord Rotterdam", "club_id": 234, "from": "2018-01-22", "to": "2019-06-01"}
+    ]
+  },
+  {
+    "name": "Wesley Sneijder",
+    "first_name": "Wesley",
+    "last_name": "Sneijder",
+    "country": "Netherlands",
+    "position": "Midfield",
+    "date_of_birth": "1984-06-09",
+    "highest_market_value": 45000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/4673-1684166804.jpg?lm=1",
+    "clubs": [
+      {"name": "AFC Ajax Amsterdam", "club_id": 610, "from": "2002-07-01", "to": "2007-08-27"},
+      {"name": "Real Madrid Club de Fútbol", "club_id": 418, "from": "2007-08-27", "to": "2009-08-28"},
+      {"name": "Football Club Internazionale Milano S.p.A.", "club_id": 46, "from": "2009-08-28", "to": "2013-01-22"},
+      {"name": "Galatasaray Spor Kulübü", "club_id": 141, "from": "2013-01-22", "to": "2017-08-01"},
+      {"name": "OGC Nice", "club_id": 417, "from": "2017-08-11", "to": "2018-01-01"},
+      {"name": "Al Gharafa SC", "club_id": 15180, "from": "2018-01-01", "to": "2019-05-01"}
+    ]
+  },
+  {
+    "name": "Arjen Robben",
+    "first_name": "Arjen",
+    "last_name": "Robben",
+    "country": "Netherlands",
+    "position": "Attack",
+    "date_of_birth": "1984-01-23",
+    "highest_market_value": 50000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/4360-1719545379.jpg?lm=1",
+    "clubs": [
+      {"name": "FC Groningen", "club_id": 202, "from": "2000-07-01", "to": "2002-07-01"},
+      {"name": "PSV Eindhoven", "club_id": 383, "from": "2002-07-01", "to": "2004-07-01"},
+      {"name": "Chelsea Football Club", "club_id": 631, "from": "2004-07-01", "to": "2007-08-22"},
+      {"name": "Real Madrid Club de Fútbol", "club_id": 418, "from": "2007-08-22", "to": "2009-08-28"},
+      {"name": "FC Bayern München", "club_id": 27, "from": "2009-08-28", "to": "2019-06-30"},
+      {"name": "FC Groningen", "club_id": 202, "from": "2020-07-01", "to": "2021-07-01"}
+    ]
+  },
+  {
+    "name": "Franck Ribéry",
+    "first_name": "Franck",
+    "last_name": "Ribéry",
+    "country": "France",
+    "position": "Attack",
+    "date_of_birth": "1983-04-07",
+    "highest_market_value": 50000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/22068-1663667692.jpg?lm=1",
+    "clubs": [
+      {"name": "US Boulogne-sur-Mer", "club_id": 1142, "from": "2000-07-01", "to": "2002-07-01"},
+      {"name": "Stade de Reims", "club_id": 1421, "from": "2002-07-01", "to": "2003-07-01"},
+      {"name": "Stade Brestois 29", "club_id": 3911, "from": "2003-07-01", "to": "2004-07-01"},
+      {"name": "FC Metz", "club_id": 347, "from": "2004-07-01", "to": "2005-01-01"},
+      {"name": "Galatasaray Spor Kulübü", "club_id": 141, "from": "2005-01-01", "to": "2005-06-30"},
+      {"name": "Olympique de Marseille", "club_id": 244, "from": "2005-06-30", "to": "2007-06-07"},
+      {"name": "FC Bayern München", "club_id": 27, "from": "2007-06-07", "to": "2019-06-30"},
+      {"name": "ACF Fiorentina", "club_id": 430, "from": "2019-08-21", "to": "2021-07-01"},
+      {"name": "US Salernitana 1919", "club_id": 380, "from": "2021-09-06", "to": "2022-09-01"}
+    ]
+  },
+  {
+    "name": "Philipp Lahm",
+    "first_name": "Philipp",
+    "last_name": "Lahm",
+    "country": "Germany",
+    "position": "Defender",
+    "date_of_birth": "1983-11-11",
+    "highest_market_value": 40000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/2219-1471439838.JPG?lm=1",
+    "clubs": [
+      {"name": "FC Bayern München", "club_id": 27, "from": "2002-07-01", "to": "2017-05-20"},
+      {"name": "VfB Stuttgart", "club_id": 79, "from": "2003-07-01", "to": "2005-06-30"}
+    ]
+  },
+  {
+    "name": "Bastian Schweinsteiger",
+    "first_name": "Bastian",
+    "last_name": "Schweinsteiger",
+    "country": "Germany",
+    "position": "Midfield",
+    "date_of_birth": "1984-08-01",
+    "highest_market_value": 45000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/2514-1551256967.jpg?lm=1",
+    "clubs": [
+      {"name": "FC Bayern München", "club_id": 27, "from": "2002-07-01", "to": "2015-07-11"},
+      {"name": "Manchester United Football Club", "club_id": 985, "from": "2015-07-11", "to": "2017-03-21"},
+      {"name": "Chicago Fire Soccer Club", "club_id": 2948, "from": "2017-03-29", "to": "2019-10-15"}
+    ]
+  },
+  {
+    "name": "Miroslav Klose",
+    "first_name": "Miroslav",
+    "last_name": "Klose",
+    "country": "Germany",
+    "position": "Attack",
+    "date_of_birth": "1978-06-09",
+    "highest_market_value": 30000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/10-1448468291.jpg?lm=1",
+    "clubs": [
+      {"name": "1. FC Kaiserslautern", "club_id": 56, "from": "1999-07-01", "to": "2004-07-01"},
+      {"name": "SV Werder Bremen", "club_id": 86, "from": "2004-07-01", "to": "2007-07-01"},
+      {"name": "FC Bayern München", "club_id": 27, "from": "2007-07-01", "to": "2011-06-30"},
+      {"name": "Società Sportiva Lazio S.p.A.", "club_id": 398, "from": "2011-07-01", "to": "2016-06-30"}
+    ]
+  },
+  {
+    "name": "David Villa",
+    "first_name": "David",
+    "last_name": "Villa Sánchez",
+    "country": "Spain",
+    "position": "Attack",
+    "date_of_birth": "1981-12-03",
+    "highest_market_value": 50000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/7980-1684165569.jpg?lm=1",
+    "clubs": [
+      {"name": "Real Sporting de Gijón S.A.D.", "club_id": 3368, "from": "2001-07-01", "to": "2003-07-01"},
+      {"name": "Real Zaragoza", "club_id": 301, "from": "2003-07-01", "to": "2005-07-01"},
+      {"name": "Valencia Club de Fútbol S. A. D.", "club_id": 1049, "from": "2005-07-01", "to": "2010-05-20"},
+      {"name": "Futbol Club Barcelona", "club_id": 131, "from": "2010-05-20", "to": "2013-06-01"},
+      {"name": "Club Atlético de Madrid S.A.D.", "club_id": 13, "from": "2013-06-01", "to": "2014-07-01"},
+      {"name": "Melbourne City Football Club", "club_id": 7851, "from": "2014-10-01", "to": "2014-12-01"},
+      {"name": "New York City Football Club", "club_id": 27261, "from": "2015-01-01", "to": "2018-12-01"},
+      {"name": "Vissel Kobe", "club_id": 7352, "from": "2019-01-01", "to": "2019-12-01"}
+    ]
+  },
+  {
+    "name": "Fernando Torres",
+    "first_name": "Fernando",
+    "last_name": "Torres Sanz",
+    "country": "Spain",
+    "position": "Attack",
+    "date_of_birth": "1984-03-20",
+    "highest_market_value": 55000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/7980-1684165569.jpg?lm=1",
+    "clubs": [
+      {"name": "Club Atlético de Madrid S.A.D.", "club_id": 13, "from": "2001-07-01", "to": "2007-07-04"},
+      {"name": "Liverpool Football Club", "club_id": 31, "from": "2007-07-04", "to": "2011-01-31"},
+      {"name": "Chelsea Football Club", "club_id": 631, "from": "2011-01-31", "to": "2014-08-31"},
+      {"name": "Associazione Calcio Milan", "club_id": 5, "from": "2014-08-31", "to": "2015-01-05"},
+      {"name": "Club Atlético de Madrid S.A.D.", "club_id": 13, "from": "2015-01-05", "to": "2018-12-01"},
+      {"name": "Sagan Tosu", "club_id": 3670, "from": "2018-07-10", "to": "2019-08-23"}
+    ]
+  },
+  {
+    "name": "Carlos Tevez",
+    "first_name": "Carlos",
+    "last_name": "Tevez",
+    "country": "Argentina",
+    "position": "Attack",
+    "date_of_birth": "1984-02-05",
+    "highest_market_value": 50000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/7980-1684165569.jpg?lm=1",
+    "clubs": [
+      {"name": "Club Atlético Boca Juniors", "club_id": 189, "from": "2001-07-01", "to": "2005-01-01"},
+      {"name": "Sport Club Corinthians Paulista", "club_id": 199, "from": "2005-01-01", "to": "2007-02-01"},
+      {"name": "West Ham United Football Club", "club_id": 379, "from": "2007-02-01", "to": "2007-07-01"},
+      {"name": "Manchester United Football Club", "club_id": 985, "from": "2007-08-10", "to": "2009-06-30"},
+      {"name": "Manchester City Football Club", "club_id": 281, "from": "2009-07-14", "to": "2013-06-30"},
+      {"name": "Juventus Football Club", "club_id": 506, "from": "2013-06-26", "to": "2015-06-30"},
+      {"name": "Club Atlético Boca Juniors", "club_id": 189, "from": "2015-07-01", "to": "2021-06-04"}
+    ]
+  },
+  {
+    "name": "Sergio Agüero",
+    "first_name": "Sergio",
+    "last_name": "Agüero",
+    "country": "Argentina",
+    "position": "Attack",
+    "date_of_birth": "1988-06-02",
+    "highest_market_value": 90000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/26399-1580460866.jpg?lm=1",
+    "clubs": [
+      {"name": "Club Atlético Independiente", "club_id": 1234, "from": "2003-07-01", "to": "2006-07-01"},
+      {"name": "Club Atlético de Madrid S.A.D.", "club_id": 13, "from": "2006-07-01", "to": "2011-07-28"},
+      {"name": "Manchester City Football Club", "club_id": 281, "from": "2011-07-28", "to": "2021-06-30"},
+      {"name": "Futbol Club Barcelona", "club_id": 131, "from": "2021-07-01", "to": "2021-12-15"}
+    ]
+  },
+  {
+    "name": "Mesut Özil",
+    "first_name": "Mesut",
+    "last_name": "Özil",
+    "country": "Germany",
+    "position": "Midfield",
+    "date_of_birth": "1988-10-15",
+    "highest_market_value": 65000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/35664-1483519286.jpg?lm=1",
+    "clubs": [
+      {"name": "FC Schalke 04", "club_id": 33, "from": "2006-07-01", "to": "2008-01-31"},
+      {"name": "SV Werder Bremen", "club_id": 86, "from": "2008-01-31", "to": "2010-08-17"},
+      {"name": "Real Madrid Club de Fútbol", "club_id": 418, "from": "2010-08-17", "to": "2013-09-02"},
+      {"name": "Arsenal Football Club", "club_id": 11, "from": "2013-09-02", "to": "2021-01-18"},
+      {"name": "Fenerbahçe Spor Kulübü", "club_id": 36, "from": "2021-01-18", "to": "2022-03-20"},
+      {"name": "İstanbul Başakşehir Futbol Kulübü", "club_id": 6890, "from": "2022-07-01", "to": "2024-06-01"}
+    ]
+  },
+  {
+    "name": "Iker Casillas",
+    "first_name": "Iker",
+    "last_name": "Casillas",
+    "country": "Spain",
+    "position": "Goalkeeper",
+    "date_of_birth": "1981-05-20",
+    "highest_market_value": 45000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/3979-1684226777.jpeg?lm=1",
+    "clubs": [
+      {"name": "Real Madrid Club de Fútbol", "club_id": 418, "from": "1999-07-01", "to": "2015-07-12"},
+      {"name": "Futebol Clube do Porto", "club_id": 720, "from": "2015-07-12", "to": "2020-08-04"}
+    ]
+  },
+  {
+    "name": "Petr Čech",
+    "first_name": "Petr",
+    "last_name": "Čech",
+    "country": "Czech Republic",
+    "position": "Goalkeeper",
+    "date_of_birth": "1982-05-20",
+    "highest_market_value": 30000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/5658-1464946835.jpg?lm=1",
+    "clubs": [
+      {"name": "AC Sparta Praha", "club_id": 197, "from": "1999-07-01", "to": "2002-07-01"},
+      {"name": "Stade Rennais Football Club", "club_id": 273, "from": "2002-07-01", "to": "2004-07-01"},
+      {"name": "Chelsea Football Club", "club_id": 631, "from": "2004-07-01", "to": "2015-06-29"},
+      {"name": "Arsenal Football Club", "club_id": 11, "from": "2015-06-29", "to": "2019-05-29"}
+    ]
+  },
+  {
+    "name": "Deco",
+    "first_name": "Anderson Luís",
+    "last_name": "de Souza",
+    "country": "Portugal",
+    "position": "Midfield",
+    "date_of_birth": "1977-08-27",
+    "highest_market_value": 40000000,
+    "image_url": "https://img.a.transfermarkt.technology/portrait/header/8564-1720495726.jpg?lm=1",
+    "clubs": [
+      {"name": "Sport Clube de Salgueiros", "club_id": 8192, "from": "1997-07-01", "to": "1999-07-01"},
+      {"name": "Futebol Clube do Porto", "club_id": 720, "from": "1999-07-01", "to": "2004-07-01"},
+      {"name": "Futbol Club Barcelona", "club_id": 131, "from": "2004-07-01", "to": "2008-07-01"},
+      {"name": "Chelsea Football Club", "club_id": 631, "from": "2008-07-01", "to": "2010-07-01"},
+      {"name": "Fluminense Football Club", "club_id": 2462, "from": "2010-07-01", "to": "2013-07-01"}
+    ]
+  }
+]

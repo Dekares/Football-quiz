@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futbol Quiz</title>
+    <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <nav>
+        <button data-nav-route="menu" onclick="navigate('#/')" data-i18n="nav_menu">Ana Menü</button>
+        <button data-nav-route="solo" onclick="navigate('#/solo')" data-i18n="menu_solo_title">Solo Oyun</button>
+        <button data-nav-route="multi" onclick="navigate('#/multi')" data-i18n="nav_multi">Çok Kişilik</button>
+        <button class="lang-toggle" onclick="toggleLang()">EN</button>
+    </nav>
+
+    <div class="container">
+
+        <!-- ===== ANA MENÜ ===== -->
+        <section class="page" data-route="menu">
+            <h1 data-i18n="app_title">Futbol Quiz</h1>
+            <p class="subtitle" data-i18n="app_subtitle">Ne oynamak istersin?</p>
+
+            <div class="main-menu">
+                <a class="menu-card" onclick="navigate('#/solo')">
+                    <div class="menu-icon">&#9917;</div>
+                    <div class="menu-body">
+                        <div class="menu-title" data-i18n="menu_solo_title">Solo Oyun</div>
+                        <div class="menu-desc" data-i18n="menu_solo_desc">Ortak oyuncu bul veya tek başına oyuncu tahmin et</div>
+                    </div>
+                    <div class="menu-arrow">&rsaquo;</div>
+                </a>
+                <a class="menu-card" onclick="navigate('#/multi')">
+                    <div class="menu-icon">&#127942;</div>
+                    <div class="menu-body">
+                        <div class="menu-title" data-i18n="menu_multi_title">Çok Kişilik Oyun</div>
+                        <div class="menu-desc" data-i18n="menu_multi_desc">2-8 kişilik lobide arkadaşlarınla yarış</div>
+                    </div>
+                    <div class="menu-arrow">&rsaquo;</div>
+                </a>
+            </div>
+        </section>
+
+        <!-- ===== SOLO ===== -->
+        <section id="page-solo" class="page" data-route="solo">
+            <a class="back-link" onclick="navigate('#/')" data-i18n="multi_back">&larr; Geri</a>
+
+            <div class="sub-nav">
+                <button class="active" onclick="showSoloTab('common', this)" data-i18n="nav_common">Ortak Oyuncu</button>
+                <button onclick="showSoloTab('quiz', this)" data-i18n="nav_quiz">Tahmin Oyunu</button>
+            </div>
+
+            <!-- Ortak Oyuncu Bul -->
+            <div id="solo-common" class="solo-tab active">
+                <h1 data-i18n="common_title">Ortak Oyuncu Bul</h1>
+                <p class="subtitle" data-i18n="common_subtitle">İki takım seç, her ikisinde de oynamış oyuncuları bul</p>
+
+                <div class="search-wrapper">
+                    <label data-i18n="team1">1. Takım</label>
+                    <input type="text" id="club1-input" data-i18n-placeholder="search_team" placeholder="Takım adı yaz..." autocomplete="off">
+                    <div class="dropdown" id="club1-dropdown"></div>
+                </div>
+
+                <div class="search-wrapper">
+                    <label data-i18n="team2">2. Takım</label>
+                    <input type="text" id="club2-input" data-i18n-placeholder="search_team" placeholder="Takım adı yaz..." autocomplete="off">
+                    <div class="dropdown" id="club2-dropdown"></div>
+                </div>
+
+                <button class="btn btn-primary" id="find-btn" onclick="findCommon()" disabled data-i18n="find_common">Ortak Oyuncuları Bul</button>
+                <div id="common-results"></div>
+            </div>
+
+            <!-- Tahmin Oyunu -->
+            <div id="solo-quiz" class="solo-tab">
+                <h1 data-i18n="quiz_title">Oyuncu Tahmin Et</h1>
+                <p class="subtitle" data-i18n="quiz_subtitle">Kulüp geçmişine bakarak oyuncuyu tahmin et</p>
+
+                <div class="difficulty-selector">
+                    <button class="active" onclick="setDifficulty('easy', this)" data-i18n="easy">Kolay</button>
+                    <button onclick="setDifficulty('medium', this)" data-i18n="medium">Orta</button>
+                    <button onclick="setDifficulty('hard', this)" data-i18n="hard">Zor</button>
+                </div>
+
+                <div class="quiz-score" id="quiz-score" style="display:none">
+                    <span data-i18n="score">Skor</span>: <span class="correct-count" id="score-correct">0</span> /
+                    <span id="score-total">0</span>
+                </div>
+
+                <div id="quiz-lives" class="quiz-lives" style="display:none"></div>
+
+                <div id="quiz-area">
+                    <div class="empty-state">
+                        <div class="icon">&#9917;</div>
+                        <span data-i18n="start_prompt">Başlamak için aşağıdaki butona tıkla</span>
+                    </div>
+                </div>
+
+                <div id="quiz-wrong-feedback"></div>
+
+                <div class="quiz-input-row" id="quiz-input-row" style="display:none">
+                    <div class="search-wrapper quiz-search-wrapper">
+                        <input type="text" id="quiz-guess" data-i18n-placeholder="guess_placeholder" placeholder="Oyuncu adını yaz..." autocomplete="off">
+                        <div class="dropdown" id="quiz-player-dropdown"></div>
+                    </div>
+                    <button class="btn btn-primary" onclick="submitGuess()" data-i18n="guess_btn">Tahmin Et</button>
+                </div>
+
+                <button class="btn btn-primary" id="quiz-start-btn" onclick="loadQuiz()" data-i18n="new_question">Yeni Soru</button>
+                <button class="btn btn-secondary" id="quiz-pass-btn" onclick="passQuiz()" style="display:none" data-i18n="pass">Pas Geç</button>
+            </div>
+        </section>
+
+        <!-- ===== MULTIPLAYER GİRİŞ ===== -->
+        <section class="page" data-route="multi">
+            <a class="back-link" onclick="navigate('#/')" data-i18n="multi_back">&larr; Geri</a>
+            <h1 data-i18n="multi_title">Çok Kişilik</h1>
+            <p class="subtitle" data-i18n="multi_subtitle">Arkadaşlarınla gerçek zamanlı yarış</p>
+
+            <div id="multi-entry">
+                <!-- multi.js tarafından doldurulacak -->
+                <div class="empty-state"><div class="icon">&#127942;</div><span data-i18n="multi_soon">Çok kişilik modu yakında geliyor.</span></div>
+            </div>
+        </section>
+
+        <!-- ===== LOBBY ===== -->
+        <section class="page" data-route="lobby">
+            <a class="back-link" onclick="navigate('#/multi')" data-i18n="multi_back">&larr; Geri</a>
+            <div id="lobby-view"></div>
+        </section>
+
+        <!-- ===== GAME ===== -->
+        <section class="page" data-route="game">
+            <div id="game-view"></div>
+        </section>
+
+        <!-- ===== GAME OVER ===== -->
+        <section class="page" data-route="gameover">
+            <div id="gameover-view"></div>
+        </section>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="/static/js/common.js" defer></script>
+    <script src="/static/js/solo.js" defer></script>
+    <script src="/static/js/multi.js" defer></script>
+    <script src="/static/js/router.js" defer></script>
+</body>
+</html>
