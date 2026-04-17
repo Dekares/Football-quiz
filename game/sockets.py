@@ -435,5 +435,12 @@ def register_socket_handlers(socketio: SocketIO, get_db: Callable[[], Any]) -> N
         player.sid = None
         player.disconnected_at = time.time()
         socketio.emit("player_disconnected", {"player_id": pid}, to=code)
-        # Grace period sonrası hâlâ bağlanmadıysa kaldır
+
+        # Eğer hiç bağlı oyuncu kalmadıysa lobi'yi hemen kapat
+        # (oyun WAITING/GAME_OVER'daysa reconnect bekleme anlamsız)
+        if not lobby.connected_players():
+            registry.remove(code)
+            return
+
+        # Aksi halde grace period sonrası bu oyuncuyu kaldır
         socketio.start_background_task(_disconnect_grace, code, pid)

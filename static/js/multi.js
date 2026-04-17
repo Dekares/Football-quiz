@@ -118,6 +118,14 @@ function wireSocketEvents(s) {
         multiState.gameOver = data;
         stopRoundTimer();
         navigate(`#/gameover/${multiState.code}`);
+        // 8 sn sonra herkesi lobi girişine geri gönder
+        setTimeout(() => {
+            if (location.hash.startsWith('#/gameover/')) {
+                getSocket().emit('leave_lobby');
+                clearSession();
+                navigate('#/multi');
+            }
+        }, 8000);
     });
 
     s.on('kicked', () => {
@@ -567,9 +575,8 @@ function renderGameOverView() {
         root.innerHTML = `<div class="loading"><div class="spinner"></div><div>${t('multi_connecting')}</div></div>`;
         return;
     }
-    const isHost = lb.host_id === multiState.playerId;
     const sorted = [...lb.players].sort((a, b) => (go.final_scores[b.player_id] || 0) - (go.final_scores[a.player_id] || 0));
-    const rows = sorted.map((p, i) => {
+    const rows = sorted.map((p) => {
         const isYou = p.player_id === multiState.playerId;
         const isWinner = p.player_id === go.winner.player_id;
         const cls = ['player-tile'];
@@ -588,11 +595,33 @@ function renderGameOverView() {
             <div class="answer-name">${esc(go.winner.nickname)}</div>
         </div>
         <div class="players-grid">${rows}</div>
-        ${isHost ? `<button class="btn btn-primary" onclick="requestRematch()">${t('multi_rematch')}</button>` : ''}
-        <button class="btn btn-secondary" onclick="leaveLobby()" style="margin-top:0.6rem">${t('multi_to_menu')}</button>
+        <p class="subtitle" style="text-align:center;margin-top:1rem">
+            <span id="gameover-countdown">8</span> ${t('multi_redirect_hint')}
+        </p>
+        <button class="btn btn-secondary" onclick="leaveLobbyNow()" style="margin-top:0.6rem">${t('multi_to_menu')}</button>
     `;
     applyLang();
     fireConfetti();
+    startGameOverCountdown();
+}
+
+function startGameOverCountdown() {
+    let remaining = 8;
+    const tick = () => {
+        const el = document.getElementById('gameover-countdown');
+        if (!el) return;
+        el.textContent = remaining;
+        remaining -= 1;
+        if (remaining < 0) return;
+        setTimeout(tick, 1000);
+    };
+    tick();
+}
+
+function leaveLobbyNow() {
+    getSocket().emit('leave_lobby');
+    clearSession();
+    navigate('#/multi');
 }
 
 function requestRematch() {
