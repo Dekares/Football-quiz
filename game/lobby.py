@@ -18,7 +18,8 @@ DISCONNECT_GRACE_S = 30
 
 VALID_MODES = {"mc", "free"}
 VALID_DIFFICULTIES = {"easy", "medium", "hard"}
-VALID_TARGETS = {5, 7, 10}
+TARGET_SCORE_MIN = 3
+TARGET_SCORE_MAX = 50
 
 DEFAULT_SETTINGS = {
     "mode": "mc",
@@ -156,8 +157,10 @@ def validate_settings(raw: dict[str, Any]) -> dict[str, Any]:
         target_score = int(raw.get("target_score", DEFAULT_SETTINGS["target_score"]))
     except (TypeError, ValueError):
         target_score = DEFAULT_SETTINGS["target_score"]
-    if target_score not in VALID_TARGETS:
-        target_score = DEFAULT_SETTINGS["target_score"]
+    if target_score < TARGET_SCORE_MIN:
+        target_score = TARGET_SCORE_MIN
+    elif target_score > TARGET_SCORE_MAX:
+        target_score = TARGET_SCORE_MAX
 
     return {"mode": mode, "difficulty": difficulty, "target_score": target_score}
 

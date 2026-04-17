@@ -335,8 +335,11 @@ def register_socket_handlers(socketio: SocketIO, get_db: Callable[[], Any]) -> N
 
         is_correct = False
         if lobby.settings["mode"] == "mc":
-            chosen_id = data.get("player_id")
-            is_correct = chosen_id == rnd.correct_player["player_id"]
+            try:
+                chosen_id = int(data.get("player_id"))
+            except (TypeError, ValueError):
+                chosen_id = None
+            is_correct = chosen_id == int(rnd.correct_player["player_id"])
         else:  # free
             text = (data.get("text") or "").strip()
             if text:

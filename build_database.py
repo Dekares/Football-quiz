@@ -487,6 +487,18 @@ def create_db():
               AND (p.highest_market_value >= 50000000 OR p.is_legend = 1)
         ), 0)
     """)
+    # Sahte/sistem kulüpleri prestiji 0'a zorla → pair_stats'tan otomatik düşer
+    c.execute("""
+        UPDATE clubs SET prestige_score = 0
+        WHERE name LIKE '%Without Club%'
+           OR name LIKE '%Retired%'
+           OR name LIKE '%Unknown%'
+           OR name LIKE '%Career Break%'
+           OR name LIKE '%Suspended%'
+           OR name IS NULL
+           OR name = ''
+    """)
+    print(f"  {c.rowcount} system/placeholder clubs forced to prestige=0.")
     c.execute("SELECT COUNT(*) FROM clubs WHERE prestige_score >= 3")
     print(f"  {c.fetchone()[0]} clubs with prestige_score >= 3.")
 

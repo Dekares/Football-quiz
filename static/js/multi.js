@@ -164,46 +164,147 @@ function renderCurrentView() {
     else if (route.startsWith('#/gameover/')) renderGameOverView();
 }
 
-// ===== Multi giriş ekranı (create / join) =====
+// ===== Multi giriş ekranı (chooser → create / join) =====
+let multiEntryView = 'chooser'; // 'chooser' | 'create' | 'join'
+
 function renderMultiEntry() {
+    multiEntryView = 'chooser';
+    paintMultiEntry();
+}
+
+function paintMultiEntry() {
     const entry = document.getElementById('multi-entry');
     if (!entry) return;
-    const savedNick = localStorage.getItem('mp_nick') || '';
+    if (multiEntryView === 'create') return paintCreateForm(entry);
+    if (multiEntryView === 'join')   return paintJoinForm(entry);
+    paintChooser(entry);
+}
+
+function paintChooser(entry) {
     entry.innerHTML = `
-        <div class="settings-panel">
-            <div class="row">
-                <span class="label" data-i18n="multi_nickname">Takma ad</span>
-                <input type="text" id="mp-nick" maxlength="16" value="${esc(savedNick)}" data-i18n-placeholder="multi_nickname_ph" placeholder="Takma ad gir..." style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:0.5rem 0.8rem;border-radius:8px;font-size:0.9rem;min-width:200px">
-            </div>
+        <div class="main-menu">
+            <a class="menu-card" onclick="showMultiCreate()">
+                <div class="menu-icon">&#10010;</div>
+                <div class="menu-body">
+                    <div class="menu-title">${t('multi_create')}</div>
+                    <div class="menu-desc">${t('multi_create_desc')}</div>
+                </div>
+                <div class="menu-arrow">&rsaquo;</div>
+            </a>
+            <a class="menu-card" onclick="showMultiJoin()">
+                <div class="menu-icon">&#128273;</div>
+                <div class="menu-body">
+                    <div class="menu-title">${t('multi_join')}</div>
+                    <div class="menu-desc">${t('multi_join_desc')}</div>
+                </div>
+                <div class="menu-arrow">&rsaquo;</div>
+            </a>
         </div>
-        <button class="btn btn-primary" onclick="createLobby()" data-i18n="multi_create">Lobi Kur</button>
-        <div style="text-align:center;color:var(--text-dim);margin:1rem 0;font-size:0.88rem">— ${t('multi_code') || 'ya da'} —</div>
-        <div class="settings-panel">
-            <div class="row">
-                <span class="label" data-i18n="multi_code">Lobi kodu</span>
-                <input type="text" id="mp-code" maxlength="6" data-i18n-placeholder="multi_code_ph" placeholder="KOD" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:0.5rem 0.8rem;border-radius:8px;font-size:1rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;min-width:140px">
-            </div>
-        </div>
-        <button class="btn btn-secondary" onclick="joinLobby()" data-i18n="multi_join">Koda Katıl</button>
     `;
     applyLang();
 }
 
+function paintCreateForm(entry) {
+    const savedNick = localStorage.getItem('mp_nick') || '';
+    entry.innerHTML = `
+        <a class="back-link" onclick="showMultiChooser()">&larr; ${t('multi_back')}</a>
+        <h2 style="margin-bottom:0.4rem">${t('multi_create')}</h2>
+        <p class="subtitle" style="margin-bottom:1rem">${t('multi_create_hint')}</p>
+
+        <div class="settings-panel">
+            <div class="form-row">
+                <label class="form-label">${t('multi_nickname')}</label>
+                <input type="text" id="mp-nick" class="form-input" maxlength="16" value="${esc(savedNick)}" placeholder="${esc(t('multi_nickname_ph'))}">
+            </div>
+            <div class="form-row">
+                <label class="form-label">${t('multi_target')}</label>
+                <input type="number" id="mp-target" class="form-input" min="3" max="50" value="7">
+                <div class="form-hint">${t('multi_target_hint')}</div>
+            </div>
+            <div class="form-row">
+                <label class="form-label">${t('multi_difficulty')}</label>
+                <div class="options" id="mp-diff-opts">
+                    ${['easy','medium','hard'].map(d => `<button data-val="${d}" class="${d==='medium'?'active':''}" onclick="pickOpt('mp-diff-opts',this)">${t(d)}</button>`).join('')}
+                </div>
+            </div>
+            <div class="form-row">
+                <label class="form-label">${t('multi_mode')}</label>
+                <div class="options" id="mp-mode-opts">
+                    <button data-val="mc" class="active" onclick="pickOpt('mp-mode-opts',this)">${t('multi_mode_mc')}</button>
+                    <button data-val="free" onclick="pickOpt('mp-mode-opts',this)">${t('multi_mode_free')}</button>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="createLobby()">${t('multi_create')}</button>
+    `;
+    applyLang();
+}
+
+function paintJoinForm(entry) {
+    const savedNick = localStorage.getItem('mp_nick') || '';
+    entry.innerHTML = `
+        <a class="back-link" onclick="showMultiChooser()">&larr; ${t('multi_back')}</a>
+        <h2 style="margin-bottom:0.4rem">${t('multi_join')}</h2>
+        <p class="subtitle" style="margin-bottom:1rem">${t('multi_join_hint')}</p>
+
+        <div class="settings-panel">
+            <div class="form-row">
+                <label class="form-label">${t('multi_nickname')}</label>
+                <input type="text" id="mp-nick" class="form-input" maxlength="16" value="${esc(savedNick)}" placeholder="${esc(t('multi_nickname_ph'))}">
+            </div>
+            <div class="form-row">
+                <label class="form-label">${t('multi_code')}</label>
+                <input type="text" id="mp-code" class="form-input form-code" maxlength="6" placeholder="${esc(t('multi_code_ph'))}">
+            </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="joinLobby()">${t('multi_join')}</button>
+    `;
+    applyLang();
+    // Kod input'unda otomatik uppercase
+    const codeInput = document.getElementById('mp-code');
+    if (codeInput) {
+        codeInput.addEventListener('input', () => {
+            codeInput.value = codeInput.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        });
+    }
+}
+
+function showMultiChooser() { multiEntryView = 'chooser'; paintMultiEntry(); }
+function showMultiCreate()  { multiEntryView = 'create';  paintMultiEntry(); }
+function showMultiJoin()    { multiEntryView = 'join';    paintMultiEntry(); }
+
+function pickOpt(groupId, btn) {
+    const group = document.getElementById(groupId);
+    if (!group) return;
+    group.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+function readPickedOpt(groupId, fallback) {
+    const active = document.querySelector(`#${groupId} button.active`);
+    return active?.dataset.val ?? fallback;
+}
+
 function createLobby() {
     const nick = (document.getElementById('mp-nick')?.value || '').trim();
-    if (!nick) { alert(t('multi_nickname_ph') || 'Takma ad gir'); return; }
+    if (!nick) { alert(t('multi_nickname_ph')); return; }
+    const target = parseInt(document.getElementById('mp-target')?.value, 10) || 7;
+    const difficulty = readPickedOpt('mp-diff-opts', 'medium');
+    const mode = readPickedOpt('mp-mode-opts', 'mc');
     localStorage.setItem('mp_nick', nick);
     getSocket().emit('create_lobby', {
         nickname: nick,
-        settings: { mode: 'mc', difficulty: 'medium', target_score: 7 },
+        settings: { mode, difficulty, target_score: target },
     });
 }
 
 function joinLobby() {
     const nick = (document.getElementById('mp-nick')?.value || '').trim();
     const code = (document.getElementById('mp-code')?.value || '').trim().toUpperCase();
-    if (!nick) { alert(t('multi_nickname_ph') || 'Takma ad gir'); return; }
-    if (!code) { alert(t('multi_code_ph') || 'Kod gir'); return; }
+    if (!nick) { alert(t('multi_nickname_ph')); return; }
+    if (!code) { alert(t('multi_code_ph')); return; }
     localStorage.setItem('mp_nick', nick);
     getSocket().emit('join_lobby', { lobby_code: code, nickname: nick });
 }
@@ -234,11 +335,9 @@ function renderLobbyView() {
             ${t(d)}
         </button>`).join('');
 
-    const targetOpts = [5, 7, 10].map(n => `
-        <button class="${settings.target_score === n ? 'active' : ''}"
-                onclick="changeSetting('target_score',${n})" ${isHost ? '' : 'disabled'}>
-            ${n}
-        </button>`).join('');
+    const targetInput = isHost
+        ? `<input type="number" id="lobby-target" min="3" max="50" value="${settings.target_score}" class="form-input form-target" onchange="changeSetting('target_score', parseInt(this.value,10))">`
+        : `<span style="font-weight:700;color:var(--gold);font-size:1.1rem">${settings.target_score}</span>`;
 
     const playersHtml = lb.players.map(p => {
         const isYou = p.player_id === multiState.playerId;
@@ -279,7 +378,7 @@ function renderLobbyView() {
             </div>
             <div class="row">
                 <span class="label" data-i18n="multi_target">Hedef puan</span>
-                <div class="options">${targetOpts}</div>
+                <div class="options">${targetInput}</div>
             </div>
         </div>
 
@@ -425,8 +524,9 @@ function renderGameView(answerResult) {
 
 function pickChoice(playerId) {
     if (multiState.answered) return;
-    multiState.picked = playerId;
-    getSocket().emit('submit_answer', { round_no: multiState.round.round_no, player_id: playerId });
+    const idNum = parseInt(playerId, 10);
+    multiState.picked = idNum;
+    getSocket().emit('submit_answer', { round_no: multiState.round.round_no, player_id: idNum });
     renderGameView();
 }
 
