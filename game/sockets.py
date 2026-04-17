@@ -126,12 +126,21 @@ def register_socket_handlers(socketio: SocketIO, get_db: Callable[[], Any]) -> N
 
         scores = {p.player_id: p.score for p in lobby.players.values()}
         correct_ids = [p.player_id for p in lobby.players.values() if p.was_correct]
+        player_results = {
+            p.player_id: {
+                "answered": p.answered_this_round,
+                "correct": p.was_correct,
+                "answer_text": p.answer_text,
+            }
+            for p in lobby.players.values()
+        }
 
         socketio.emit("round_end", {
             "round_no": rnd.round_no,
             "correct_answer": rnd.correct_player,
             "scores": scores,
             "correct_player_ids": correct_ids,
+            "player_results": player_results,
             "reason": reason,
         }, to=lobby.code)
 
@@ -342,6 +351,7 @@ def register_socket_handlers(socketio: SocketIO, get_db: Callable[[], Any]) -> N
             is_correct = chosen_id == int(rnd.correct_player["player_id"])
         else:  # free
             text = (data.get("text") or "").strip()
+            player.answer_text = text[:64] if text else None
             if text:
                 conn = get_db()
                 try:

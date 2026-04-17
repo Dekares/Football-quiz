@@ -464,17 +464,21 @@ function renderGameView(answerResult) {
     let body = '';
     if (end) {
         // Round sonuç ekranı
-        const ans = end.correct_answer;
-        body = `
-            <div class="quiz-result correct" style="position:relative;transform:none">
-                <img class="player-photo" src="${ans.image_url || ''}" onerror="this.style.display='none'" alt="">
-                <div class="answer-name">${esc(ans.name)}</div>
-                <div class="answer-meta">
-                    <span class="meta-pill">${esc(posText(ans.position))}</span>
-                    <span class="meta-pill">${esc(ans.country || '?')}</span>
-                </div>
-                <div style="margin-top:0.8rem;font-size:0.9rem;color:var(--text-dim)">${t('multi_round_result')}</div>
-            </div>`;
+        if (rnd.mode === 'free') {
+            body = renderFreeRoundResult(end);
+        } else {
+            const ans = end.correct_answer;
+            body = `
+                <div class="quiz-result correct" style="position:relative;transform:none">
+                    <img class="player-photo" src="${ans.image_url || ''}" onerror="this.style.display='none'" alt="">
+                    <div class="answer-name">${esc(ans.name)}</div>
+                    <div class="answer-meta">
+                        <span class="meta-pill">${esc(posText(ans.position))}</span>
+                        <span class="meta-pill">${esc(ans.country || '?')}</span>
+                    </div>
+                    <div style="margin-top:0.8rem;font-size:0.9rem;color:var(--text-dim)">${t('multi_round_result')}</div>
+                </div>`;
+        }
     } else if (rnd.mode === 'mc') {
         const choices = rnd.choices || [];
         const cells = choices.map(c => {
@@ -491,13 +495,15 @@ function renderGameView(answerResult) {
             body += `<div class="answered-state ${cls}">${t('multi_already_answered')}</div>`;
         }
     } else {
-        // free mode
+        // free mode — canlı arama dropdown'u (solo tahmin oyunundaki gibi)
         body = `
             <div class="quiz-input-row" style="margin-top:1rem">
-                <input type="text" id="mp-free-answer" autocomplete="off"
-                    placeholder="${esc(t('guess_placeholder'))}"
-                    ${multiState.answered ? 'disabled' : ''}
-                    style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:0.6rem 0.9rem;border-radius:10px;font-size:1rem">
+                <div class="search-wrapper quiz-search-wrapper">
+                    <input type="text" id="mp-free-answer" autocomplete="off"
+                        placeholder="${esc(t('guess_placeholder'))}"
+                        ${multiState.answered ? 'disabled' : ''}>
+                    <div class="dropdown" id="mp-free-dropdown"></div>
+                </div>
                 <button class="btn btn-primary" ${multiState.answered ? 'disabled' : ''} onclick="submitFreeAnswer()">${t('guess_btn')}</button>
             </div>`;
         if (multiState.answered) {
@@ -520,14 +526,87 @@ function renderGameView(answerResult) {
     applyLang();
     if (!end) {
         startRoundTimer();
-        if (rnd.mode === 'free') {
-            const input = document.getElementById('mp-free-answer');
-            if (input && !multiState.answered) {
-                input.focus();
-                input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitFreeAnswer(); });
-            }
-        }
+        if (rnd.mode === 'free') setupFreeSearch();
     }
+}
+
+// Serbest yazma için canlı arama (solo tahmin oyunundaki gibi)
+let mpFreeDebounce = null;
+function setupFreeSearch() {
+    const input = document.getElementById('mp-free-answer');
+    const dropdown = document.getElementById('mp-free-dropdown');
+    if (!input || !dropdown) return;
+    if (multiState.answered) return;
+    input.focus();
+
+    input.addEventListener('input', () => {
+        clearTimeout(mpFreeDebounce);
+        multiState.picked = null; // yeni yazımla seçim sıfırlanır
+        const q = input.value.trim();
+        if (q.length < 2) { dropdown.classList.remove('show'); return; }
+
+        mpFreeDebounce = setTimeout(async () => {
+            try {
+                const res = await fetch('/api/search-player?q=' + encodeURIComponent(q));
+                const players = await res.json();
+                if (!players.length) {
+                    dropdown.innerHTML = `<div style="padding:0.8rem;color:var(--text-dim)">${t('no_player')}</div>`;
+                } else {
+                    dropdown.innerHTML = players.map(p => `
+                        <div class="dropdown-player" data-id="${p.player_id}" data-name="${esc(p.name)}">
+                            <img src="${p.image_url || ''}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><rect fill=%22%23242734%22 width=%2240%22 height=%2240%22/><text x=%2220%22 y=%2224%22 text-anchor=%22middle%22 fill=%22%238b8fa3%22 font-size=%2216%22>?</text></svg>'" alt="">
+                            <div class="dp-info">
+                                <div class="dp-name">${esc(p.name)}</div>
+                                <div class="dp-meta">${posText(p.position)} · ${esc(p.country || '')}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                dropdown.classList.add('show');
+                dropdown.querySelectorAll('.dropdown-player').forEach(item => {
+                    item.addEventListener('click', () => {
+                        input.value = item.dataset.name;
+                        multiState.picked = item.dataset.name; // anında submit için
+                        dropdown.classList.remove('show');
+                        submitFreeAnswer();
+                    });
+                });
+            } catch (_) { /* sessiz */ }
+        }, 250);
+    });
+
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitFreeAnswer(); });
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.quiz-search-wrapper')) dropdown.classList.remove('show');
+    }, { once: true });
+}
+
+function renderFreeRoundResult(end) {
+    const me = end.player_results?.[multiState.playerId];
+    let headline, sub, cls;
+    if (!me || !me.answered) {
+        cls = 'wrong';
+        headline = t('multi_free_no_answer');
+        sub = t('multi_free_no_answer_hint');
+    } else if (me.correct) {
+        cls = 'correct';
+        headline = t('multi_free_correct');
+        sub = me.answer_text ? esc(me.answer_text) : '';
+    } else {
+        cls = 'wrong';
+        headline = t('multi_free_wrong');
+        sub = me.answer_text ? `"${esc(me.answer_text)}"` : '';
+    }
+    const correctCount = (end.correct_player_ids || []).length;
+    const totalCount = Object.keys(end.player_results || {}).length;
+    return `
+        <div class="quiz-result ${cls}" style="position:relative;transform:none;text-align:center">
+            <div class="verdict" style="font-size:1.4rem;margin-bottom:0.4rem">${headline}</div>
+            ${sub ? `<div class="answer-name" style="font-size:1.05rem">${sub}</div>` : ''}
+            <div style="margin-top:0.8rem;font-size:0.85rem;color:var(--text-dim)">
+                ${correctCount}/${totalCount} ${t('multi_free_correct_count')}
+            </div>
+        </div>`;
 }
 
 function pickChoice(playerId) {
@@ -541,8 +620,10 @@ function pickChoice(playerId) {
 function submitFreeAnswer() {
     if (multiState.answered) return;
     const input = document.getElementById('mp-free-answer');
+    const dropdown = document.getElementById('mp-free-dropdown');
     const text = (input?.value || '').trim();
     if (!text) return;
+    dropdown?.classList.remove('show');
     multiState.picked = text;
     getSocket().emit('submit_answer', { round_no: multiState.round.round_no, text });
 }

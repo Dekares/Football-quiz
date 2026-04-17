@@ -47,6 +47,7 @@ class Player:
     disconnected_at: float | None = None
     answered_this_round: bool = False
     was_correct: bool = False
+    answer_text: str | None = None  # free modda gönderilen metin (tur sonu ekranında gösterilir)
 
     def is_connected(self) -> bool:
         return self.sid is not None
@@ -133,6 +134,7 @@ class Lobby:
         for p in self.players.values():
             p.answered_this_round = False
             p.was_correct = False
+            p.answer_text = None
 
     def reached_target(self) -> Player | None:
         target = self.settings.get("target_score", 7)
