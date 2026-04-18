@@ -11,6 +11,57 @@ let quizLives = 0;
 const MAX_LIVES = 8;
 let debounceTimer = null;
 
+// ===== Retention: localStorage istatistikleri =====
+// current_streak oturumlar arası saklanır; kullanıcı sayfayı kapatsa bile
+// son seri durur, yeni doğruyla devam eder.
+function getSoloStats() {
+    return {
+        best:    parseInt(localStorage.getItem('solo_best_streak') || '0', 10),
+        total:   parseInt(localStorage.getItem('solo_total_correct') || '0', 10),
+        streak:  parseInt(localStorage.getItem('solo_current_streak') || '0', 10),
+    };
+}
+function setSoloStats(s) {
+    localStorage.setItem('solo_best_streak', String(s.best));
+    localStorage.setItem('solo_total_correct', String(s.total));
+    localStorage.setItem('solo_current_streak', String(s.streak));
+}
+function renderSoloStats(opts) {
+    const panel = document.getElementById('solo-stats');
+    if (!panel) return;
+    const s = getSoloStats();
+    panel.style.display = 'flex';
+    document.getElementById('stat-streak').textContent = s.streak;
+    document.getElementById('stat-best').textContent = s.best;
+    document.getElementById('stat-total').textContent = s.total;
+    if (opts?.pulseRecord) {
+        const chip = panel.querySelector('.stat-chip.record');
+        if (chip) {
+            chip.classList.remove('pulse');
+            // reflow ile yeniden oynat
+            void chip.offsetWidth;
+            chip.classList.add('pulse');
+        }
+    }
+}
+function recordCorrectAnswer() {
+    const s = getSoloStats();
+    s.streak += 1;
+    s.total  += 1;
+    const newRecord = s.streak > s.best;
+    if (newRecord) s.best = s.streak;
+    setSoloStats(s);
+    renderSoloStats({ pulseRecord: newRecord });
+    return { newRecord, streak: s.streak, best: s.best };
+}
+function resetStreak() {
+    const s = getSoloStats();
+    if (s.streak === 0) return;
+    s.streak = 0;
+    setSoloStats(s);
+    renderSoloStats();
+}
+
 // ===== Solo alt-sekme geçişi =====
 function showSoloTab(tab, btn) {
     document.querySelectorAll('#page-solo .solo-tab').forEach(p => p.classList.remove('active'));
@@ -152,6 +203,7 @@ async function loadQuiz() {
     document.getElementById('quiz-guess').focus();
 
     renderLives(false);
+    renderSoloStats();
 
     const res = await fetch('/api/quiz?difficulty=' + quizDifficulty);
     currentQuiz = await res.json();
@@ -198,12 +250,13 @@ function setupQuizSearch() {
             if (players.length === 0) {
                 quizDropdown.innerHTML = `<div style="padding:0.8rem;color:var(--text-dim)">${t('no_player')}</div>`;
             } else {
+                // Tahmin oyununda oyuncunun mevkisi/ülkesi gösterilmez
+                // (cevabı önceden belli etmemek için — sadece isim + foto).
                 quizDropdown.innerHTML = players.map(p => `
                     <div class="dropdown-player" data-id="${p.player_id}" data-name="${esc(p.name)}">
                         <img src="${p.image_url || ''}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><rect fill=%22%23242734%22 width=%2240%22 height=%2240%22/><text x=%2220%22 y=%2224%22 text-anchor=%22middle%22 fill=%22%238b8fa3%22 font-size=%2216%22>?</text></svg>'" alt="">
                         <div class="dp-info">
                             <div class="dp-name">${esc(p.name)}</div>
-                            <div class="dp-meta">${posText(p.position)} · ${esc(p.country || '')}</div>
                         </div>
                     </div>
                 `).join('');
@@ -254,7 +307,8 @@ function submitGuess() {
     if (isCorrect) {
         quizCorrect++;
         quizTotal++;
-        showQuizResult(true);
+        const rec = recordCorrectAnswer();
+        showQuizResult(true, rec);
     } else {
         quizLives--;
         renderLives(true);
@@ -262,6 +316,7 @@ function submitGuess() {
 
         if (quizLives <= 0) {
             quizTotal++;
+            resetStreak();
             document.getElementById('quiz-wrong-feedback').innerHTML = '';
             showQuizResult(false);
         } else {
@@ -278,11 +333,12 @@ function passQuiz() {
     const quizDropdown = document.getElementById('quiz-player-dropdown');
     quizDropdown.classList.remove('show');
     quizTotal++;
+    resetStreak();
     document.getElementById('quiz-wrong-feedback').innerHTML = '';
     showQuizResult(false);
 }
 
-function showQuizResult(correct) {
+function showQuizResult(correct, recordInfo) {
     const p = currentQuiz;
 
     document.getElementById('quiz-input-row').style.display = 'none';
@@ -298,6 +354,21 @@ function showQuizResult(correct) {
     const existing = document.getElementById('quiz-modal-backdrop');
     if (existing) existing.remove();
 
+    const newRecordBadge = recordInfo?.newRecord
+        ? `<div class="answer-meta" style="margin-bottom:0.8rem">
+               <span class="meta-pill" style="background:linear-gradient(135deg,var(--gold),#f59f00);color:#0a0d18;font-weight:700">
+                   ★ ${t('solo_new_record')} ${recordInfo.best}
+               </span>
+           </div>`
+        : '';
+
+    // Paylaşım sadece doğru bilindiğinde görünür — yanlışta spam olmasın.
+    const shareBtn = correct
+        ? `<button class="btn share-score-btn" onclick="shareSoloScore()" style="margin-top:0.55rem">
+               ${t('share_result')}
+           </button>`
+        : '';
+
     const backdrop = document.createElement('div');
     backdrop.className = 'quiz-modal-backdrop';
     backdrop.id = 'quiz-modal-backdrop';
@@ -310,7 +381,9 @@ function showQuizResult(correct) {
                 <span class="meta-pill">${esc(posText(p.position))}</span>
                 <span class="meta-pill">${esc(p.country || '?')}</span>
             </div>
+            ${newRecordBadge}
             <button class="btn btn-primary next-btn" onclick="closeQuizModalAndNext()">${t('next_question')}</button>
+            ${shareBtn}
         </div>`;
     document.body.appendChild(backdrop);
 
@@ -318,6 +391,17 @@ function showQuizResult(correct) {
     currentQuiz = null;
 
     if (correct) fireConfetti();
+}
+
+function shareSoloScore() {
+    const s = getSoloStats();
+    const tmpl = t('share_caption_solo');
+    const caption = tmpl
+        .replace('{correct}', quizCorrect)
+        .replace('{total}', quizTotal)
+        .replace('{streak}', s.best);
+    const url = `${location.origin}/`;
+    shareOrCopy(caption, url);
 }
 
 function closeQuizModalAndNext() {

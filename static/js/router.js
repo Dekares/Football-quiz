@@ -53,5 +53,13 @@ window.addEventListener('DOMContentLoaded', () => {
     applyLang();
     const toggle = document.querySelector('.lang-toggle');
     if (toggle) toggle.textContent = currentLang === 'tr' ? 'EN' : 'TR';
+
+    // ?join=XXXXXX ile gelindiyse direkt multi girişine yönlendir.
+    // multi.js bu query'yi görüp join formunu doldurur.
+    const joinCode = getQueryParam('join');
+    if (joinCode && (!location.hash || location.hash === '#' || location.hash === '#/')) {
+        location.hash = '#/multi';
+    }
+
     renderRoute();
 });

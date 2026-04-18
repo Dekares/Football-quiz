@@ -89,13 +89,35 @@ const LANGS = {
         multi_winner: 'Kazanan',
         multi_rematch: 'Yeniden Oyna',
         multi_to_menu: 'Ana Menüye',
-        multi_redirect_hint: 'saniye sonra lobi girişine döneceksin...',
+        multi_back_to_lobby: 'Lobiye Dön',
+        multi_redirect_hint: 'saniye sonra lobiye dönüp host\'u bekleyeceksin...',
         multi_host_left: 'Host ayrıldı, yeni host atandı',
         multi_error_invalid_code: 'Geçersiz lobi kodu',
         multi_error_full: 'Lobi dolu',
         multi_error_in_game: 'Oyun zaten başladı',
         multi_connecting: 'Bağlanıyor...',
         multi_disconnected: 'Bağlantı koptu, yeniden bağlanıyor...',
+        // Hero / landing
+        hero_hook: 'İki takım, bir oyuncu — bulabilir misin?',
+        hero_example_label: 'Örnek',
+        hero_example_hint: 'Hangi oyuncu her iki takımda da oynadı?',
+        hero_example_answer: 'David Beckham',
+        // Solo rekor
+        solo_record: 'Rekor',
+        solo_total_correct: 'Toplam doğru',
+        solo_streak: 'Seri',
+        solo_new_record: 'Yeni rekor!',
+        // Paylaşım
+        share_result: 'Skorumu Paylaş',
+        share_invite: 'Davet Linki',
+        share_copied: 'Kopyalandı!',
+        share_caption_solo: '⚽ Futbol Quiz\'de {correct}/{total} doğru, rekor seri: {streak}. Sen de dene:',
+        share_caption_multi: '⚽ Futbol Quiz\'de {score} puanla {place}. oldum! Sen de dene:',
+        // Cold-start
+        waking_up: 'Sunucu uyanıyor (ilk açılışta ~30sn)...',
+        // Lobby
+        copy_code: 'Kodu Kopyala',
+        copy_invite: 'Davet Linkini Kopyala',
     },
     en: {
         nav_menu: 'Main Menu',
@@ -182,13 +204,35 @@ const LANGS = {
         multi_winner: 'Winner',
         multi_rematch: 'Rematch',
         multi_to_menu: 'Main Menu',
-        multi_redirect_hint: 'seconds until you return to the lobby menu...',
+        multi_back_to_lobby: 'Back to Lobby',
+        multi_redirect_hint: 'seconds until you return to the lobby and wait for the host...',
         multi_host_left: 'Host left, new host assigned',
         multi_error_invalid_code: 'Invalid lobby code',
         multi_error_full: 'Lobby is full',
         multi_error_in_game: 'Game already in progress',
         multi_connecting: 'Connecting...',
         multi_disconnected: 'Disconnected, reconnecting...',
+        // Hero / landing
+        hero_hook: 'Two clubs, one player — can you name them?',
+        hero_example_label: 'Example',
+        hero_example_hint: 'Which player played for both clubs?',
+        hero_example_answer: 'David Beckham',
+        // Solo records
+        solo_record: 'Record',
+        solo_total_correct: 'Total correct',
+        solo_streak: 'Streak',
+        solo_new_record: 'New record!',
+        // Share
+        share_result: 'Share Score',
+        share_invite: 'Invite Link',
+        share_copied: 'Copied!',
+        share_caption_solo: '⚽ Got {correct}/{total} on Football Quiz, best streak: {streak}. Try it:',
+        share_caption_multi: '⚽ Finished #{place} with {score} points on Football Quiz! Try it:',
+        // Cold-start
+        waking_up: 'Waking up server (first load ~30s)...',
+        // Lobby
+        copy_code: 'Copy Code',
+        copy_invite: 'Copy Invite Link',
     }
 };
 
@@ -306,3 +350,97 @@ function fireConfetti() {
 function avatarLetter(nick) {
     return (nick || '?').trim().charAt(0).toUpperCase() || '?';
 }
+
+// ===== Toast (küçük bildirim) =====
+function showToast(msg, kind) {
+    const prev = document.getElementById('toast-notify');
+    if (prev) prev.remove();
+    const el = document.createElement('div');
+    el.id = 'toast-notify';
+    el.className = 'toast-notify' + (kind === 'error' ? ' error' : '');
+    el.textContent = msg;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('show'));
+    setTimeout(() => {
+        el.classList.remove('show');
+        setTimeout(() => el.remove(), 300);
+    }, 2200);
+}
+
+// ===== Clipboard + share =====
+async function copyText(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        return true;
+    } catch (_) {
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (_) {}
+        ta.remove();
+        return true;
+    }
+}
+
+async function shareOrCopy(text, url) {
+    const payload = { title: 'Football Quiz', text, url };
+    if (navigator.share) {
+        try {
+            await navigator.share(payload);
+            return 'shared';
+        } catch (_) { /* user cancelled → fall back */ }
+    }
+    await copyText(`${text} ${url}`);
+    showToast(t('share_copied'));
+    return 'copied';
+}
+
+// ===== URL params =====
+function getQueryParam(name) {
+    try {
+        const params = new URLSearchParams(location.search);
+        return params.get(name);
+    } catch (_) { return null; }
+}
+
+// ===== Cold-start (ilk yüklemede sunucunun uyandığını göster) =====
+let wakeupOverlayTimer = null;
+function showWakeupOverlayIfSlow(delayMs) {
+    if (document.getElementById('wakeup-overlay')) return;
+    wakeupOverlayTimer = setTimeout(() => {
+        if (document.getElementById('wakeup-overlay')) return;
+        const el = document.createElement('div');
+        el.id = 'wakeup-overlay';
+        el.className = 'wakeup-overlay';
+        el.innerHTML = `<div class="wakeup-card">
+            <div class="spinner"></div>
+            <div class="wakeup-msg">${t('waking_up')}</div>
+        </div>`;
+        document.body.appendChild(el);
+    }, delayMs || 1200);
+}
+function hideWakeupOverlay() {
+    if (wakeupOverlayTimer) { clearTimeout(wakeupOverlayTimer); wakeupOverlayTimer = null; }
+    const el = document.getElementById('wakeup-overlay');
+    if (el) {
+        el.classList.add('fade-out');
+        setTimeout(() => el.remove(), 250);
+    }
+}
+
+// İlk ping: ana sayfa açılışında backend'e dokunarak Render cold-start'ı tetikler.
+// Yanıt gelirse overlay yok; 1.2sn sonra hala bekliyorsa overlay çıkar.
+(function pingServerOnLoad() {
+    if (sessionStorage.getItem('pinged')) return;
+    showWakeupOverlayIfSlow(1500);
+    fetch('/api/health', { cache: 'no-store' })
+        .catch(() => {})
+        .finally(() => {
+            sessionStorage.setItem('pinged', '1');
+            hideWakeupOverlay();
+        });
+})();

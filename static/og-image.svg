@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <radialGradient id="bg1" cx="20%" cy="15%" r="60%">
+      <stop offset="0" stop-color="#6c5ce7" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#0a0d18" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="bg2" cx="85%" cy="75%" r="55%">
+      <stop offset="0" stop-color="#00cec9" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#0a0d18" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="title" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.5" stop-color="#00cec9"/>
+      <stop offset="1" stop-color="#6c5ce7"/>
+    </linearGradient>
+    <linearGradient id="pill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6c5ce7"/>
+      <stop offset="1" stop-color="#00cec9"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="#0a0d18"/>
+  <rect width="1200" height="630" fill="url(#bg1)"/>
+  <rect width="1200" height="630" fill="url(#bg2)"/>
+
+  <!-- Soccer ball icon -->
+  <g transform="translate(120,120)">
+    <circle cx="60" cy="60" r="58" fill="#fff"/>
+    <polygon points="60,22 82,38 74,64 46,64 38,38" fill="#0a0d18"/>
+    <line x1="60" y1="22" x2="60" y2="2" stroke="#0a0d18" stroke-width="3"/>
+    <line x1="82" y1="38" x2="104" y2="28" stroke="#0a0d18" stroke-width="3"/>
+    <line x1="38" y1="38" x2="16" y2="28" stroke="#0a0d18" stroke-width="3"/>
+    <line x1="74" y1="64" x2="94" y2="92" stroke="#0a0d18" stroke-width="3"/>
+    <line x1="46" y1="64" x2="26" y2="92" stroke="#0a0d18" stroke-width="3"/>
+  </g>
+
+  <text x="260" y="170" font-family="-apple-system, Segoe UI, Roboto, sans-serif"
+        font-size="44" font-weight="700" fill="#ecedf5" letter-spacing="-1">
+    Futbol Quiz
+  </text>
+
+  <text x="100" y="320" font-family="-apple-system, Segoe UI, Roboto, sans-serif"
+        font-size="84" font-weight="800" fill="url(#title)" letter-spacing="-2">
+    İki Takım, Bir Oyuncu
+  </text>
+
+  <text x="100" y="400" font-family="-apple-system, Segoe UI, Roboto, sans-serif"
+        font-size="34" font-weight="500" fill="#8b8fa3">
+    İki kulübü seç — her ikisinde de oynamış oyuncuyu bul.
+  </text>
+
+  <!-- Example row -->
+  <g transform="translate(100,470)">
+    <rect x="0" y="0" rx="18" width="420" height="96" fill="#161a2c" stroke="#2a3050"/>
+    <text x="30" y="40" font-family="sans-serif" font-size="22" font-weight="700" fill="#ecedf5">Real Madrid</text>
+    <text x="30" y="72" font-family="sans-serif" font-size="18" fill="#8b8fa3">2003–2007</text>
+
+    <text x="440" y="60" font-family="sans-serif" font-size="44" font-weight="800" fill="#00cec9">&amp;</text>
+
+    <rect x="500" y="0" rx="18" width="420" height="96" fill="#161a2c" stroke="#2a3050"/>
+    <text x="530" y="40" font-family="sans-serif" font-size="22" font-weight="700" fill="#ecedf5">AC Milan</text>
+    <text x="530" y="72" font-family="sans-serif" font-size="18" fill="#8b8fa3">2008–2009 (loan)</text>
+  </g>
+
+  <!-- CTA pill -->
+  <g transform="translate(970,520)">
+    <rect x="0" y="0" rx="26" width="180" height="52" fill="url(#pill)"/>
+    <text x="90" y="34" text-anchor="middle" font-family="sans-serif"
+          font-size="22" font-weight="700" fill="#ffffff">Oyna →</text>
+  </g>
+</svg>

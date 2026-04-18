@@ -118,24 +118,23 @@ function wireSocketEvents(s) {
         multiState.gameOver = data;
         stopRoundTimer();
         navigate(`#/gameover/${multiState.code}`);
-        // 8 sn sonra herkesi lobi girişine geri gönder
+        // Skorları göstermek için kısa bir duraklama, ardından lobiye dön.
+        // Host yeni oyunu başlatana kadar orada beklenir; leave_lobby YOK.
         setTimeout(() => {
             if (location.hash.startsWith('#/gameover/')) {
-                getSocket().emit('leave_lobby');
-                clearSession();
-                navigate('#/multi');
+                navigate(`#/lobby/${multiState.code}`);
             }
-        }, 8000);
+        }, 6000);
     });
 
     s.on('kicked', () => {
         clearSession();
-        alert('Lobiden çıkarıldın.');
+        showToast('Lobiden çıkarıldın.', 'error');
         navigate('#/');
     });
 
     s.on('error', (err) => {
-        alert(`${err.code}: ${err.message}`);
+        showToast(`${err.code}: ${err.message}`, 'error');
     });
 }
 
@@ -176,6 +175,22 @@ function renderCurrentView() {
 let multiEntryView = 'chooser'; // 'chooser' | 'create' | 'join'
 
 function renderMultiEntry() {
+    // ?join=XYZ ile gelinmişse otomatik olarak join formunu aç + kodu doldur.
+    const joinCode = getQueryParam('join');
+    if (joinCode) {
+        multiEntryView = 'join';
+        paintMultiEntry();
+        const codeInput = document.getElementById('mp-code');
+        if (codeInput) {
+            codeInput.value = joinCode.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+        }
+        // URL'yi temizle ki refresh'te tekrar yönlendirme olmasın
+        try {
+            const clean = location.origin + location.pathname + location.hash;
+            history.replaceState(null, '', clean);
+        } catch (_) {}
+        return;
+    }
     multiEntryView = 'chooser';
     paintMultiEntry();
 }
@@ -297,7 +312,7 @@ function readPickedOpt(groupId, fallback) {
 
 function createLobby() {
     const nick = (document.getElementById('mp-nick')?.value || '').trim();
-    if (!nick) { alert(t('multi_nickname_ph')); return; }
+    if (!nick) { showToast(t('multi_nickname_ph'), 'error'); return; }
     const target = parseInt(document.getElementById('mp-target')?.value, 10) || 7;
     const difficulty = readPickedOpt('mp-diff-opts', 'medium');
     const mode = readPickedOpt('mp-mode-opts', 'mc');
@@ -311,8 +326,8 @@ function createLobby() {
 function joinLobby() {
     const nick = (document.getElementById('mp-nick')?.value || '').trim();
     const code = (document.getElementById('mp-code')?.value || '').trim().toUpperCase();
-    if (!nick) { alert(t('multi_nickname_ph')); return; }
-    if (!code) { alert(t('multi_code_ph')); return; }
+    if (!nick) { showToast(t('multi_nickname_ph'), 'error'); return; }
+    if (!code) { showToast(t('multi_code_ph'), 'error'); return; }
     localStorage.setItem('mp_nick', nick);
     getSocket().emit('join_lobby', { lobby_code: code, nickname: nick });
 }
@@ -371,6 +386,10 @@ function renderLobbyView() {
             <div class="label" data-i18n="multi_lobby_code">Lobi kodu</div>
             <div class="code" onclick="copyCode('${lb.code}')">${lb.code}</div>
             <div class="hint" data-i18n="multi_lobby_hint">Arkadaşlarına bu kodu gönder</div>
+            <div class="invite-actions">
+                <button onclick="copyCode('${lb.code}')"><span class="icon">&#128203;</span> ${t('copy_code')}</button>
+                <button onclick="copyInviteLink('${lb.code}')"><span class="icon">&#128279;</span> ${t('copy_invite')}</button>
+            </div>
         </div>
 
         <div class="players-grid">${playersHtml}</div>
@@ -412,6 +431,8 @@ function startGame() {
 }
 
 function kickPlayer(pid) {
+    // Confirm native dialog — paylaşım / toast'a göre bu aksiyon geri dönüşü
+    // olmayan bir şey, kullanıcının durup onaylaması mantıklı.
     if (!confirm('Oyuncu lobiden çıkarılsın mı?')) return;
     getSocket().emit('kick_player', { player_id: pid });
 }
@@ -423,9 +444,13 @@ function leaveLobby() {
 }
 
 function copyCode(code) {
-    navigator.clipboard?.writeText(code).then(() => {
-        // ops: toast
-    });
+    copyText(code).then(() => showToast(t('share_copied')));
+}
+
+function copyInviteLink(code) {
+    const url = `${location.origin}/?join=${code}`;
+    const caption = `${t('multi_lobby_hint')}: ${code}`;
+    shareOrCopy(caption, url);
 }
 
 // ===== Game (aktif tur) =====
@@ -669,6 +694,10 @@ function renderGameOverView() {
         </div>`;
     }).join('');
 
+    // Kullanıcının kaçıncı olduğunu hesapla (paylaşım metni için)
+    const myPlace = sorted.findIndex(p => p.player_id === multiState.playerId) + 1;
+    const myScore = go.final_scores[multiState.playerId] || 0;
+
     root.innerHTML = `
         <h1 style="text-align:center">${t('multi_game_over')}</h1>
         <div class="quiz-result correct" style="position:relative;transform:none;margin:1rem auto">
@@ -677,8 +706,12 @@ function renderGameOverView() {
         </div>
         <div class="players-grid">${rows}</div>
         <p class="subtitle" style="text-align:center;margin-top:1rem">
-            <span id="gameover-countdown">8</span> ${t('multi_redirect_hint')}
+            <span id="gameover-countdown">6</span> ${t('multi_redirect_hint')}
         </p>
+        <button class="btn share-score-btn" onclick="shareMultiScore(${myPlace}, ${myScore})" style="margin-top:0.6rem">
+            ${t('share_result')}
+        </button>
+        <button class="btn btn-primary" onclick="returnToLobby()" style="margin-top:0.6rem">${t('multi_back_to_lobby')}</button>
         <button class="btn btn-secondary" onclick="leaveLobbyNow()" style="margin-top:0.6rem">${t('multi_to_menu')}</button>
     `;
     applyLang();
@@ -686,8 +719,19 @@ function renderGameOverView() {
     startGameOverCountdown();
 }
 
+function returnToLobby() {
+    if (multiState.code) navigate(`#/lobby/${multiState.code}`);
+}
+
+function shareMultiScore(place, score) {
+    const tmpl = t('share_caption_multi');
+    const caption = tmpl.replace('{score}', score).replace('{place}', place);
+    const url = `${location.origin}/`;
+    shareOrCopy(caption, url);
+}
+
 function startGameOverCountdown() {
-    let remaining = 8;
+    let remaining = 6;
     const tick = () => {
         const el = document.getElementById('gameover-countdown');
         if (!el) return;

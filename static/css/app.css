@@ -834,6 +834,227 @@ h1 {
 }
 .answered-state.wrong { background: rgba(255, 71, 87, 0.08); border-color: rgba(255, 71, 87, 0.35); color: var(--red); }
 
+/* === Hero örnek kart (ana menü) === */
+.hero-hook {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 1.4rem;
+    max-width: 520px;
+    margin-left: auto; margin-right: auto;
+}
+
+.hero-example {
+    position: relative;
+    padding: 1.2rem 1.2rem 1rem;
+    margin: 0 auto 2rem;
+    max-width: 520px;
+    background: linear-gradient(180deg, rgba(108, 92, 231, 0.10), rgba(0, 206, 201, 0.06));
+    border: 1px solid var(--border-glow);
+    border-radius: 18px;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.04);
+    animation: slideUp 0.6s cubic-bezier(.4,0,.2,1);
+}
+.hero-example-label {
+    position: absolute; top: -10px; left: 18px;
+    font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    padding: 0.25rem 0.7rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    border-radius: 999px;
+    box-shadow: 0 4px 14px rgba(108, 92, 231, 0.4);
+}
+.hero-example-body { text-align: center; }
+.hero-clubs {
+    display: flex; align-items: center; justify-content: center;
+    gap: 1.2rem; margin-bottom: 0.9rem; margin-top: 0.3rem;
+    flex-wrap: wrap;
+}
+.hero-club { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
+.hero-club-logo {
+    width: 56px; height: 56px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 0.95rem; letter-spacing: 0.04em;
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+    transition: transform 0.3s;
+}
+.hero-club-logo:hover { transform: rotate(-4deg) scale(1.05); }
+.hero-logo-rma {
+    background: linear-gradient(135deg, #febe10, #e8b100);
+    color: #0a0d18;
+}
+.hero-logo-mil {
+    background: linear-gradient(135deg, #ac1a2f, #7a0f22);
+}
+.hero-club-name { font-size: 0.85rem; color: var(--text-dim); font-weight: 500; }
+
+.hero-example-hint {
+    font-size: 0.9rem; color: var(--text-dim);
+    margin-bottom: 0.8rem;
+}
+
+.hero-example-answer {
+    font-size: 1.1rem; font-weight: 700;
+    padding-top: 0.6rem;
+    border-top: 1px dashed var(--border);
+}
+.hero-answer-reveal {
+    display: inline-block;
+    position: relative;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: revealSlide 0.8s ease 0.4s both;
+}
+@keyframes revealSlide {
+    0%   { opacity: 0; filter: blur(6px); transform: scale(0.9); }
+    100% { opacity: 1; filter: blur(0);   transform: scale(1); }
+}
+
+/* === Skeleton (multi girişte JS yüklenene kadar) === */
+.menu-card.skeleton {
+    pointer-events: none;
+    cursor: default;
+}
+.skeleton-icon, .skeleton-line {
+    background: linear-gradient(90deg, var(--surface2) 0%, rgba(255,255,255,0.05) 50%, var(--surface2) 100%);
+    background-size: 200% 100%;
+    border-radius: 8px;
+    animation: shimmerBg 1.4s linear infinite;
+}
+.skeleton-icon {
+    width: 58px; height: 58px; border-radius: 14px;
+    flex-shrink: 0;
+}
+.skeleton-line { height: 12px; margin: 6px 0; }
+.skeleton-line.w60 { width: 60%; }
+.skeleton-line.w80 { width: 80%; }
+@keyframes shimmerBg {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* === Toast === */
+.toast-notify {
+    position: fixed;
+    bottom: 24px; left: 50%;
+    transform: translate(-50%, 20px);
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    padding: 0.7rem 1.2rem;
+    border-radius: 999px;
+    font-size: 0.9rem; font-weight: 600;
+    box-shadow: 0 10px 30px rgba(108, 92, 231, 0.45);
+    z-index: 9000;
+    opacity: 0;
+    transition: opacity 0.25s, transform 0.25s cubic-bezier(.4,1.4,.5,1);
+    pointer-events: none;
+}
+.toast-notify.show { opacity: 1; transform: translate(-50%, 0); }
+.toast-notify.error { background: linear-gradient(135deg, var(--red), #d63447); box-shadow: 0 10px 30px rgba(255, 71, 87, 0.45); }
+
+/* === Cold-start overlay === */
+.wakeup-overlay {
+    position: fixed; inset: 0;
+    background: rgba(5, 7, 14, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 8000;
+    animation: backdropIn 0.25s ease;
+}
+.wakeup-overlay.fade-out { opacity: 0; transition: opacity 0.25s; }
+.wakeup-card {
+    display: flex; flex-direction: column; align-items: center; gap: 0.8rem;
+    padding: 1.8rem 2rem;
+    background: linear-gradient(180deg, var(--surface), var(--bg2));
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    max-width: 320px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+.wakeup-msg {
+    text-align: center;
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    line-height: 1.4;
+}
+
+/* === Solo retention: rekor chipleri === */
+.solo-stats {
+    display: flex; gap: 0.5rem; flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+.stat-chip {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.45rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.85rem;
+}
+.stat-chip .stat-label { color: var(--text-dim); font-weight: 500; }
+.stat-chip .stat-value { color: var(--text); font-weight: 800; font-size: 0.95rem; }
+.stat-chip.record {
+    background: linear-gradient(135deg, rgba(255, 212, 59, 0.12), rgba(255, 212, 59, 0.04));
+    border-color: rgba(255, 212, 59, 0.4);
+}
+.stat-chip.record .stat-value { color: var(--gold); }
+.stat-chip.record.pulse { animation: recordPulse 1.2s ease; }
+@keyframes recordPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 212, 59, 0.0); }
+    50%      { box-shadow: 0 0 0 10px rgba(255, 212, 59, 0.25); transform: scale(1.04); }
+}
+
+/* === Lobi paylaşım (kod + link butonları) === */
+.invite-actions {
+    display: flex; gap: 0.5rem;
+    justify-content: center; flex-wrap: wrap;
+    margin-top: 0.8rem;
+}
+.invite-actions button {
+    flex: 1; min-width: 140px;
+    padding: 0.6rem 0.9rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 0.85rem; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.22s;
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+}
+.invite-actions button:hover {
+    border-color: var(--accent2);
+    color: var(--text);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 206, 201, 0.15);
+}
+.invite-actions .icon { font-size: 1rem; }
+
+/* === Game over: paylaşım butonu === */
+.share-score-btn {
+    background: linear-gradient(135deg, var(--gold), #f59f00);
+    color: #0a0d18;
+    font-weight: 700;
+    box-shadow: 0 6px 22px rgba(255, 212, 59, 0.35);
+}
+.share-score-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(255, 212, 59, 0.5);
+}
+
+/* === Mobile tweaks === */
+@media (max-width: 600px) {
+    .hero-hook { font-size: 1rem; }
+    .hero-example { padding: 1rem 0.9rem 0.85rem; }
+    .hero-club-logo { width: 48px; height: 48px; font-size: 0.85rem; }
+    .hero-example-answer { font-size: 1rem; }
+}
+
 @media (max-width: 480px) {
     nav { gap: 0.3rem; padding: 0.7rem 0.6rem; }
     nav button { padding: 0.5rem 0.85rem; font-size: 0.85rem; }
@@ -845,6 +1066,10 @@ h1 {
     .orb { display: none; }
     .choice-grid { grid-template-columns: 1fr; }
     .players-grid { grid-template-columns: 1fr 1fr; }
+    .solo-stats { gap: 0.35rem; }
+    .stat-chip { padding: 0.35rem 0.7rem; font-size: 0.78rem; }
+    .invite-actions button { min-width: 0; width: 100%; }
+    .lobby-code-display .code { font-size: 1.6rem; letter-spacing: 0.25em; }
 }
 
 @media (prefers-reduced-motion: reduce) {

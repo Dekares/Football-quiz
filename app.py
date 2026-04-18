@@ -76,6 +76,12 @@ def index():
     return send_from_directory("static", "index.html")
 
 
+@app.route("/api/health")
+def health():
+    # Render cold-start'ı sıcak tutmak için hafif endpoint.
+    return jsonify({"ok": True})
+
+
 @app.route("/api/search-club")
 def search_club():
     q = request.args.get("q", "").strip()
@@ -90,21 +96,39 @@ def search_club():
     conn = get_db()
     c = conn.cursor()
 
+    # %w% sayesinde her kelime alias'ın herhangi bir yerinde geçebilir
+    # (isim/soyisim/alias'ın ortasından başlayan aramalar çalışır).
     where = " AND ".join(["ca.search_alias LIKE ?"] * len(words))
     params = [f"%{w}%" for w in words]
 
-    # Alias'lardan ara ama her zaman clubs.name (resmi isim) döndür
+    first_word = words[0]
+    last_word = words[-1]
+
+    # Sıralama bucket'ları:
+    #   0 -> alias tam eşleşme
+    #   1 -> ilk VE son sorgu kelimesi, alias'taki bir kelimenin baştan eşleşmesi
+    #   2 -> sadece ortadan eşleşme
+    # Aynı bucket içinde prestij skoru yüksek kulüpler önce gelir.
     c.execute(f"""
         SELECT ca.club_id, cl.name, cl.logo_url
         FROM club_aliases ca
         JOIN clubs cl ON cl.club_id = ca.club_id
         WHERE {where}
         ORDER BY
-            CASE WHEN ca.search_alias = ? THEN 0 ELSE 1 END,
-            CASE WHEN ca.search_alias LIKE ? THEN 0 ELSE 1 END,
+            CASE
+                WHEN ca.search_alias = ? THEN 0
+                WHEN (ca.search_alias LIKE ? OR ca.search_alias LIKE ?)
+                 AND (ca.search_alias LIKE ? OR ca.search_alias LIKE ?) THEN 1
+                ELSE 2
+            END,
+            cl.prestige_score DESC,
             LENGTH(cl.name)
-        LIMIT 40
-    """, params + [norm_q, f"{norm_q}%"])
+        LIMIT 60
+    """, params + [
+        norm_q,
+        f"{first_word}%", f"% {first_word}%",
+        f"{last_word}%",  f"% {last_word}%",
+    ])
 
     results = [{"club_id": r[0], "name": r[1], "logo_url": r[2]} for r in c.fetchall()]
 
@@ -171,7 +195,7 @@ def quiz():
     elif difficulty == "medium":
         value_filter = "AND p.highest_market_value >= 20000000"
     else:
-        value_filter = "AND (p.highest_market_value < 20000000 OR p.highest_market_value IS NULL) AND p.is_legend = 0"
+        value_filter = "AND (p.highest_market_value < 20000000 AND p.highest_market_value > 5000000) AND p.is_legend = 0"
 
     c.execute(f"""
         SELECT p.player_id, p.name, p.country_of_citizenship, p.position, p.image_url
@@ -247,23 +271,39 @@ def search_player():
     conn = get_db()
     c = conn.cursor()
 
-    # Her kelime normalize edilmiş isimde geçmeli (ad/soyad/parça eşleşmesi)
+    # Her kelime normalize edilmiş isimde geçmeli (ad/soyad/parça eşleşmesi).
+    # %w% sayesinde ismin veya soyismin ortasından başlayan aramalar da çalışır.
     where = " AND ".join(["search_name LIKE ?"] * len(words))
     params = [f"%{w}%" for w in words]
 
-    # Sıralama: tam eşleşme > tam prefix > son kelime prefix (soyisim) > kısa isim
+    first_word = words[0]
     last_word = words[-1]
+
+    # Sıralama bucket'ları:
+    #   0 -> tam isim eşleşmesi
+    #   1 -> ilk VE son sorgu kelimesi, isimdeki bir kelimenin başından eşleşiyor
+    #        (ad ya da soyad prefix'i — tek kelime sorguda: herhangi bir kelime baştan)
+    #   2 -> sadece ortadan eşleşme (kelimenin içinde geçiyor)
+    # Aynı bucket içinde piyasa değeri yüksek oyuncular önce gelir.
     c.execute(f"""
         SELECT player_id, name, country_of_citizenship, position, image_url
         FROM players
         WHERE {where}
         ORDER BY
-            CASE WHEN search_name = ? THEN 0 ELSE 1 END,
-            CASE WHEN search_name LIKE ? THEN 0 ELSE 1 END,
-            CASE WHEN search_name LIKE ? THEN 0 ELSE 1 END,
+            CASE
+                WHEN search_name = ? THEN 0
+                WHEN (search_name LIKE ? OR search_name LIKE ?)
+                 AND (search_name LIKE ? OR search_name LIKE ?) THEN 1
+                ELSE 2
+            END,
+            COALESCE(highest_market_value, market_value, 0) DESC,
             LENGTH(name)
-        LIMIT 12
-    """, params + [norm_q, f"{norm_q}%", f"% {last_word}%"])
+        LIMIT 15
+    """, params + [
+        norm_q,
+        f"{first_word}%", f"% {first_word}%",
+        f"{last_word}%",  f"% {last_word}%",
+    ])
 
     results = [{
         "player_id": r[0],
