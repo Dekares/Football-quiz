@@ -89,7 +89,7 @@ function setupSearch(inputId, dropdownId, onSelect) {
             } else {
                 dropdown.innerHTML = clubs.map(c => `
                     <div class="dropdown-item" data-id="${c.club_id}" data-name="${esc(c.name)}" data-logo="${c.logo_url || ''}">
-                        <img src="${c.logo_url || ''}" onerror="this.style.display='none'" alt="">
+                        <img src="${c.logo_url || ''}" onerror="this.style.display='none'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">
                         <span>${esc(c.name)}</span>
                     </div>
                 `).join('');
@@ -136,9 +136,9 @@ async function findCommon() {
 
     const headerHtml = `
         <div class="results-header">
-            <div class="club-badge"><img src="${selectedClub1.logo_url}" onerror="this.style.display='none'" alt=""><span>${esc(selectedClub1.name)}</span></div>
+            <div class="club-badge"><img src="${selectedClub1.logo_url}" onerror="this.style.display='none'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"><span>${esc(selectedClub1.name)}</span></div>
             <span class="vs">&amp;</span>
-            <div class="club-badge"><img src="${selectedClub2.logo_url}" onerror="this.style.display='none'" alt=""><span>${esc(selectedClub2.name)}</span></div>
+            <div class="club-badge"><img src="${selectedClub2.logo_url}" onerror="this.style.display='none'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"><span>${esc(selectedClub2.name)}</span></div>
         </div>`;
 
     if (data.players.length === 0) {
@@ -205,8 +205,15 @@ async function loadQuiz() {
     renderLives(false);
     renderSoloStats();
 
-    const res = await fetch('/api/quiz?difficulty=' + quizDifficulty);
-    currentQuiz = await res.json();
+    try {
+        currentQuiz = await safeFetch('/api/quiz?difficulty=' + quizDifficulty);
+    } catch (e) {
+        area.innerHTML = `<div class="error-card">
+            <p>${t('quiz_load_error')}</p>
+            <button class="btn btn-primary" onclick="loadQuiz()">${t('retry')}</button>
+        </div>`;
+        return;
+    }
 
     let html = `
         <div class="quiz-hints">
@@ -216,14 +223,27 @@ async function loadQuiz() {
         <div class="quiz-timeline">`;
 
     currentQuiz.clubs.forEach((c, i) => {
-        html += `
-            <div class="timeline-item" style="animation-delay:${Math.min(i * 70, 700)}ms">
-                ${c.logo_url ? `<img src="${c.logo_url}" onerror="this.style.display='none'" alt="">` : ''}
-                <div class="timeline-info">
-                    <div class="club-name">${esc(c.name)}</div>
-                    <div class="club-dates">${formatDate(c)}</div>
-                </div>
-            </div>`;
+        const delay = `animation-delay:${Math.min(i * 70, 700)}ms`;
+        if (c.is_retirement) {
+            const year = c.date_from ? c.date_from.substring(0, 4) : '';
+            html += `
+                <div class="timeline-item retirement" style="${delay}">
+                    <div class="retirement-badge">🏁</div>
+                    <div class="timeline-info">
+                        <div class="club-name">${t('retirement')}</div>
+                        <div class="club-dates">${esc(year)}</div>
+                    </div>
+                </div>`;
+        } else {
+            html += `
+                <div class="timeline-item" style="${delay}">
+                    ${c.logo_url ? `<img src="${c.logo_url}" onerror="this.style.display='none'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : ''}
+                    <div class="timeline-info">
+                        <div class="club-name">${esc(c.name)}</div>
+                        <div class="club-dates">${formatDate(c)}</div>
+                    </div>
+                </div>`;
+        }
     });
     html += '</div>';
     area.innerHTML = html;
@@ -374,7 +394,7 @@ function showQuizResult(correct, recordInfo) {
     backdrop.id = 'quiz-modal-backdrop';
     backdrop.innerHTML = `
         <div class="quiz-result ${correct ? 'correct' : 'wrong'}">
-            <img class="player-photo" src="${p.image_url || ''}" onerror="this.style.display='none'" alt="">
+            <img class="player-photo" src="${p.image_url || ''}" onerror="this.style.display='none'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">
             <div class="verdict">${correct ? t('correct') : t('wrong')}</div>
             <div class="answer-name">${esc(p.name)}</div>
             <div class="answer-meta">

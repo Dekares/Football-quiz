@@ -21,3 +21,7 @@ archive/
 
 # DB yedekleri (prune/dedup scriptleri otomatik oluşturur)
 football_quiz.db.bak-*
+
+# SQLite WAL/SHM runtime dosyaları
+football_quiz.db-wal
+football_quiz.db-shm

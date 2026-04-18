@@ -42,6 +42,9 @@ const LANGS = {
         nationality: 'Milliyet',
         ongoing: 'Devam ediyor',
         until: "'a kadar",
+        retirement: 'Emeklilik',
+        quiz_load_error: 'Soru yüklenemedi, bağlantını kontrol et.',
+        retry: 'Tekrar dene',
         pos_attack: 'Forvet',
         pos_midfield: 'Orta Saha',
         pos_defender: 'Defans',
@@ -159,6 +162,9 @@ const LANGS = {
         nationality: 'Nationality',
         ongoing: 'Present',
         until: ' until',
+        retirement: 'Retired',
+        quiz_load_error: 'Could not load quiz, check your connection.',
+        retry: 'Retry',
         pos_attack: 'Forward',
         pos_midfield: 'Midfielder',
         pos_defender: 'Defender',
@@ -304,7 +310,7 @@ function flagHtml(country, large) {
     const code = COUNTRY_CODES[country];
     if (!code) return '';
     const cls = large ? 'flag-img flag-lg' : 'flag-img';
-    return `<img class="${cls}" src="https://flagcdn.com/w40/${code}.png" srcset="https://flagcdn.com/w80/${code}.png 2x" alt="" onerror="this.style.display='none'">`;
+    return `<img class="${cls}" src="https://flagcdn.com/w40/${code}.png" srcset="https://flagcdn.com/w80/${code}.png 2x" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.style.display='none'">`;
 }
 
 // ===== normalize (istemci tarafı: kıyaslama ve arama) =====
@@ -405,6 +411,35 @@ function getQueryParam(name) {
         const params = new URLSearchParams(location.search);
         return params.get(name);
     } catch (_) { return null; }
+}
+
+// ===== safeFetch: timeout + hata yönetimi =====
+// Render cold-start + flaky network → her fetch askıda kalabilir.
+// AbortController ile 15sn timeout, !ok'te Error throw, JSON parse koruması.
+async function safeFetch(url, opts = {}) {
+    const timeout = opts.timeout || 15000;
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), timeout);
+    try {
+        const res = await fetch(url, { ...opts, signal: ctrl.signal });
+        if (!res.ok) {
+            const body = await res.text().catch(() => '');
+            const err = new Error(`HTTP ${res.status}`);
+            err.status = res.status;
+            err.body = body;
+            throw err;
+        }
+        return await res.json();
+    } catch (e) {
+        if (e.name === 'AbortError') {
+            const timeoutErr = new Error('timeout');
+            timeoutErr.isTimeout = true;
+            throw timeoutErr;
+        }
+        throw e;
+    } finally {
+        clearTimeout(tid);
+    }
 }
 
 // ===== Cold-start (ilk yüklemede sunucunun uyandığını göster) =====

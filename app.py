@@ -5,6 +5,7 @@ import os
 import random
 import re
 import unicodedata
+from datetime import date as _date
 
 from game.sockets import register_socket_handlers
 
@@ -36,9 +37,21 @@ def normalize_text(s):
 
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
+    # eventlet tek worker ama her request yeni bağlantı açıyor → thread check kapatmak
+    # güvenli; bağlantı create edildiği thread'e bağlı kalmasın diye (eventlet green thread).
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=5.0)
     conn.row_factory = sqlite3.Row
     conn.create_function("normalize", 1, normalize_text)
+    # Read-heavy quiz DB'si için tuning:
+    #   WAL     → eşzamanlı okumalar blocked olmaz, ilk yazma .wal/.shm üretir
+    #   NORMAL  → fsync cost düşer, güç kesintisinde son işlem riski var (kabul)
+    #   32MB    → cache_size negatif = KB, 32k = 32MB (default 2MB)
+    #   128MB   → mmap ile file sayfa cache OS'e devredilir
+    conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("PRAGMA synchronous = NORMAL")
+    conn.execute("PRAGMA cache_size = -32000")
+    conn.execute("PRAGMA mmap_size = 134217728")
+    conn.execute("PRAGMA temp_store = MEMORY")
     return conn
 
 
@@ -184,16 +197,41 @@ def common_players():
 
 @app.route("/api/quiz")
 def quiz():
+    try:
+        return _quiz_impl()
+    except Exception as e:
+        # Sunucu 500 fırlatıp frontend'de sonsuz spinner'da kalmasın diye
+        # düzgün JSON ile hatayı bildir; loglara at.
+        app.logger.exception("quiz endpoint error: %s", e)
+        return jsonify({"error": "Sunucu hatası, tekrar dene"}), 500
+
+
+def _quiz_impl():
     difficulty = request.args.get("difficulty", "easy")
     conn = get_db()
     c = conn.cursor()
 
-    # Zorluk seviyesine göre piyasa değeri filtresi
+    # Zorluk seviyesine göre piyasa değeri filtresi.
+    # Emekli oyuncular kolay/orta modda daha düşük eşikle dahil edilir —
+    # highest_market_value emekli olunca düşmediği halde DB'deki ham değerler
+    # eski kuşakta düşük, bu yüzden ayrı bir alt-eşik uyguluyoruz ki
+    # kariyer geçmişindeki "Emeklilik" satırı yeterince sık görünebilsin.
+    retired_exists = """EXISTS (
+        SELECT 1 FROM player_clubs pcr
+        JOIN clubs cr ON cr.club_id = pcr.club_id
+        WHERE pcr.player_id = p.player_id AND cr.name LIKE '%Retired%'
+    )"""
     if difficulty == "easy":
-        # Efsaneler kolay modda her zaman seçilebilir
-        value_filter = "AND (p.highest_market_value >= 60000000 OR p.is_legend = 1)"
+        value_filter = (
+            "AND (p.highest_market_value >= 60000000 "
+            "OR p.is_legend = 1 "
+            f"OR ({retired_exists} AND p.highest_market_value >= 20000000))"
+        )
     elif difficulty == "medium":
-        value_filter = "AND p.highest_market_value >= 20000000"
+        value_filter = (
+            "AND (p.highest_market_value >= 20000000 "
+            f"OR ({retired_exists} AND p.highest_market_value >= 10000000))"
+        )
     else:
         value_filter = "AND (p.highest_market_value < 20000000 AND p.highest_market_value > 5000000) AND p.is_legend = 0"
 
@@ -215,13 +253,16 @@ def quiz():
 
     player = random.choice(candidates)
 
-    # Get club history with dates, chronological order
-    # "Without Club" ve "Retired" gibi kayıtları hariç tut
+    # Kulüp geçmişi, kronolojik sıra.
+    # "Without Club" / "Career break" / "Unknown" gizlenir; "Retired" kaydı tutulur
+    # ama is_retirement flag'i ile her zaman en sona alınır — oyuncu kariyerini
+    # bitirdiyse bu bilgiyi ipucu olarak sunmak için.
     c.execute("""
         SELECT COALESCE(cl.name, ca_sub.alias, CAST(pc.club_id AS TEXT)),
                cl.logo_url,
                pc.date_from,
-               pc.date_to
+               pc.date_to,
+               CASE WHEN COALESCE(cl.name, '') LIKE '%Retired%' THEN 1 ELSE 0 END AS is_retirement
         FROM player_clubs pc
         LEFT JOIN clubs cl ON cl.club_id = pc.club_id
         LEFT JOIN (
@@ -229,11 +270,12 @@ def quiz():
         ) ca_sub ON ca_sub.club_id = pc.club_id
         WHERE pc.player_id = ?
           AND COALESCE(cl.name, '') NOT LIKE '%Without Club%'
-          AND COALESCE(cl.name, '') NOT LIKE '%Retired%'
+          AND COALESCE(cl.name, '') NOT LIKE '%Career break%'
           AND COALESCE(cl.name, '') NOT LIKE '%Unknown%'
           AND cl.name IS NOT NULL
           AND cl.name != ''
         ORDER BY
+            CASE WHEN COALESCE(cl.name, '') LIKE '%Retired%' THEN 1 ELSE 0 END,
             COALESCE(pc.date_from, pc.date_to, '9999'),
             pc.date_from NULLS FIRST,
             COALESCE(pc.date_to, '9999')
@@ -244,7 +286,30 @@ def quiz():
         "logo_url": r[1],
         "date_from": r[2],
         "date_to": r[3],
+        "is_retirement": bool(r[4]),
     } for r in c.fetchall()]
+
+    # Sentetik emeklilik: DB'de "Retired" kaydı yoksa ama hiçbir kulüpte
+    # açık uçlu (date_to=NULL = aktif) kontrat yoksa ve son bitiş 2+ yıl
+    # önceyse oyuncu büyük ihtimalle emekli. date_to=NULL olan tek bir
+    # kayıt bile aktif demektir — Messi/Haaland gibi oyuncuları yanlış
+    # emekli saymamak için bu kontrol şart.
+    if clubs and not any(x["is_retirement"] for x in clubs):
+        has_ongoing = any(x.get("date_to") is None for x in clubs)
+        if not has_ongoing:
+            end_dates = [x["date_to"] for x in clubs if x.get("date_to")]
+            if end_dates:
+                latest_end = max(end_dates)
+                today = _date.today()
+                cutoff = today.replace(year=today.year - 2).isoformat()
+                if latest_end < cutoff:
+                    clubs.append({
+                        "name": "Retired",
+                        "logo_url": None,
+                        "date_from": latest_end,
+                        "date_to": None,
+                        "is_retirement": True,
+                    })
 
     conn.close()
     return jsonify({

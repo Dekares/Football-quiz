@@ -481,9 +481,9 @@ function renderGameView(answerResult) {
 
     const teamsHtml = `
         <div class="results-header">
-            <div class="club-badge"><img src="${rnd.club1.logo_url || ''}" onerror="this.style.display='none'" alt=""><span>${esc(rnd.club1.name)}</span></div>
+            <div class="club-badge"><img src="${rnd.club1.logo_url || ''}" onerror="this.style.display='none'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"><span>${esc(rnd.club1.name)}</span></div>
             <span class="vs">&amp;</span>
-            <div class="club-badge"><img src="${rnd.club2.logo_url || ''}" onerror="this.style.display='none'" alt=""><span>${esc(rnd.club2.name)}</span></div>
+            <div class="club-badge"><img src="${rnd.club2.logo_url || ''}" onerror="this.style.display='none'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"><span>${esc(rnd.club2.name)}</span></div>
         </div>`;
 
     let body = '';
@@ -495,7 +495,7 @@ function renderGameView(answerResult) {
             const ans = end.correct_answer;
             body = `
                 <div class="quiz-result correct" style="position:relative;transform:none">
-                    <img class="player-photo" src="${ans.image_url || ''}" onerror="this.style.display='none'" alt="">
+                    <img class="player-photo" src="${ans.image_url || ''}" onerror="this.style.display='none'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">
                     <div class="answer-name">${esc(ans.name)}</div>
                     <div class="answer-meta">
                         <span class="meta-pill">${esc(posText(ans.position))}</span>
@@ -510,7 +510,7 @@ function renderGameView(answerResult) {
             const disabled = multiState.answered ? 'disabled' : '';
             const picked = multiState.picked === c.player_id ? 'picked' : '';
             return `<button class="choice-btn ${picked}" ${disabled} onclick="pickChoice('${c.player_id}')">
-                <img src="${c.image_url || ''}" onerror="this.style.display='none'" alt="">
+                <img src="${c.image_url || ''}" onerror="this.style.display='none'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">
                 <span class="ch-name">${esc(c.name)}</span>
             </button>`;
         }).join('');
