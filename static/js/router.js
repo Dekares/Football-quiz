@@ -55,10 +55,12 @@ window.addEventListener('DOMContentLoaded', () => {
     if (toggle) toggle.textContent = currentLang === 'tr' ? 'EN' : 'TR';
 
     // ?join=XXXXXX ile gelindiyse direkt multi girişine yönlendir.
-    // multi.js bu query'yi görüp join formunu doldurur.
+    // history.replaceState ile hashchange fire etmeden hash'i set ediyoruz;
+    // aksi halde çifte render olup ikinci render'da URL temizlendiği için
+    // join form yerine chooser açılıyor.
     const joinCode = getQueryParam('join');
     if (joinCode && (!location.hash || location.hash === '#' || location.hash === '#/')) {
-        location.hash = '#/multi';
+        history.replaceState(null, '', location.pathname + location.search + '#/multi');
     }
 
     renderRoute();
