@@ -63,7 +63,7 @@ class RevalidateStaticFiles(StaticFiles):
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title="Futbol Quiz API",
+        title="Careerdle API",
         docs_url="/api/docs" if settings.enable_docs else None,
         openapi_url="/api/openapi.json" if settings.enable_docs else None,
     )

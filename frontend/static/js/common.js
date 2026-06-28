@@ -6,10 +6,10 @@ const LANGS = {
         nav_menu: 'Günlük Tahmin',
         nav_multi: 'Düello',
         nav_duel: 'Harman 1v1',
-        app_title: 'Futbol Quiz',
+        app_title: 'Careerdle',
         app_subtitle: 'Ne oynamak istersin?',
         multi_soon: 'Çok kişilik modu yakında geliyor.',
-        seo_h1: 'Football Quiz — Futbolcuyu kariyerinden tahmin et',
+        seo_h1: 'Careerdle — Futbolcuyu kariyerinden tahmin et',
         seo_intro: 'Her gün yeni "Günün Futbolcusu" bulmacası, kariyer ve transfer geçmişine dayalı solo futbolcu tahmin oyunu ve arkadaşlarınla 2-6 kişilik canlı düello. Ücretsiz, üyeliksiz.',
         solo_eyebrow: 'FUTBOLCU TAHMİN',
         quiz_title_a: 'Oyuncuyu',
@@ -151,6 +151,7 @@ const LANGS = {
         classic_lost: 'Hakların bitti! Yarın yeni bir futbolcu seni bekliyor.',
         classic_reveal: 'Cevabı gör',
         classic_answer: 'Doğru cevap',
+        close: 'Kapat',
         classic_already: 'Bu oyuncuyu zaten denedin',
         classic_tomorrow: 'Her gün yeni bir futbolcu. Yarın tekrar gel!',
         classic_pool_note: 'Tüm aktif oyuncuları arayabilirsin',
@@ -174,8 +175,8 @@ const LANGS = {
         share_result: 'Skorumu Paylaş',
         share_invite: 'Davet Linki',
         share_copied: 'Kopyalandı!',
-        share_caption_solo: '⚽ Futbol Quiz\'de {correct}/{total} doğru, rekor seri: {streak}. Sen de dene:',
-        share_caption_multi: '⚽ Futbol Quiz\'de {score} puanla {place}. oldum! Sen de dene:',
+        share_caption_solo: '⚽ Careerdle\'de {correct}/{total} doğru, rekor seri: {streak}. Sen de dene:',
+        share_caption_multi: '⚽ Careerdle\'de {score} puanla {place}. oldum! Sen de dene:',
         // Cold-start
         waking_up: 'Sunucu uyanıyor (ilk açılışta ~30sn)...',
         // Lobby
@@ -186,10 +187,10 @@ const LANGS = {
         nav_menu: 'Daily Guess',
         nav_multi: 'Duel',
         nav_duel: 'Harman 1v1',
-        app_title: 'Football Quiz',
+        app_title: 'Careerdle',
         app_subtitle: 'What do you want to play?',
         multi_soon: 'Multiplayer mode coming soon.',
-        seo_h1: 'Football Quiz — Guess the footballer from their career',
+        seo_h1: 'Careerdle — Guess the footballer from their career',
         seo_intro: 'A new "Player of the Day" puzzle every day, a solo footballer guessing game based on career and transfer history, plus live 2-6 player duels with friends. Free, no sign-up.',
         solo_eyebrow: 'FOOTBALLER GUESS',
         quiz_title_a: 'Guess the',
@@ -329,6 +330,7 @@ const LANGS = {
         classic_lost: 'Out of guesses! A new footballer awaits tomorrow.',
         classic_reveal: 'Reveal answer',
         classic_answer: 'The answer',
+        close: 'Close',
         classic_already: 'You already tried this player',
         classic_tomorrow: 'A new footballer every day. Come back tomorrow!',
         classic_pool_note: 'Search any active player',
@@ -352,8 +354,8 @@ const LANGS = {
         share_result: 'Share Score',
         share_invite: 'Invite Link',
         share_copied: 'Copied!',
-        share_caption_solo: '⚽ Got {correct}/{total} on Football Quiz, best streak: {streak}. Try it:',
-        share_caption_multi: '⚽ Finished #{place} with {score} points on Football Quiz! Try it:',
+        share_caption_solo: '⚽ Got {correct}/{total} on Careerdle, best streak: {streak}. Try it:',
+        share_caption_multi: '⚽ Finished #{place} with {score} points on Careerdle! Try it:',
         // Cold-start
         waking_up: 'Waking up server (first load ~30s)...',
         // Lobby
@@ -529,7 +531,7 @@ async function copyText(text) {
 }
 
 async function shareOrCopy(text, url) {
-    const payload = { title: 'Football Quiz', text, url };
+    const payload = { title: 'Careerdle', text, url };
     if (navigator.share) {
         try {
             await navigator.share(payload);

@@ -1,4 +1,4 @@
-# Futbol Quiz
+# Careerdle
 
 Kulüp geçmişine bakarak gizemli futbolcuyu bul. Solo (kariyerden tahmin) ve
 2-6 kişilik gerçek zamanlı çok-kişilik modu (Harman 1v1 düellosu 2 kişilik).

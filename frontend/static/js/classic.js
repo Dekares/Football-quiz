@@ -116,26 +116,13 @@ function paintClassic() {
         ? `<div class="cl-win">🎉 ${t('classic_solved')} — ${s.guesses.length} ${t('classic_tries')}</div>`
         : (over ? `<div class="cl-lose">${t('classic_lost')}</div>` : '');
 
-    // Kaybedince gizli oyuncuyu açma: önce buton, açıldıktan sonra oyuncu kartı.
+    // Kaybedince gizli oyuncuyu popup'ta göster ("Cevabı gör" → modal).
     const lost = over && !s.solved;
-    const r = s.revealed;
-    const revealCard = (lost && r) ? `
-        <div class="cl-reveal">
-            <div class="cl-reveal-label">${t('classic_answer')}</div>
-            <div class="cl-reveal-player">
-                <img src="${r.image_url || ''}" onerror="this.style.display='none'" alt="" loading="lazy" referrerpolicy="no-referrer">
-                <div class="cl-reveal-info">
-                    <div class="cl-reveal-name">${esc(r.name)}</div>
-                    <div class="cl-reveal-meta">${flagHtml(r.country) || ''}<span>${posText(r.position)}${r.club_name ? ' · ' + esc(r.club_name) : ''}</span></div>
-                </div>
-            </div>
-        </div>` : '';
-    const revealBtn = (lost && !r)
+    const revealBtn = lost
         ? `<button class="btn btn-secondary" onclick="revealClassic()">${t('classic_reveal')}</button>` : '';
 
     const actions = over
         ? `<div class="daily-actions">${revealBtn}<button class="btn share-score-btn" onclick="shareClassic()">${t('share_result')}</button></div>
-           ${revealCard}
            <div class="daily-foot">${t('classic_tomorrow')}</div>`
         : `<div class="daily-foot">${t('classic_attempts')}: ${s.guesses.length} / ${CLASSIC_MAX_GUESSES}</div>`;
 
@@ -193,19 +180,50 @@ function classicApplyStreak() {
     localStorage.setItem('classic_last_day', String(day));
 }
 
-// Gizli oyuncuyu açar (yalnız oyun bitince). Açılan oyuncu localStorage'a yazılır
-// → tekrar yüklemede de görünür, gün değişince (yeni state) sıfırlanır.
+// Gizli oyuncuyu popup'ta gösterir (yalnız oyun bitince). İlk açılışta sunucudan
+// çekip localStorage'a yazar (gün değişince yeni state ile sıfırlanır); sonraki
+// tıklamalarda tekrar fetch etmeden modalı açar.
 async function revealClassic() {
     const s = classicState();
     const over = s.solved || s.guesses.length >= CLASSIC_MAX_GUESSES;
-    if (s.revealed || !over) return;
-    let res;
-    try { res = await (await fetch('/api/classic/reveal')).json(); }
-    catch (_) { showToast(t('quiz_load_error'), 'error'); return; }
-    if (!res || res.error || !res.player) { showToast(t('quiz_load_error'), 'error'); return; }
-    s.revealed = res.player;
-    classicSave(s);
-    paintClassic();
+    if (!over) return;
+    if (!s.revealed) {
+        let res;
+        try { res = await (await fetch('/api/classic/reveal')).json(); }
+        catch (_) { showToast(t('quiz_load_error'), 'error'); return; }
+        if (!res || res.error || !res.player) { showToast(t('quiz_load_error'), 'error'); return; }
+        s.revealed = res.player;
+        classicSave(s);
+    }
+    openRevealModal(s.revealed);
+}
+
+function openRevealModal(r) {
+    closeRevealModal();
+    const meta = [
+        `<span class="rm-pill">${flagHtml(r.country, true) || ''} ${esc(r.country || '?')}</span>`,
+        `<span class="rm-pill">${esc(posText(r.position))}</span>`,
+        r.club_name ? `<span class="rm-pill">${esc(r.club_name)}</span>` : '',
+    ].join('');
+    const backdrop = document.createElement('div');
+    backdrop.className = 'quiz-modal-backdrop';
+    backdrop.id = 'classic-reveal-backdrop';
+    backdrop.onclick = (e) => { if (e.target === backdrop) closeRevealModal(); };
+    backdrop.innerHTML = `
+        <div class="result-modal reveal">
+            <button class="rm-close" onclick="closeRevealModal()" aria-label="${esc(t('close'))}">&times;</button>
+            <div class="rm-sub" style="text-transform:uppercase;letter-spacing:0.05em">${t('classic_answer')}</div>
+            <img class="rm-photo" src="${r.image_url || ''}" onerror="this.style.display='none'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+            <div class="rm-name">${esc(r.name)}</div>
+            <div class="rm-pills">${meta}</div>
+            <button class="btn btn-primary rm-next" onclick="closeRevealModal()">${t('close')}</button>
+        </div>`;
+    document.body.appendChild(backdrop);
+}
+
+function closeRevealModal() {
+    const b = document.getElementById('classic-reveal-backdrop');
+    if (b) b.remove();
 }
 
 function shareClassic() {
