@@ -1,0 +1,18 @@
+# Realtime (socket.io) — TEK worker (in-memory lobi state). Dikey ölçeklenir.
+# Çok-node gerekirse LB'de lobi koduna göre sticky/hash routing eklenir (README).
+FROM python:3.11-slim
+
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
+
+COPY backend/requirements.txt backend/requirements.txt
+RUN pip install -r backend/requirements.txt
+
+COPY backend/ backend/
+COPY data/football_quiz.db data/football_quiz.db
+
+ENV APP_SERVE_STATIC=false
+EXPOSE 8001
+
+# In-memory state → tek worker. Yüksek eşzamanlılık asyncio ile sağlanır.
+CMD ["uvicorn", "backend.app.realtime.server:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]

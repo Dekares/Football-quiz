@@ -9,19 +9,18 @@ venv/
 .DS_Store
 .claude/
 
-# Ham CSV'ler — DB lokalde build edilip commit edilir
-appearances.csv
-clubs.csv
-players.csv
-transfers.csv
+# Ham CSV'ler — DB build edilip data/football_quiz.db olarak commit edilir
+data/sources/*.csv
 
 # Geliştirme/arşiv
-unused_data/
 archive/
 
-# DB yedekleri (prune/dedup scriptleri otomatik oluşturur)
-football_quiz.db.bak-*
+# Ham görsel kaynakları — servis edilen kopyalar frontend/static/img/ altında
+logo/
+background/
 
-# SQLite WAL/SHM runtime dosyaları
-football_quiz.db-wal
-football_quiz.db-shm
+# DB yedekleri + SQLite WAL/SHM runtime dosyaları + update.py geçici çıktısı
+data/*.db.bak-*
+data/*.db-wal
+data/*.db-shm
+data/*.db.new

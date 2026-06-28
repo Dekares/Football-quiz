@@ -1,0 +1,19 @@
+# Stateless HTTP API — yatay ölçeklenir (N replica). Gömülü salt-okunur DB.
+FROM python:3.11-slim
+
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
+
+COPY backend/requirements.txt backend/requirements.txt
+RUN pip install -r backend/requirements.txt
+
+COPY backend/ backend/
+COPY data/football_quiz.db data/football_quiz.db
+COPY frontend/ frontend/
+
+# Prod'da statikler CDN/nginx'ten gelir.
+ENV APP_SERVE_STATIC=false
+EXPOSE 8000
+
+# Stateless → process başına çok worker; ayrıca birden çok replica çalıştırılır.
+CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

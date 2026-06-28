@@ -1,11 +1,16 @@
+# Render Blueprint — kök konum zorunlu (Render render.yaml'ı repo kökünde arar).
+# Launch: TEK servis API + statik + socket.io'yu same-origin sunar.
+# Frontend'e dokunmadan çalışır (io() ve /api/* aynı origin). Dikey ölçeklenir.
+#
+# Ölçek yolu (1M/gün): statik+API'yi CDN + api replica'larına (deploy/Dockerfile.api),
+# realtime'ı ayrı node'a (deploy/Dockerfile.realtime) taşı; bkz. README + deploy/nginx.conf.
 services:
   - type: web
-    name: football-quiz
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn -k eventlet -w 1 -b 0.0.0.0:$PORT app:app
+    name: futbol-quiz
+    runtime: python
+    pythonVersion: "3.11.9"
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.app.realtime.server:app --host 0.0.0.0 --port $PORT --workers 1
     envVars:
-      - key: SECRET_KEY
-        generateValue: true
-      - key: PYTHON_VERSION
-        value: 3.10.6
+      - key: APP_SERVE_STATIC
+        value: "true"

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#070b14">
+    <title>Futbol Quiz — Oyuncuyu Tahmin Et</title>
+    <meta name="description" content="Kulüp geçmişine bakarak gizemli futbolcuyu bul. Solo oyna ya da arkadaşlarınla 2-8 kişilik real-time yarış.">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Futbol Quiz — Oyuncuyu Tahmin Et">
+    <meta property="og:description" content="Kulüp geçmişine bakarak gizemli futbolcuyu bul. Solo ya da arkadaşlarınla yarış.">
+    <meta property="og:image" content="/static/img/icon.png">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Futbol Quiz — Oyuncuyu Tahmin Et">
+    <meta name="twitter:description" content="Kulüp geçmişine bakarak gizemli futbolcuyu bul.">
+    <meta name="twitter:image" content="/static/img/icon.png">
+
+    <link rel="stylesheet" href="/static/css/app.css">
+    <link rel="icon" type="image/png" href="/static/img/icon.png">
+    <link rel="apple-touch-icon" href="/static/img/icon.png">
+</head>
+<body>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <nav>
+        <a class="brand" onclick="navigate('#/')">
+            <img class="brand-mark" src="/static/img/logo.png" alt="Football Quiz">
+            <span class="brand-name"><span class="bn-white">Football</span> <span class="bn-green">Quiz</span></span>
+        </a>
+
+        <div class="nav-links">
+            <button data-nav-route="menu" onclick="navigate('#/')">
+                <span class="nav-ico">&#9750;</span><span data-i18n="nav_menu">Günlük Tahmin</span>
+            </button>
+            <button data-nav-route="solo" onclick="navigate('#/solo')">
+                <span class="nav-ico">&#9679;</span><span data-i18n="menu_solo_title">Futbolcu Tahmin</span>
+            </button>
+            <button data-nav-route="multi" onclick="navigate('#/multi')">
+                <span class="nav-ico">&#9783;</span><span data-i18n="nav_multi">Düello</span>
+            </button>
+            <button data-nav-route="duel" onclick="navigate('#/duel')">
+                <span class="nav-ico">&#9876;</span><span data-i18n="nav_duel">Harman 1v1</span>
+            </button>
+        </div>
+
+        <div class="nav-right">
+            <button class="lang-toggle" onclick="toggleLang()">EN</button>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <!-- ===== GÜNLÜK TAHMİN (ana sayfa) ===== -->
+        <section class="page menu-page" data-route="menu">
+            <!-- Günün Futbolcusu (LoLdle tarzı günlük tahmin oyunu) -->
+            <div id="classic-card" class="daily-card">
+                <div class="daily-loading"><div class="spinner"></div></div>
+            </div>
+        </section>
+
+        <!-- ===== SOLO (dashboard) ===== -->
+        <section id="page-solo" class="page dashboard" data-route="solo">
+            <div class="dash-main">
+                <div class="eyebrow" data-i18n="solo_eyebrow">FUTBOLCU TAHMİN</div>
+                <div class="dash-head">
+                    <div class="dash-head-text">
+                        <h1 class="dash-title">
+                            <span data-i18n="quiz_title_a">Oyuncuyu</span>
+                            <span class="accent" data-i18n="quiz_title_b">Tahmin Et</span>
+                        </h1>
+                        <p class="dash-sub" data-i18n="quiz_subtitle">Kariyer yolculuğundan gizemli futbolcuyu bul.</p>
+                    </div>
+                    <div class="mystery-figure" aria-hidden="true">?</div>
+                </div>
+
+                <div class="difficulty-selector">
+                    <button class="active" onclick="setDifficulty('easy', this)" data-i18n="easy">Kolay</button>
+                    <button onclick="setDifficulty('medium', this)" data-i18n="medium">Orta</button>
+                    <button onclick="setDifficulty('hard', this)" data-i18n="hard">Zor</button>
+                </div>
+
+                <div class="solo-stats">
+                    <div class="stat-card">
+                        <div class="stat-ico streak">&#128293;</div>
+                        <div class="stat-meta">
+                            <span class="stat-label" data-i18n="solo_streak">Seri</span>
+                            <span class="stat-value" id="stat-streak">0</span>
+                            <span class="stat-note" data-i18n="streak_note">Devam et!</span>
+                        </div>
+                    </div>
+                    <div class="stat-card record">
+                        <div class="stat-ico">&#127942;</div>
+                        <div class="stat-meta">
+                            <span class="stat-label" data-i18n="solo_record">Rekor</span>
+                            <span class="stat-value" id="stat-best">0</span>
+                            <span class="stat-note" data-i18n="record_note">En iyin</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-ico">&#127919;</div>
+                        <div class="stat-meta">
+                            <span class="stat-label" data-i18n="solo_total_correct">Toplam doğru</span>
+                            <span class="stat-value" id="stat-total">0</span>
+                            <span class="stat-note" data-i18n="total_note">Gelişmeye devam</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="quiz-area">
+                    <div class="empty-state">
+                        <div class="icon">&#9917;</div>
+                        <span data-i18n="start_prompt">Başlamak için Yeni Tur'a bas</span>
+                    </div>
+                </div>
+
+                <div id="quiz-hint-reveal" class="hint-reveal" style="display:none"></div>
+                <div id="quiz-lives" class="quiz-lives" style="display:none"></div>
+                <div id="quiz-wrong-feedback"></div>
+
+                <div class="guess-row" id="quiz-input-row" style="display:none">
+                    <div class="search-wrapper quiz-search-wrapper">
+                        <input type="text" id="quiz-guess" data-i18n-placeholder="guess_placeholder" placeholder="Oyuncu adını yaz..." autocomplete="off">
+                        <div class="dropdown" id="quiz-player-dropdown"></div>
+                    </div>
+                    <button class="btn btn-primary" onclick="submitGuess()" data-i18n="submit_guess">Tahmini Gönder</button>
+                </div>
+
+                <div class="action-row">
+                    <button class="action-btn" id="hint-btn" onclick="useHint()">
+                        <span class="action-ico">&#128161;</span>
+                        <span data-i18n="hint">İpucu</span>
+                        <span class="action-badge" id="hint-count">3</span>
+                    </button>
+                    <button class="action-btn" id="skip-btn" onclick="passQuiz()">
+                        <span class="action-ico">&#9197;</span>
+                        <span data-i18n="skip">Atla</span>
+                    </button>
+                    <button class="action-btn" id="newround-btn" onclick="loadQuiz()">
+                        <span class="action-ico">&#8635;</span>
+                        <span data-i18n="new_round">Yeni Tur</span>
+                    </button>
+                </div>
+            </div>
+
+            <aside class="dash-side">
+                <div class="side-card">
+                    <div class="side-card-head"><span class="side-ico">&#128338;</span><span data-i18n="recent_guesses">Son Tahminler</span></div>
+                    <div id="recent-guesses" class="recent-list"></div>
+                </div>
+
+                <div class="side-card">
+                    <div class="side-card-head"><span class="side-ico">&#9733;</span><span data-i18n="quick_tips">İpuçları</span></div>
+                    <ul class="tips-list">
+                        <li data-i18n="tip_1">Mevki ve milliyet en güçlü ilk ipuçların.</li>
+                        <li data-i18n="tip_2">Kariyer sırası önemli — ilk kulüp en üstte.</li>
+                        <li data-i18n="tip_3">İpucu hakkını adın baş harflerini görmek için kullan.</li>
+                        <li data-i18n="tip_4">Takıldıysan Atla ve yeni turla geri dön.</li>
+                    </ul>
+                </div>
+            </aside>
+        </section>
+
+        <!-- ===== MULTIPLAYER GİRİŞ ===== -->
+        <section class="page multi-page" data-route="multi">
+            <a class="back-link" onclick="navigate('#/')" data-i18n="multi_back">&larr; Geri</a>
+            <h1 data-i18n="multi_title">Düello</h1>
+            <p class="subtitle" data-i18n="multi_subtitle">Arkadaşlarınla gerçek zamanlı yarış</p>
+
+            <div id="multi-entry">
+                <!-- JS yüklenene kadar iskelet göster (kırık izlenim olmasın) -->
+                <div class="main-menu">
+                    <div class="menu-card skeleton">
+                        <div class="skeleton-icon"></div>
+                        <div class="menu-body">
+                            <div class="skeleton-line w60"></div>
+                            <div class="skeleton-line w80"></div>
+                        </div>
+                    </div>
+                    <div class="menu-card skeleton">
+                        <div class="skeleton-icon"></div>
+                        <div class="menu-body">
+                            <div class="skeleton-line w60"></div>
+                            <div class="skeleton-line w80"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== DÜELLO GİRİŞ ===== -->
+        <section class="page duel-page" data-route="duel">
+            <a class="back-link" onclick="navigate('#/')" data-i18n="multi_back">&larr; Geri</a>
+            <h1 data-i18n="duel_title">Harman 1v1</h1>
+            <p class="subtitle" data-i18n="duel_subtitle">İki takım seçilir, ortak oyuncuyu ilk söyleyen puanı kapar</p>
+
+            <div class="duel-rules">
+                <div class="duel-rule">
+                    <span class="duel-rule-no">1</span>
+                    <span data-i18n="duel_rule_1">İki oyuncu sırayla birer takım seçer.</span>
+                </div>
+                <div class="duel-rule">
+                    <span class="duel-rule-no">2</span>
+                    <span data-i18n="duel_rule_2">Herkes iki takımda da oynamış bir futbolcuyu yazmaya yarışır.</span>
+                </div>
+                <div class="duel-rule">
+                    <span class="duel-rule-no">3</span>
+                    <span data-i18n="duel_rule_3">İlk doğru cevap +1 puan; hedefe ulaşan kazanır.</span>
+                </div>
+            </div>
+
+            <div id="duel-entry">
+                <div class="main-menu">
+                    <div class="menu-card skeleton">
+                        <div class="skeleton-icon"></div>
+                        <div class="menu-body">
+                            <div class="skeleton-line w60"></div>
+                            <div class="skeleton-line w80"></div>
+                        </div>
+                    </div>
+                    <div class="menu-card skeleton">
+                        <div class="skeleton-icon"></div>
+                        <div class="menu-body">
+                            <div class="skeleton-line w60"></div>
+                            <div class="skeleton-line w80"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== LOBBY ===== -->
+        <section class="page" data-route="lobby">
+            <a class="back-link" onclick="navigate('#/multi')" data-i18n="multi_back">&larr; Geri</a>
+            <div id="lobby-view"></div>
+        </section>
+
+        <!-- ===== GAME ===== -->
+        <section class="page" data-route="game">
+            <div id="game-view"></div>
+        </section>
+
+        <!-- ===== GAME OVER ===== -->
+        <section class="page" data-route="gameover">
+            <div id="gameover-view"></div>
+        </section>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="/static/js/common.js" defer></script>
+    <script src="/static/js/solo.js" defer></script>
+    <script src="/static/js/router.js" defer></script>
+    <script src="/static/js/multi.js" defer></script>
+    <script src="/static/js/classic.js" defer></script>
+</body>
+</html>
