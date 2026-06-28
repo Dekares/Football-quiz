@@ -1,8 +1,9 @@
 // Günün Futbolcusu (LoLdle "Classic" tarzı) — ana sayfadaki günlük tahmin oyunu.
 // İpucu yok: bir futbolcu adı yaz → özellikleri gizli oyuncuyla kıyaslanır
-// (🟩 aynı / 🟨 kısmen / 🟥 alakasız, sayısallarda ↑↓). Sınırsız tahmin.
+// (🟩 aynı / 🟨 kısmen / 🟥 alakasız, sayısallarda ↑↓). 8 tahmin hakkı.
 
 const CLASSIC_KEY = 'classic_v1';
+const CLASSIC_MAX_GUESSES = 8;
 const ATTR_ORDER = ['nationality', 'position', 'age', 'value', 'club', 'league'];
 let classicData = null;     // /api/classic yanıtı (gün boyu sabit)
 let classicSearchDebounce = null;
@@ -79,6 +80,7 @@ function paintClassic() {
     const root = document.getElementById('classic-card');
     if (!root) return;
     const s = classicState();
+    const over = s.solved || s.guesses.length >= CLASSIC_MAX_GUESSES;
 
     const legend = `
         <div class="cl-legend">
@@ -90,7 +92,7 @@ function paintClassic() {
         </div>`;
 
     // Arama + sonuçlar arama kutusunun ALTINDA
-    const inputBlock = s.solved ? '' : `
+    const inputBlock = over ? '' : `
         <div class="quiz-input-row daily-input">
             <div class="search-wrapper quiz-search-wrapper">
                 <input type="text" id="classic-input" autocomplete="off" placeholder="${esc(t('guess_placeholder'))}">
@@ -111,11 +113,12 @@ function paintClassic() {
     const table = s.guesses.length ? `<div class="cl-results">${rows}</div>` : '';
 
     const result = s.solved
-        ? `<div class="cl-win">🎉 ${t('classic_solved')} — ${s.guesses.length} ${t('classic_tries')}</div>` : '';
-    const actions = s.solved
+        ? `<div class="cl-win">🎉 ${t('classic_solved')} — ${s.guesses.length} ${t('classic_tries')}</div>`
+        : (over ? `<div class="cl-lose">${t('classic_lost')}</div>` : '');
+    const actions = over
         ? `<div class="daily-actions"><button class="btn share-score-btn" onclick="shareClassic()">${t('share_result')}</button></div>
            <div class="daily-foot">${t('classic_tomorrow')}</div>`
-        : `<div class="daily-foot">${t('classic_attempts')}: ${s.guesses.length}</div>`;
+        : `<div class="daily-foot">${t('classic_attempts')}: ${s.guesses.length} / ${CLASSIC_MAX_GUESSES}</div>`;
 
     root.style.display = '';
     root.innerHTML = `
@@ -136,7 +139,7 @@ function paintClassic() {
 // ---- Tahmin ----
 async function classicGuessById(playerId) {
     const s = classicState();
-    if (s.solved || classicBusy) return;
+    if (s.solved || s.guesses.length >= CLASSIC_MAX_GUESSES || classicBusy) return;
     if (s.guesses.some(g => g.guess.player_id === playerId)) {
         showToast(t('classic_already'), 'error');
         return;
@@ -179,7 +182,8 @@ function shareClassic() {
             return st === 'hit' ? '🟩' : (st === 'partial' ? '🟨' : '🟥');
         }).join('')
     ).join('\n');
-    const caption = `${t('classic_title')} #${classicData.day} — ${s.guesses.length} ${t('classic_tries')}\n${grid}`;
+    const score = s.solved ? `${s.guesses.length}/${CLASSIC_MAX_GUESSES}` : `X/${CLASSIC_MAX_GUESSES}`;
+    const caption = `${t('classic_title')} #${classicData.day} — ${score}\n${grid}`;
     shareOrCopy(caption, location.origin + '/');
 }
 

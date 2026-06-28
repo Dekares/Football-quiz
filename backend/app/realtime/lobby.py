@@ -10,7 +10,9 @@ from typing import Any
 
 LOBBY_CODE_ALPHABET = string.ascii_uppercase + string.digits
 LOBBY_CODE_LEN = 6
-MAX_PLAYERS = 8
+# Lobi kapasitesi moda bağlı: Düello (mc/free) 6 kişi, Harman 1v1 (duel) 2 kişi.
+MAX_PLAYERS_DEFAULT = 6
+MAX_PLAYERS_DUEL = 2
 MIN_PLAYERS = 2
 MAX_LOBBIES = 5000               # toplam aktif lobi tavanı (bellek DoS koruması)
 
@@ -136,8 +138,11 @@ class Lobby:
             and len(self.connected_players()) >= MIN_PLAYERS
         )
 
+    def max_players(self) -> int:
+        return MAX_PLAYERS_DUEL if self.settings.get("mode") == "duel" else MAX_PLAYERS_DEFAULT
+
     def is_full(self) -> bool:
-        return len(self.players) >= MAX_PLAYERS
+        return len(self.players) >= self.max_players()
 
     def add_player(self, nickname: str) -> Player:
         pid = secrets.token_urlsafe(8)
@@ -165,6 +170,7 @@ class Lobby:
             "phase": self.phase,
             "settings": self.settings,
             "players": self.player_list(),
+            "max_players": self.max_players(),
             "round_no": self.round_no,
         }
         if self.phase == "PICKING" and self.pick:

@@ -1,7 +1,8 @@
 # Futbol Quiz
 
 Kulüp geçmişine bakarak gizemli futbolcuyu bul. Solo (kariyerden tahmin) ve
-2-8 kişilik gerçek zamanlı çok-kişilik modu. Ana sayfada **Günün Futbolcusu**
+2-6 kişilik gerçek zamanlı çok-kişilik modu (Harman 1v1 düellosu 2 kişilik).
+Ana sayfada **Günün Futbolcusu**
 (LoLdle tarzı): ipucu yok; isim yaz, her tahminde milliyet/mevki/yaş/değer/kulüp/lig
 özellikleri 🟩/🟨/🟥 + ↑↓ ile kıyaslanır (🟨 kısmen: aynı kıta/lig/yakın sayı; kulüp
 hariç), daraltarak gizli oyuncuyu bul. Arama **tüm aktif** oyuncuları kapsar; gizli

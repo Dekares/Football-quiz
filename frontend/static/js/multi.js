@@ -415,6 +415,7 @@ function renderLobbyView() {
         ? `<input type="number" id="lobby-target" min="3" max="50" value="${settings.target_score}" class="form-input form-target" onchange="changeSetting('target_score', parseInt(this.value,10))">`
         : `<span style="font-weight:700;color:var(--gold);font-size:1.1rem">${settings.target_score}</span>`;
 
+    const maxPlayers = lb.max_players || 6;
     const playersHtml = lb.players.map(p => {
         const isYou = p.player_id === multiState.playerId;
         const isH = p.player_id === lb.host_id;
@@ -445,6 +446,10 @@ function renderLobbyView() {
             </div>
         </div>
 
+        <div class="players-head">
+            <span class="label" data-i18n="multi_players">Oyuncular</span>
+            <span class="players-count${lb.players.length >= maxPlayers ? ' is-full' : ''}">${lb.players.length} / ${maxPlayers}</span>
+        </div>
         <div class="players-grid">${playersHtml}</div>
 
         <div class="settings-panel">

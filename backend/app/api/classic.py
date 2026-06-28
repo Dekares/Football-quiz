@@ -2,11 +2,12 @@
 
 Gizli bir futbolcu var; oyuncu doğrudan isim yazar. Her tahminde tahmin edilen
 oyuncunun özellikleri gizli oyuncununkilerle kıyaslanır: 🟩 aynı / 🟥 farklı,
-sayısallarda (yaş, değer) ek olarak ↑↓ yön. Sınırsız tahmin; doğru oyuncuda biter.
+sayısallarda (yaş, değer) ek olarak ↑↓ yön. Doğru oyuncuda biter.
 
 Yalnız **aktif** (güncel market değeri olan) tanınmış oyuncular havuza girer.
 Stateless: gizli oyuncu tarihten (TR saati) deterministik seçilir → herkese aynı.
-Sunucuda durum yok; ilerleme/seri istemcide localStorage'da. Cevap asla sızmaz.
+Sunucuda durum yok; ilerleme/seri ve 8 tahmin hakkı istemcide (localStorage)
+yönetilir. Cevap asla sızmaz (kayıpta da açılmaz).
 """
 from __future__ import annotations
 

@@ -852,6 +852,10 @@ h1 {
 }
 .lobby-code-display .hint { font-size: 0.78rem; color: var(--text-dim); margin-top: 0.4rem; }
 
+.players-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 0.6rem; }
+.players-head .label { color: var(--text-dim); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.players-count { font-weight: 700; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.players-count.is-full { color: var(--gold); }
 .players-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.6rem; margin-bottom: 1.4rem; }
 .player-tile {
     display: flex; align-items: center; gap: 0.6rem;
@@ -1069,6 +1073,7 @@ h1 {
 .cl-arrow { font-size: 0.7rem; opacity: 0.9; }
 @keyframes clFlip { 0% { transform: rotateX(-90deg); opacity: 0; } 100% { transform: rotateX(0); opacity: 1; } }
 .cl-win { font-size: 1.15rem; font-weight: 800; color: var(--green); margin: 0.6rem 0; }
+.cl-lose { font-size: 1.05rem; font-weight: 700; color: var(--text-dim); margin: 0.6rem 0; }
 @media (max-width: 560px) { .cl-attrs { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 360px) { .cl-attrs { grid-template-columns: repeat(2, 1fr); } }
 
