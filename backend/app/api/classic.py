@@ -7,7 +7,7 @@ sayısallarda (yaş, değer) ek olarak ↑↓ yön. Doğru oyuncuda biter.
 Yalnız **aktif** (güncel market değeri olan) tanınmış oyuncular havuza girer.
 Stateless: gizli oyuncu tarihten (TR saati) deterministik seçilir → herkese aynı.
 Sunucuda durum yok; ilerleme/seri ve 8 tahmin hakkı istemcide (localStorage)
-yönetilir. Cevap asla sızmaz (kayıpta da açılmaz).
+yönetilir. Cevap oyun sırasında sızmaz; oyun bitince /classic/reveal ile açılır.
 """
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ import sqlite3
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Response
 
 from ..db import query
 
@@ -192,9 +192,15 @@ def _compare(secret: dict[str, Any], g: dict[str, Any]) -> dict[str, dict]:
     }
 
 
+# Güne bağlı yanıtlar tarayıcıda cache'lenMEMELİ: gece yarısı (TR) gün değişince
+# istemci bayat "day" alıp eski tahminleri göstermesin.
+_NO_STORE = "no-store"
+
+
 @router.get("/classic")
-async def classic() -> dict[str, Any]:
+async def classic(response: Response) -> dict[str, Any]:
     """Bugünün meta'sı (gizli oyuncu GÖNDERİLMEZ)."""
+    response.headers["Cache-Control"] = _NO_STORE
     day = _day_number()
     secret = await _get_secret(day)
     if not secret:
@@ -203,8 +209,9 @@ async def classic() -> dict[str, Any]:
 
 
 @router.get("/classic/guess")
-async def classic_guess(player_id: int = Query(..., ge=1)) -> dict[str, Any]:
+async def classic_guess(response: Response, player_id: int = Query(..., ge=1)) -> dict[str, Any]:
     """Bir tahminin özellik kıyası. Doğruysa correct=true (kazanan tahmin reveal'dır)."""
+    response.headers["Cache-Control"] = _NO_STORE
     day = _day_number()
     secret = await _get_secret(day)
     if not secret:
@@ -220,4 +227,24 @@ async def classic_guess(player_id: int = Query(..., ge=1)) -> dict[str, Any]:
             "image_url": facts["image_url"],
         },
         "attrs": _compare(secret, facts),
+    }
+
+
+@router.get("/classic/reveal")
+async def classic_reveal(response: Response) -> dict[str, Any]:
+    """Bugünün gizli oyuncusunu açar — istemci yalnız oyun BİTİNCE çağırır."""
+    response.headers["Cache-Control"] = _NO_STORE
+    day = _day_number()
+    secret = await _get_secret(day)
+    if not secret:
+        return {"error": "unavailable"}
+    return {
+        "player": {
+            "player_id": secret["player_id"],
+            "name": secret["name"],
+            "image_url": secret["image_url"],
+            "country": secret["country"],
+            "position": secret["position"],
+            "club_name": secret["club_name"],
+        }
     }

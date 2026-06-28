@@ -115,8 +115,27 @@ function paintClassic() {
     const result = s.solved
         ? `<div class="cl-win">🎉 ${t('classic_solved')} — ${s.guesses.length} ${t('classic_tries')}</div>`
         : (over ? `<div class="cl-lose">${t('classic_lost')}</div>` : '');
+
+    // Kaybedince gizli oyuncuyu açma: önce buton, açıldıktan sonra oyuncu kartı.
+    const lost = over && !s.solved;
+    const r = s.revealed;
+    const revealCard = (lost && r) ? `
+        <div class="cl-reveal">
+            <div class="cl-reveal-label">${t('classic_answer')}</div>
+            <div class="cl-reveal-player">
+                <img src="${r.image_url || ''}" onerror="this.style.display='none'" alt="" loading="lazy" referrerpolicy="no-referrer">
+                <div class="cl-reveal-info">
+                    <div class="cl-reveal-name">${esc(r.name)}</div>
+                    <div class="cl-reveal-meta">${flagHtml(r.country) || ''}<span>${posText(r.position)}${r.club_name ? ' · ' + esc(r.club_name) : ''}</span></div>
+                </div>
+            </div>
+        </div>` : '';
+    const revealBtn = (lost && !r)
+        ? `<button class="btn btn-secondary" onclick="revealClassic()">${t('classic_reveal')}</button>` : '';
+
     const actions = over
-        ? `<div class="daily-actions"><button class="btn share-score-btn" onclick="shareClassic()">${t('share_result')}</button></div>
+        ? `<div class="daily-actions">${revealBtn}<button class="btn share-score-btn" onclick="shareClassic()">${t('share_result')}</button></div>
+           ${revealCard}
            <div class="daily-foot">${t('classic_tomorrow')}</div>`
         : `<div class="daily-foot">${t('classic_attempts')}: ${s.guesses.length} / ${CLASSIC_MAX_GUESSES}</div>`;
 
@@ -172,6 +191,21 @@ function classicApplyStreak() {
     localStorage.setItem('classic_streak', String(streak));
     localStorage.setItem('classic_best', String(best));
     localStorage.setItem('classic_last_day', String(day));
+}
+
+// Gizli oyuncuyu açar (yalnız oyun bitince). Açılan oyuncu localStorage'a yazılır
+// → tekrar yüklemede de görünür, gün değişince (yeni state) sıfırlanır.
+async function revealClassic() {
+    const s = classicState();
+    const over = s.solved || s.guesses.length >= CLASSIC_MAX_GUESSES;
+    if (s.revealed || !over) return;
+    let res;
+    try { res = await (await fetch('/api/classic/reveal')).json(); }
+    catch (_) { showToast(t('quiz_load_error'), 'error'); return; }
+    if (!res || res.error || !res.player) { showToast(t('quiz_load_error'), 'error'); return; }
+    s.revealed = res.player;
+    classicSave(s);
+    paintClassic();
 }
 
 function shareClassic() {
