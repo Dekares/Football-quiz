@@ -133,6 +133,14 @@ def create_app() -> FastAPI:
                 headers={"Cache-Control": "public, max-age=3600"},
             )
 
+        @app.get("/ads.txt", include_in_schema=False)
+        async def ads_txt() -> PlainTextResponse:
+            # Google AdSense yetkili satıcı doğrulaması (publisher ca-pub-5823826038472901).
+            return PlainTextResponse(
+                "google.com, pub-5823826038472901, DIRECT, f08c47fec0942fa0\n",
+                headers={"Cache-Control": "public, max-age=86400"},
+            )
+
     return app
 
 
