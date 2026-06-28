@@ -4,24 +4,63 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#070b14">
-    <title>Futbol Quiz — Oyuncuyu Tahmin Et</title>
-    <meta name="description" content="Kulüp geçmişine bakarak gizemli futbolcuyu bul. Solo oyna ya da arkadaşlarınla 2-8 kişilik real-time yarış.">
+    <title>Football Quiz — Futbolcuyu Kariyerinden Tahmin Et | Günlük, Solo & Düello</title>
+    <meta name="description" content="Kariyer ve transfer geçmişine bakarak gizemli futbolcuyu bul. Her gün yeni Günün Futbolcusu bulmacası, solo futbolcu tahmin oyunu ve arkadaşlarınla 2-8 kişilik canlı düello. Ücretsiz, üyeliksiz.">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+    <link rel="canonical" href="{{BASE_URL}}/">
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Futbol Quiz — Oyuncuyu Tahmin Et">
-    <meta property="og:description" content="Kulüp geçmişine bakarak gizemli futbolcuyu bul. Solo ya da arkadaşlarınla yarış.">
-    <meta property="og:image" content="/static/img/icon.png">
+    <meta property="og:site_name" content="Football Quiz">
+    <meta property="og:title" content="Football Quiz — Futbolcuyu Kariyerinden Tahmin Et">
+    <meta property="og:description" content="Kariyer geçmişine bakarak gizemli futbolcuyu bul. Günün Futbolcusu, solo tahmin ve canlı çok oyunculu düello. Ücretsiz, üyeliksiz.">
+    <meta property="og:url" content="{{BASE_URL}}/">
+    <meta property="og:image" content="{{BASE_URL}}/static/img/icon.png">
+    <meta property="og:image:alt" content="Football Quiz — futbolcu tahmin oyunu">
+    <meta property="og:locale" content="tr_TR">
+    <meta property="og:locale:alternate" content="en_US">
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Futbol Quiz — Oyuncuyu Tahmin Et">
-    <meta name="twitter:description" content="Kulüp geçmişine bakarak gizemli futbolcuyu bul.">
-    <meta name="twitter:image" content="/static/img/icon.png">
+    <meta name="twitter:title" content="Football Quiz — Futbolcuyu Kariyerinden Tahmin Et">
+    <meta name="twitter:description" content="Kariyer geçmişine bakarak gizemli futbolcuyu bul. Solo ya da arkadaşlarınla canlı yarış.">
+    <meta name="twitter:image" content="{{BASE_URL}}/static/img/icon.png">
+    <meta name="twitter:image:alt" content="Football Quiz — futbolcu tahmin oyunu">
 
+    <link rel="preconnect" href="https://flagcdn.com" crossorigin>
     <link rel="stylesheet" href="/static/css/app.css">
     <link rel="icon" type="image/png" href="/static/img/icon.png">
     <link rel="apple-touch-icon" href="/static/img/icon.png">
+
+    <!-- Yapısal veri (Google Rich Results) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "WebSite",
+                "@id": "{{BASE_URL}}/#website",
+                "url": "{{BASE_URL}}/",
+                "name": "Football Quiz",
+                "description": "Kariyer ve transfer geçmişine bakarak gizemli futbolcuyu tahmin etme oyunu.",
+                "inLanguage": ["tr", "en"]
+            },
+            {
+                "@type": "WebApplication",
+                "@id": "{{BASE_URL}}/#app",
+                "url": "{{BASE_URL}}/",
+                "name": "Football Quiz",
+                "applicationCategory": "GameApplication",
+                "operatingSystem": "Web",
+                "browserRequirements": "Requires JavaScript",
+                "inLanguage": ["tr", "en"],
+                "isAccessibleForFree": true,
+                "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+                "description": "Her gün yeni Günün Futbolcusu bulmacası, solo futbolcu tahmin oyunu ve 2-8 kişilik canlı düello."
+            }
+        ]
+    }
+    </script>
 </head>
 <body>
     <div class="orb orb-1"></div>
@@ -55,8 +94,23 @@
 
     <div class="container">
 
+        <noscript>
+            <h1>Football Quiz — Futbolcuyu Kariyerinden Tahmin Et</h1>
+            <p>Kariyer ve transfer geçmişine bakarak gizemli futbolcuyu bul. Her gün yeni
+            "Günün Futbolcusu" bulmacası, solo futbolcu tahmin oyunu ve arkadaşlarınla
+            2-8 kişilik canlı düello. Oynamak için lütfen JavaScript'i etkinleştir.</p>
+            <p lang="en">Guess the mystery footballer from their career and transfer history.
+            A new daily puzzle, a solo guessing game, and live multiplayer duels. Please
+            enable JavaScript to play.</p>
+        </noscript>
+
         <!-- ===== GÜNLÜK TAHMİN (ana sayfa) ===== -->
         <section class="page menu-page" data-route="menu">
+            <!-- Arama motorları + ekran okuyucular için landing başlığı (görsel olarak gizli) -->
+            <header class="visually-hidden">
+                <h1 data-i18n="seo_h1">Football Quiz — Futbolcuyu kariyerinden tahmin et</h1>
+                <p data-i18n="seo_intro">Her gün yeni "Günün Futbolcusu" bulmacası, kariyer ve transfer geçmişine dayalı solo futbolcu tahmin oyunu ve arkadaşlarınla 2-8 kişilik canlı düello. Ücretsiz, üyeliksiz.</p>
+            </header>
             <!-- Günün Futbolcusu (LoLdle tarzı günlük tahmin oyunu) -->
             <div id="classic-card" class="daily-card">
                 <div class="daily-loading"><div class="spinner"></div></div>

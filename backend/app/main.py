@@ -5,15 +5,34 @@ Realtime (socket.io) ayrı servistir; bkz. backend/app/realtime/server.py.
 """
 from __future__ import annotations
 
+from datetime import date
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import Response
 
 from .api import classic, health, quiz, search
 from .config import settings
 from .ratelimit import RateLimiter
+
+
+def _public_base_url(request: Request) -> str:
+    """Canonical/OG/sitemap için site kökü (scheme + host), sondaki / olmadan.
+
+    Ayar verilmişse onu kullanır; aksi halde isteği reverse-proxy başlıklarından
+    türetir (Render TLS'i proxy'de sonlandırır → X-Forwarded-Proto=https).
+    """
+    if settings.public_base_url:
+        return settings.public_base_url.rstrip("/")
+    proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+    host = (
+        request.headers.get("x-forwarded-host")
+        or request.headers.get("host")
+        or request.url.netloc
+    )
+    return f"{proto}://{host}"
 
 # Per-IP HTTP hız limiti. Asıl pahalı yol arama autocomplete'i (LIKE tarama);
 # insan kullanımı için bol, tarayıcı/abuse için dar.
@@ -72,11 +91,46 @@ def create_app() -> FastAPI:
         app.mount("/static", RevalidateStaticFiles(directory=static_dir), name="static")
 
         @app.get("/", include_in_schema=False)
-        async def index() -> FileResponse:
-            # index.html asla cache'lenmemeli; aksi halde yeni asset'ler görünmez.
-            return FileResponse(
-                static_dir / "index.html",
+        async def index(request: Request) -> HTMLResponse:
+            # {{BASE_URL}} placeholder'ları canonical/OG/JSON-LD için mutlak URL'e
+            # doldurulur. index.html asla cache'lenmemeli; aksi halde yeni
+            # asset'ler görünmez.
+            html = (static_dir / "index.html").read_text(encoding="utf-8")
+            html = html.replace("{{BASE_URL}}", _public_base_url(request))
+            return HTMLResponse(
+                html,
                 headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+            )
+
+        @app.get("/robots.txt", include_in_schema=False)
+        async def robots(request: Request) -> PlainTextResponse:
+            base = _public_base_url(request)
+            body = (
+                "User-agent: *\n"
+                "Allow: /\n"
+                "Disallow: /api/\n\n"
+                f"Sitemap: {base}/sitemap.xml\n"
+            )
+            return PlainTextResponse(body, headers={"Cache-Control": "public, max-age=86400"})
+
+        @app.get("/sitemap.xml", include_in_schema=False)
+        async def sitemap(request: Request) -> Response:
+            base = _public_base_url(request)
+            xml = (
+                '<?xml version="1.0" encoding="UTF-8"?>\n'
+                '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+                "  <url>\n"
+                f"    <loc>{base}/</loc>\n"
+                f"    <lastmod>{date.today().isoformat()}</lastmod>\n"
+                "    <changefreq>daily</changefreq>\n"
+                "    <priority>1.0</priority>\n"
+                "  </url>\n"
+                "</urlset>\n"
+            )
+            return Response(
+                xml,
+                media_type="application/xml",
+                headers={"Cache-Control": "public, max-age=3600"},
             )
 
     return app

@@ -27,6 +27,11 @@ class Settings(BaseSettings):
     serve_static: bool = True
     static_dir: Path = REPO_ROOT / "frontend" / "static"
 
+    # Canonical/OG/sitemap mutlak URL'lerinin tabanı (örn. https://futbolquiz.com).
+    # Boşsa istek başlıklarından türetilir (X-Forwarded-Proto/Host) — tek host'ta
+    # otomatik doğrudur. Birden çok host varsa canonical'ı sabitlemek için ayarla.
+    public_base_url: str = ""
+
     # OpenAPI/Swagger (/api/docs) — güvenli varsayılan kapalı; dev'de APP_ENABLE_DOCS=true.
     enable_docs: bool = False
 
