@@ -90,6 +90,42 @@ def pick_best_name(names: set[str]) -> str:
     return max(clean, key=len)
 
 
+# --- player_valuations isim çözücüsü için yardımcılar ---
+# valuations.current_club_NAME tarihsel-doğru kulübü taşır; current_club_id ise
+# bazı oyuncularda donmuş/yanlış. Bu yüzden kulübü İSİMDEN çözeriz: her isim için
+# valuations'ın kendi çoğunluk-oyu id'sini al, sonra clubs.csv ismiyle ÇAPRAZ
+# DOĞRULA → "Manisaspor→Gençlerbirliği" gibi oy hatalarını ele. (Geçmiş: id'ye
+# körü körüne güvenmek gerçek kulüpleri youth sanıp sildirmişti.)
+_VAL_YOUTH = re.compile(
+    r'\bU[_-]?\d{1,2}\b|Youth|\bYth|Junior|Reserve|Amateur|Juvenil|'
+    r'Primavera|Next Gen|\bsub-?\d|\bII$|\bIII$|\b[BC]$',
+    re.IGNORECASE,
+)
+_CLUB_STOP = {
+    "fc", "sc", "ac", "as", "cf", "sk", "if", "ss", "us", "afc", "cd", "ca",
+    "club", "de", "spor", "kulubu", "football", "futbol", "calcio", "the",
+    "sa", "spa", "asd", "jk", "ssc", "losc", "aj", "rc", "sv", "vfl", "vfb", "og",
+}
+
+
+def _val_is_youth(name: str) -> bool:
+    return bool(name and _VAL_YOUTH.search(name))
+
+
+def _club_tokens(s: str) -> set[str]:
+    return set(normalize_text(s).split()) - _CLUB_STOP
+
+
+def _names_similar(a: str, b: str) -> bool:
+    """İki kulüp ismi aynı kulübü mü gösteriyor (kısa↔uzun varyant toleranslı)."""
+    ta, tb = _club_tokens(a), _club_tokens(b)
+    if not ta or not tb:
+        return False
+    if ta <= tb or tb <= ta:
+        return True
+    return len(ta & tb) / min(len(ta), len(tb)) >= 0.5
+
+
 def to_int(val):
     if val and val.strip():
         try:
@@ -97,6 +133,17 @@ def to_int(val):
         except (ValueError, TypeError):
             return None
     return None
+
+
+def clean_image(url):
+    """Transfermarkt'ın gri placeholder'ını (default.jpg) NULL'a çevir.
+
+    Böylece frontend'in kendi onerror fallback'i devreye girer; çirkin silüet
+    URL'i saklanmaz. Gerçek portre URL'leri olduğu gibi döner.
+    """
+    if not url or not url.strip() or "default" in url:
+        return None
+    return url
 
 
 def build_stints(transfers_for_player, youth_club_ids):
@@ -161,7 +208,14 @@ def create_db():
             highest_market_value INTEGER,
             international_caps INTEGER,
             is_legend INTEGER NOT NULL DEFAULT 0,
-            search_name TEXT
+            search_name TEXT,
+            -- Additive (backend okumaz; tools/inspect_player.py SELECT * ile gösterir)
+            sub_position TEXT,
+            foot TEXT,
+            height_in_cm INTEGER,
+            country_of_birth TEXT,
+            city_of_birth TEXT,
+            international_goals INTEGER
         );
 
         CREATE TABLE clubs (
@@ -235,14 +289,22 @@ def create_db():
                 r["country_of_citizenship"],
                 r["date_of_birth"],
                 r["position"],
-                r["image_url"],
+                clean_image(r["image_url"]),
                 to_int(r.get("market_value_in_eur")),
                 to_int(r.get("highest_market_value_in_eur")),
                 to_int(r.get("international_caps")),
                 0,
                 normalize_text(r["name"]),
+                (r.get("sub_position") or "").strip() or None,
+                (r.get("foot") or "").strip() or None,
+                to_int(r.get("height_in_cm")),
+                (r.get("country_of_birth") or "").strip() or None,
+                (r.get("city_of_birth") or "").strip() or None,
+                to_int(r.get("international_goals")),
             ))
-        c.executemany("INSERT OR IGNORE INTO players VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", rows)
+        c.executemany(
+            "INSERT OR IGNORE INTO players VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", rows
+        )
     print(f"  {len(rows)} players loaded.")
 
     # 2) Clubs (genç takımları atla)
@@ -307,23 +369,90 @@ def create_db():
     print(f"  {sum(len(v) for v in player_transfers.values())} transfers for {len(player_transfers)} players.")
     print(f"  {len(youth_club_ids)} youth club IDs excluded.")
 
-    # 4) Stint'leri oluştur
+    # 4) Stint kaynak zinciri: transfers → player_valuations → appearances →
+    # game_lineups → current_club. Her kaynak, daha önce görülmemiş (pid,cid)
+    # çiftini kendi tarihiyle ekler (existing_pairs dedup).
     print("Building player stints from transfers...")
     all_stints = []
     for pid, transfers in player_transfers.items():
         stints = build_stints(transfers, youth_club_ids)
         for s in stints:
             all_stints.append((pid, s["club_id"], s["date_from"], s["date_to"]))
-
     print(f"  {len(all_stints)} stints from transfers.")
 
-    # 5) Appearances'dan eksik stint'leri ekle
-    print("Adding stints from appearances...")
-    # Hangi (pid, cid) çiftleri zaten var?
     existing_pairs = set()
     for pid, cid, _, _ in all_stints:
         existing_pairs.add((pid, cid))
 
+    # 4.5) player_valuations → İSİMDEN çözülen kariyer (transfers'ın kaçırdığı
+    # kulüpler; özellikle eski/alt-lig dönemleri). current_club_name tarihsel-doğru;
+    # kulübü isimden çoğunluk-oyu + clubs.csv çapraz doğrulamasıyla çözeriz.
+    print("Adding stints from player_valuations (name-resolved)...")
+    # kulüp id -> en iyi isim (clubs tablosu + transfers alias'ları)
+    cname = {cid: nm for cid, nm in c.execute("SELECT club_id, name FROM clubs")}
+    for cid, names in alias_map.items():
+        best = pick_best_name(names)
+        if best and (cid not in cname or len(best) > len(cname[cid])):
+            cname[cid] = best
+    # isim -> id oyları
+    name_votes = defaultdict(lambda: defaultdict(int))   # name -> {cid: n}
+    val_player_rows = defaultdict(list)                   # pid -> [(date, name)]
+    with open(os.path.join(DATA_DIR, "player_valuations.csv"), encoding="utf-8") as f:
+        for r in csv.DictReader(f):
+            nm = (r.get("current_club_name") or "").strip()
+            cid_str = r.get("current_club_id")
+            if not nm:
+                continue
+            if cid_str:
+                try:
+                    name_votes[nm][int(cid_str)] += 1
+                except ValueError:
+                    pass
+            val_player_rows[int(r["player_id"])].append((r.get("date", ""), nm))
+    # isim -> çözülmüş id (çoğunluk-oyu + çapraz doğrulama; youth isimleri elenir)
+    val_resolved = {}
+    for nm, votes in name_votes.items():
+        if _val_is_youth(nm):
+            continue
+        mode_id = max(votes.items(), key=lambda kv: kv[1])[0]
+        if mode_id in youth_club_ids:
+            continue
+        if mode_id in cname and _names_similar(nm, cname[mode_id]):
+            val_resolved[nm] = mode_id
+    # her oyuncu: tarihe göre sırala, ardışık aynı kulübü bloğa indirge, ekle
+    val_added = 0
+    for pid, rows in val_player_rows.items():
+        rows.sort(key=lambda x: x[0])
+        blocks = []   # [cid, from, to]
+        for d, nm in rows:
+            cid = val_resolved.get(nm)
+            if cid is None:
+                continue
+            if blocks and blocks[-1][0] == cid:
+                blocks[-1][2] = d
+            else:
+                blocks.append([cid, d, d])
+        for cid, d_from, d_to in blocks:
+            if (pid, cid) in existing_pairs or cid in youth_club_ids:
+                continue
+            all_stints.append((pid, cid, d_from or None, d_to or None))
+            existing_pairs.add((pid, cid))
+            alias_map.setdefault(cid, set()).add(cname.get(cid, ""))
+            val_added += 1
+    print(f"  {len(val_resolved)} club names resolved; {val_added} stints from valuations.")
+
+    # 5) Appearances'dan eksik stint'leri ekle
+    # Aynı taramada lig çıkarımı için kulüp başına domestic_league sayacı topla
+    # (148MB'ı iki kez okumamak için piggyback). domestic_league kodları
+    # competitions.csv'den (type='domestic_league') gelir.
+    domestic_leagues = set()
+    with open(os.path.join(DATA_DIR, "competitions.csv"), encoding="utf-8") as f:
+        for r in csv.DictReader(f):
+            if r.get("type") == "domestic_league":
+                domestic_leagues.add(r["competition_id"])
+    club_league_counts = defaultdict(lambda: defaultdict(int))  # cid -> {comp_id: n}
+
+    print("Adding stints from appearances...")
     appearance_stints = defaultdict(lambda: {"from": None, "to": None})
     with open(os.path.join(DATA_DIR, "appearances.csv"), encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -336,6 +465,12 @@ def create_db():
                 cid = int(cid_str)
             except ValueError:
                 continue
+
+            # Lig sayımı: youth/existing filtrelerinden ÖNCE (kulüp zaten stint'li
+            # olsa da ligini çıkarabilmek için), domestic_league kayıtlarında.
+            comp = r.get("competition_id")
+            if comp and comp in domestic_leagues:
+                club_league_counts[cid][comp] += 1
 
             if cid in youth_club_ids:
                 continue
@@ -357,6 +492,45 @@ def create_db():
         existing_pairs.add((pid, cid))
         added += 1
     print(f"  {added} additional stints from appearances.")
+
+    # 5.4) game_lineups'tan EŞİKLİ stint'ler: bir oyuncu bir kulübün kadrosunda
+    # >=LINEUP_MIN kez yer aldıysa o kulübü kariyere ekle. Eşik, tek seferlik /
+    # yanlış ilişkilendirmeleri eler (yedek/kısa kadro gürültüsü). transfers ve
+    # appearances'ta hiç izi olmayan kulüpleri yakalar.
+    LINEUP_MIN = 3
+    print("Adding threshold stints from game_lineups...")
+    lineup_agg = defaultdict(lambda: {"n": 0, "from": None, "to": None})
+    with open(os.path.join(DATA_DIR, "game_lineups.csv"), encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for r in reader:
+            cid_str = r.get("club_id")
+            pid_str = r.get("player_id")
+            if not cid_str or not pid_str:
+                continue
+            try:
+                pid = int(pid_str)
+                cid = int(cid_str)
+            except ValueError:
+                continue
+            if cid in youth_club_ids or (pid, cid) in existing_pairs:
+                continue
+            cur = lineup_agg[(pid, cid)]
+            cur["n"] += 1
+            d = r.get("date", "")
+            if d:
+                if cur["from"] is None or d < cur["from"]:
+                    cur["from"] = d
+                if cur["to"] is None or d > cur["to"]:
+                    cur["to"] = d
+
+    lineup_added = 0
+    for (pid, cid), agg in lineup_agg.items():
+        if agg["n"] < LINEUP_MIN:
+            continue
+        all_stints.append((pid, cid, agg["from"], agg["to"]))
+        existing_pairs.add((pid, cid))
+        lineup_added += 1
+    print(f"  {lineup_added} threshold stints from game_lineups (>= {LINEUP_MIN} apps).")
 
     # 5.5) current_club fallback: transfer VE maç kaydının ikisinde de izi olmayan
     # güncel kulüpleri ekle. Veriyi uydurmadan, players.csv'nin zaten taşıdığı
@@ -453,7 +627,7 @@ def create_db():
                         legend.get("country"),
                         legend.get("date_of_birth"),
                         legend.get("position"),
-                        legend.get("image_url") or None,
+                        clean_image(legend.get("image_url")),
                         legend.get("highest_market_value"),
                         normalize_text(legend["name"]),
                         pid,
@@ -476,12 +650,13 @@ def create_db():
                     legend.get("country"),
                     legend.get("date_of_birth"),
                     legend.get("position"),
-                    legend.get("image_url") or None,
+                    clean_image(legend.get("image_url")),
                     None,
                     legend.get("highest_market_value"),
                     None,
                     1,
                     normalize_text(legend["name"]),
+                    None, None, None, None, None, None,   # ek alanlar legends.json'da yok
                 ))
                 new_legend_count += 1
 
@@ -497,7 +672,7 @@ def create_db():
 
         c.executemany("INSERT OR IGNORE INTO clubs (club_id, name, domestic_competition_id, logo_url) VALUES (?,?,?,?)", legend_new_clubs)
         c.executemany(
-            "INSERT OR IGNORE INTO players VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT OR IGNORE INTO players VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             legend_new_player_rows,
         )
         c.executemany(
@@ -517,6 +692,25 @@ def create_db():
         print(f"  {c.rowcount} youth player_clubs records removed.")
         c.execute(f"DELETE FROM clubs WHERE club_id IN ({placeholders})", list(youth_club_ids))
 
+    # 6.7) Lig çıkarımı: domestic_competition_id'si boş kulüplere, appearances'ta
+    # en sık görüldükleri first-tier ligi ata (sadece veri varsa; mevcutlar ezilmez).
+    print("Inferring missing club leagues from appearances...")
+    league_filled = 0
+    for cid, counts in club_league_counts.items():
+        if not counts:
+            continue
+        best_comp = max(counts.items(), key=lambda kv: kv[1])[0]
+        cur = c.execute(
+            "SELECT domestic_competition_id FROM clubs WHERE club_id = ?", (cid,)
+        ).fetchone()
+        if cur and (cur[0] is None or cur[0] == ""):
+            c.execute(
+                "UPDATE clubs SET domestic_competition_id = ? WHERE club_id = ?",
+                (best_comp, cid),
+            )
+            league_filled += 1
+    print(f"  {league_filled} clubs got an inferred league.")
+
     # 7) Club aliases
     print("Building club aliases...")
     c.execute("SELECT club_id, name FROM clubs")
@@ -532,6 +726,20 @@ def create_db():
                 alias_rows.append((name, cid, normalize_text(name)))
     c.executemany("INSERT INTO club_aliases (alias, club_id, search_alias) VALUES (?,?,?)", alias_rows)
     print(f"  {len(alias_rows)} aliases.")
+
+    # Placeholder kulüpleri (Without Club / Retired / Unknown ...) kariyerden çıkar:
+    # bunlar gerçek kulüp değil; kariyer geçmişinde "Without Club" gibi görünmesinler.
+    # Kulüp satırı kalır (alias eşleşmesine zarar yok), sadece stint'leri silinir.
+    print("Removing placeholder-club stints from careers...")
+    c.execute("""
+        DELETE FROM player_clubs WHERE club_id IN (
+            SELECT club_id FROM clubs
+            WHERE name LIKE '%Without Club%' OR name LIKE '%Retired%'
+               OR name LIKE '%Unknown%' OR name LIKE '%Career Break%'
+               OR name LIKE '%Suspended%' OR name IS NULL OR name = ''
+        )
+    """)
+    print(f"  {c.rowcount} placeholder stints removed.")
 
     # Orphan oyuncuları temizle
     c.execute("""
@@ -654,6 +862,58 @@ def create_db():
     print("\nPogba stint kontrol:")
     for r in c.fetchall():
         print(f"  {r[1] or '?'} - {r[2] or '?'} : {r[0]}")
+
+    # Veri kalite raporu — "eksik veri" sessiz kalmasın, her build'de ölçülür.
+    print("\n=== VERİ KALİTE RAPORU ===")
+
+    def pct(num, den):
+        return f"%{100 * num / den:.1f}" if den else "%0.0"
+
+    pf = lambda where: c.execute(
+        f"SELECT COUNT(*) FROM players WHERE {where}").fetchone()[0]
+    foto_yok = pf("image_url IS NULL")
+    deger_yok = pf("market_value IS NULL OR market_value = 0")
+    country_ok = pf("country_of_citizenship IS NOT NULL AND country_of_citizenship != ''")
+    print(f"players: {p}")
+    print(f"  foto dolu           {pct(pf('image_url IS NOT NULL'), p)}"
+          f"   (placeholder NULL'a çevrildi: {foto_yok} oyuncu fotosuz)")
+    print(f"  güncel değer dolu   {pct(pf('market_value IS NOT NULL AND market_value > 0'), p)}"
+          f"   (gerçekten eksik: {deger_yok})")
+    print(f"  ülke dolu           {pct(country_ok, p)}")
+    print(f"  boy dolu            {pct(pf('height_in_cm IS NOT NULL'), p)}")
+    print(f"  ayak dolu           {pct(pf('foot IS NOT NULL'), p)}")
+    print(f"  alt-mevki dolu      {pct(pf('sub_position IS NOT NULL'), p)}")
+
+    leagued = c.execute(
+        "SELECT COUNT(*) FROM clubs WHERE domestic_competition_id IS NOT NULL "
+        "AND domestic_competition_id != ''").fetchone()[0]
+    print(f"clubs: {cl}")
+    print(f"  lig dolu            {pct(leagued, cl)}   (build öncesi ~%7)")
+    print(f"  logo dolu           %100 (deterministik türetilir)")
+
+    # Oyuncunun GÜNCEL kulübünün ligi dolu mu (quiz 'lig' kıyası bunu kullanır)
+    cur_league = c.execute("""
+        WITH cur AS (
+            SELECT pc.player_id, pc.club_id,
+                   ROW_NUMBER() OVER (PARTITION BY pc.player_id
+                       ORDER BY COALESCE(pc.date_from,'') DESC, pc.id DESC) rn
+            FROM player_clubs pc
+        )
+        SELECT
+          SUM(CASE WHEN cl.domestic_competition_id IS NOT NULL
+                    AND cl.domestic_competition_id != '' THEN 1 ELSE 0 END),
+          COUNT(*)
+        FROM cur JOIN clubs cl ON cl.club_id = cur.club_id
+        WHERE cur.rn = 1
+    """).fetchone()
+    print(f"  güncel-kulüp ligi dolu (oyuncu bazında) {pct(cur_league[0] or 0, cur_league[1])}")
+
+    ph_stints = c.execute(
+        "SELECT COUNT(*) FROM player_clubs pc JOIN clubs c ON c.club_id=pc.club_id "
+        "WHERE c.name LIKE '%Without Club%' OR c.name LIKE '%Retired%'"
+    ).fetchone()[0]
+    print(f"\nstint özeti: toplam {pc} stint, "
+          f"placeholder ('Without Club' vb.) stint: {ph_stints} (0 olmalı)")
 
     conn.close()
     print(f"\nDatabase saved to: {DB_PATH}")

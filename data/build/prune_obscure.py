@@ -103,6 +103,28 @@ def rebuild_prestige_and_pairs(c):
     print(f"  {len(rows):,} club pairs stored.")
 
 
+def rebuild_fts(c):
+    """FTS5 arama indekslerini kalan veriden baştan kur (build_database ile aynı).
+
+    Silinen oyuncu/alias'lar contentless FTS'te otomatik düşmez → DROP+CREATE ile
+    yeniden kurulur, yoksa arama silinmiş oyuncuları hayalet olarak döndürür.
+    """
+    print("Rebuilding FTS5 search indexes...")
+    c.executescript("""
+        DROP TABLE IF EXISTS players_fts;
+        CREATE VIRTUAL TABLE players_fts USING fts5(search_name, content='', tokenize='trigram');
+        INSERT INTO players_fts(rowid, search_name)
+            SELECT player_id, search_name FROM players
+            WHERE search_name IS NOT NULL AND search_name != '';
+
+        DROP TABLE IF EXISTS club_aliases_fts;
+        CREATE VIRTUAL TABLE club_aliases_fts USING fts5(club_id UNINDEXED, search_alias, tokenize='trigram');
+        INSERT INTO club_aliases_fts(club_id, search_alias)
+            SELECT club_id, search_alias FROM club_aliases
+            WHERE search_alias IS NOT NULL AND search_alias != '';
+    """)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true", help="Sadece istatistikleri yazdır, DB'yi değiştirme")
@@ -190,6 +212,7 @@ def main():
             print(f"  orphan clubs + aliases removed.")
 
         rebuild_prestige_and_pairs(c)
+        rebuild_fts(c)
 
         conn.commit()
         print("\nCOMMIT OK.")

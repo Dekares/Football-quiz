@@ -30,7 +30,12 @@ SOURCES_DIR = os.path.join(DATA_ROOT, "sources")
 LIVE_DB = os.path.join(DATA_ROOT, "football_quiz.db")
 TMP_DB = LIVE_DB + ".new"
 DATASET = "davidcariboo/player-scores"
-REQUIRED_CSVS = ("players.csv", "clubs.csv", "transfers.csv", "appearances.csv")
+# build_database.py'nin okuduğu TÜM Kaggle CSV'leri — indirme sonrası varlıkları
+# doğrulanır (eksikse build yarıda patlamasın). legends.json elle bakımlı, listede yok.
+REQUIRED_CSVS = (
+    "players.csv", "clubs.csv", "transfers.csv", "appearances.csv",
+    "player_valuations.csv", "game_lineups.csv", "competitions.csv",
+)
 KEEP_BACKUPS = 3                 # son N güncelleme yedeği tutulur
 MIN_PLAYERS = 5000              # mutlak taban (altındaysa indirme bozuk demektir)
 MIN_RATIO = 0.6                # yeni DB, eskinin en az %60'ı kadar oyuncu içermeli
