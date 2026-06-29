@@ -1,0 +1,15 @@
+.git
+.claude
+archive/
+logo/
+background/
+tools/
+data/sources/
+data/*.db.bak-*
+data/*.db-wal
+data/*.db-shm
+data/*.db.new
+**/__pycache__/
+**/*.pyc
+.venv/
+venv/
