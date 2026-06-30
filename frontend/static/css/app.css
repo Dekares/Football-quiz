@@ -594,6 +594,7 @@ h1 {
     border: 1px solid var(--border);
     background: linear-gradient(180deg, var(--surface), var(--bg2));
     width: 100%; max-width: 380px;
+    margin: 0 auto;                 /* tur-sonu kartını yatayda ortala (duel/free/mc) */
     animation: resultIn 0.5s cubic-bezier(.4,1.4,.5,1);
     position: relative;
 }
