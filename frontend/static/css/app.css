@@ -376,7 +376,7 @@ h1 {
 }
 .timeline-item img { width: 34px; height: 34px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3)); }
 .timeline-info { flex: 1; min-width: 0; }
-.timeline-info .club-name { font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.timeline-info .club-name { font-weight: 600; font-size: 0.95rem; overflow-wrap: anywhere; }
 .timeline-info .club-role { font-size: 0.78rem; color: var(--text-dim); margin-top: 1px; }
 .timeline-item .club-years {
     flex-shrink: 0; font-size: 0.8rem; font-weight: 600;
