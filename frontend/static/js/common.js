@@ -63,6 +63,10 @@ const LANGS = {
         pos_midfield: 'Orta Saha',
         pos_defender: 'Defans',
         pos_goalkeeper: 'Kaleci',
+        hint_age: 'Yaş',
+        hint_subpos: 'Detaylı mevki',
+        hint_initials: 'Baş harfler',
+        hint_years_old: 'yaşında',
         // Menu / nav
         menu_solo_title: 'Futbolcu Tahmin',
         // Harman 1v1 sayfası
@@ -248,6 +252,10 @@ const LANGS = {
         pos_midfield: 'Midfielder',
         pos_defender: 'Defender',
         pos_goalkeeper: 'Goalkeeper',
+        hint_age: 'Age',
+        hint_subpos: 'Detailed position',
+        hint_initials: 'Initials',
+        hint_years_old: 'years old',
         menu_solo_title: 'Footballer Guess',
         // Harman 1v1 page
         duel_title: 'Harman 1v1',
@@ -400,6 +408,20 @@ function applyLang() {
 function posText(pos) {
     const map = { 'Attack': t('pos_attack'), 'Midfield': t('pos_midfield'), 'Defender': t('pos_defender'), 'Goalkeeper': t('pos_goalkeeper') };
     return map[pos] || pos || '?';
+}
+
+// Detaylı mevki (Transfermarkt sub_position) — TR'de çevir, EN'de ham değer.
+const SUBPOS_TR = {
+    'Centre-Back': 'Stoper', 'Centre-Forward': 'Santrfor',
+    'Central Midfield': 'Merkez Orta Saha', 'Defensive Midfield': 'Defansif Orta Saha',
+    'Attacking Midfield': 'Ofansif Orta Saha', 'Left Winger': 'Sol Kanat',
+    'Right Winger': 'Sağ Kanat', 'Right-Back': 'Sağ Bek', 'Left-Back': 'Sol Bek',
+    'Goalkeeper': 'Kaleci', 'Second Striker': 'İkinci Forvet',
+    'Right Midfield': 'Sağ Orta Saha', 'Left Midfield': 'Sol Orta Saha',
+};
+function subPosText(pos) {
+    if (!pos) return '?';
+    return currentLang === 'tr' ? (SUBPOS_TR[pos] || pos) : pos;
 }
 
 // ===== Ülke kodları =====

@@ -80,7 +80,8 @@ def _load_quiz(c: sqlite3.Connection, difficulty: str, exclude: list[int]) -> di
         return None
 
     player = c.execute(
-        "SELECT player_id, name, country_of_citizenship, position, image_url "
+        "SELECT player_id, name, country_of_citizenship, position, sub_position, "
+        "date_of_birth, image_url "
         "FROM players WHERE player_id = ?",
         (player_id,),
     ).fetchone()
@@ -104,6 +105,8 @@ def _load_quiz(c: sqlite3.Connection, difficulty: str, exclude: list[int]) -> di
         "name": player["name"],
         "country": player["country_of_citizenship"],
         "position": player["position"],
+        "sub_position": player["sub_position"],
+        "date_of_birth": player["date_of_birth"],
         "image_url": player["image_url"],
         "clubs": clubs,
     }

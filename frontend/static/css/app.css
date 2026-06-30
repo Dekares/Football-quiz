@@ -448,14 +448,25 @@ h1 {
 
 /* ===== Hint reveal line ===== */
 .hint-reveal {
-    margin-top: 1rem; padding: 0.7rem 1rem;
+    margin-top: 1rem; padding: 0.6rem 0.9rem;
     background: rgba(245, 196, 81, 0.08);
     border: 1px solid rgba(245, 196, 81, 0.3);
     border-radius: 10px;
-    font-size: 1.15rem; font-weight: 800;
-    letter-spacing: 0.18em; text-align: center;
-    color: var(--gold); font-family: 'Menlo', 'Consolas', monospace;
+    display: flex; flex-direction: column; gap: 0.45rem;
     animation: slideUp 0.3s ease;
+}
+.hint-line {
+    display: flex; align-items: center; gap: 0.6rem;
+    animation: slideUp 0.25s ease;
+}
+.hint-line .hint-ico { font-size: 1.15rem; flex: 0 0 auto; }
+.hint-line .hint-label {
+    color: var(--text-dim); font-size: 0.85rem; font-weight: 600;
+    flex: 0 0 auto; min-width: 6.5rem;
+}
+.hint-line .hint-val {
+    color: var(--gold); font-weight: 800; font-size: 1.05rem;
+    margin-left: auto; text-align: right;
 }
 
 /* ===== Sidebar cards ===== */

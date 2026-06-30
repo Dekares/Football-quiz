@@ -6,9 +6,8 @@ let quizDifficulty = 'easy';
 let quizCorrect = 0;
 let quizTotal = 0;
 let quizLives = 0;
-let hintsLeft = 0;
+let hintsUsed = 0;
 const MAX_LIVES = 8;
-const MAX_HINTS = 3;
 
 // ===== Retention: localStorage istatistikleri =====
 function getSoloStats() {
@@ -140,25 +139,47 @@ function formatDate(c) {
     return '';
 }
 
-// ===== İpucu: adı kademeli aç =====
-function maskName(name, reveal) {
-    return name.split(' ').map(word =>
-        [...word].map((ch, i) => (/[\p{L}]/u.test(ch) && i >= reveal) ? '•' : ch).join('')
-    ).join(' ');
+// ===== İpucu: gizli oyuncudan kademeli bilgi (yaş → detaylı mevki → baş harfler) =====
+function ageFrom(dob) {
+    if (!dob) return null;
+    const b = new Date(dob);
+    if (isNaN(b.getTime())) return null;
+    const now = new Date();
+    let age = now.getFullYear() - b.getFullYear();
+    const m = now.getMonth() - b.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
+    return (age >= 0 && age < 120) ? age : null;
+}
+function nameInitials(name) {
+    return name.split(/\s+/).filter(Boolean)
+        .map(w => [...w][0].toUpperCase() + '.').join(' ');
+}
+// Sırayla açılacak kartlar; değeri olmayan (doğum tarihi/mevki boş) atlanır.
+function hintCards() {
+    if (!currentQuiz) return [];
+    const q = currentQuiz, cards = [];
+    const age = ageFrom(q.date_of_birth);
+    if (age != null) cards.push(['🎂', t('hint_age'), `${age} ${t('hint_years_old')}`]);
+    if (q.sub_position) cards.push(['🎯', t('hint_subpos'), subPosText(q.sub_position)]);
+    cards.push(['🔤', t('hint_initials'), nameInitials(q.name)]);
+    return cards;
 }
 function setHintBtn() {
     const btn = document.getElementById('hint-btn');
     const badge = document.getElementById('hint-count');
-    if (badge) badge.textContent = hintsLeft;
-    if (btn) btn.disabled = !currentQuiz || hintsLeft <= 0;
+    const total = hintCards().length;
+    if (badge) badge.textContent = Math.max(0, total - hintsUsed);
+    if (btn) btn.disabled = !currentQuiz || hintsUsed >= total;
 }
 function useHint() {
-    if (!currentQuiz || hintsLeft <= 0) return;
-    hintsLeft -= 1;
-    const reveal = MAX_HINTS - hintsLeft;       // 1, 2, 3 harf
+    const cards = hintCards();
+    if (!currentQuiz || hintsUsed >= cards.length) return;
+    hintsUsed += 1;
     const box = document.getElementById('quiz-hint-reveal');
     box.style.display = 'block';
-    box.textContent = maskName(currentQuiz.name, reveal);
+    box.innerHTML = cards.slice(0, hintsUsed).map(([ico, label, value]) =>
+        `<div class="hint-line"><span class="hint-ico">${ico}</span><span class="hint-label">${esc(label)}</span><span class="hint-val">${esc(value)}</span></div>`
+    ).join('');
     setHintBtn();
 }
 
@@ -167,7 +188,7 @@ async function loadQuiz() {
     area.innerHTML = `<div class="loading"><div class="spinner"></div><div>${t('loading')}</div></div>`;
 
     quizLives = MAX_LIVES;
-    hintsLeft = MAX_HINTS;
+    hintsUsed = 0;
     currentQuiz = null;
     document.getElementById('quiz-wrong-feedback').innerHTML = '';
     document.getElementById('quiz-hint-reveal').style.display = 'none';
