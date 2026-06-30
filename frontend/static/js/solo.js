@@ -150,18 +150,20 @@ function ageFrom(dob) {
     if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
     return (age >= 0 && age < 120) ? age : null;
 }
-function nameInitials(name) {
-    return name.split(/\s+/).filter(Boolean)
-        .map(w => [...w][0].toUpperCase() + '.').join(' ');
+function maskName(name) {
+    // İlk harf açık, gerisi yıldız: "Jadon Sancho" -> "J**** S*****"
+    return name.split(' ').map(word =>
+        [...word].map((ch, i) => (/[\p{L}]/u.test(ch) && i >= 1) ? '*' : ch).join('')
+    ).join(' ');
 }
-// Sırayla açılacak kartlar; değeri olmayan (doğum tarihi/mevki boş) atlanır.
+// Sırayla açılacak kutucuklar (etiket/emoji yok, sadece bilgi); boş değer atlanır.
 function hintCards() {
     if (!currentQuiz) return [];
     const q = currentQuiz, cards = [];
     const age = ageFrom(q.date_of_birth);
-    if (age != null) cards.push(['🎂', t('hint_age'), `${age} ${t('hint_years_old')}`]);
-    if (q.sub_position) cards.push(['🎯', t('hint_subpos'), subPosText(q.sub_position)]);
-    cards.push(['🔤', t('hint_initials'), nameInitials(q.name)]);
+    if (age != null) cards.push(`${age} ${t('hint_years_old')}`);
+    if (q.sub_position) cards.push(subPosText(q.sub_position));
+    cards.push(maskName(q.name));
     return cards;
 }
 function setHintBtn() {
@@ -176,10 +178,9 @@ function useHint() {
     if (!currentQuiz || hintsUsed >= cards.length) return;
     hintsUsed += 1;
     const box = document.getElementById('quiz-hint-reveal');
-    box.style.display = 'block';
-    box.innerHTML = cards.slice(0, hintsUsed).map(([ico, label, value]) =>
-        `<div class="hint-line"><span class="hint-ico">${ico}</span><span class="hint-label">${esc(label)}</span><span class="hint-val">${esc(value)}</span></div>`
-    ).join('');
+    box.style.display = 'flex';
+    box.innerHTML = cards.slice(0, hintsUsed)
+        .map(v => `<span class="hint-box">${esc(v)}</span>`).join('');
     setHintBtn();
 }
 
