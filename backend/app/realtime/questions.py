@@ -227,6 +227,20 @@ def pick_reveal_player(
     }
 
 
+def get_player_public(conn: sqlite3.Connection, player_id: int) -> dict[str, Any] | None:
+    """Tek oyuncunun gösterime hazır alanları (duel: bilinen oyuncuyu açmak için)."""
+    c = conn.cursor()
+    c.execute(
+        "SELECT player_id, name, country_of_citizenship, position, image_url "
+        "FROM players WHERE player_id = ?",
+        (player_id,),
+    )
+    r = c.fetchone()
+    if not r:
+        return None
+    return {"player_id": r[0], "name": r[1], "country": r[2], "position": r[3], "image_url": r[4]}
+
+
 # ----- Cevap doğrulama (free mode) -----
 def verify_free_answer(
     conn: sqlite3.Connection,

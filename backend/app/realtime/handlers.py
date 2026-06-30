@@ -19,12 +19,13 @@ from ..db import query
 from ..ratelimit import RateLimiter
 from .lobby import (
     DISCONNECT_GRACE_S,
+    DUEL_PICK_DURATION_S,
+    DUEL_ROUND_DURATION_S,
     IDLE_LOBBY_TIMEOUT_S,
     IDLE_SWEEP_INTERVAL_S,
     MAX_LOBBIES,
     MAX_SCORELESS_ROUNDS,
     MIN_PLAYERS,
-    PICK_DURATION_S,
     ROUND_DURATION_S,
     ROUND_RESULT_DURATION_S,
     Lobby,
@@ -34,7 +35,13 @@ from .lobby import (
     validate_settings,
 )
 from .matchmaking import pick_club_pair, random_partner
-from .questions import build_question, pair_is_valid, pick_reveal_player, verify_free_answer
+from .questions import (
+    build_question,
+    get_player_public,
+    pair_is_valid,
+    pick_reveal_player,
+    verify_free_answer,
+)
 from .store import registry
 
 ANSWER_TEXT_MAX = 64  # serbest cevap metni üst sınırı (DoS: sınırsız LIKE'ı engeller)
@@ -136,12 +143,12 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
 
         await sio.emit("round_start", payload, to=lobby.code)
         await _broadcast_state(lobby)
-        sio.start_background_task(_round_timer, lobby.code, round_obj.round_no)
+        sio.start_background_task(_round_timer, lobby.code, round_obj.round_no, round_obj.ends_at)
 
-    # ---------- Düello: oyuncular takım seçer ----------
+    # ---------- Harman 1v1: iki oyuncu aynı anda takım seçer ----------
 
     async def _start_pick_phase(lobby: Lobby) -> None:
-        """İki seçiciyi (turlar arası dönen) belirle ve seçim fazını başlat."""
+        """İki seçiciyi (turlar arası dönen) belirle ve eşzamanlı seçim fazını başlat."""
         connected = sorted(lobby.connected_players(), key=lambda p: p.joined_at)
         if len(connected) < MIN_PLAYERS:
             if lobby.round_no > 0:                 # oyun başlamışken rakip kaçtı → bitir
@@ -158,29 +165,38 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
         b = connected[(i + 1) % n]
         lobby.picker_cursor = (lobby.picker_cursor + 1) % n
 
-        pick = PickState(picker_a=a.player_id, picker_b=b.player_id, turn="a")
+        now = time.time()
+        pick = PickState(
+            picker_a=a.player_id, picker_b=b.player_id,
+            ends_at=now + DUEL_PICK_DURATION_S,
+        )
         lobby.pick = pick
         lobby.phase = "PICKING"
 
         await sio.emit("pick_phase", {
             "round_no": lobby.round_no + 1,
             "pick": pick.public_dict(lobby),
-            "duration_s": PICK_DURATION_S,
+            "duration_s": DUEL_PICK_DURATION_S,
         }, to=lobby.code)
         await _broadcast_state(lobby)
         sio.start_background_task(_pick_timer, lobby.code, pick)
 
     async def _pick_timer(code: str, pick: PickState) -> None:
-        """Seçici süresinde seçmezse sunucu eksik takımları otomatik tamamlar."""
-        await sio.sleep(PICK_DURATION_S)
+        """Süre dolunca eksik/uyumsuz seçimleri sunucu rastgele tamamlar."""
+        await sio.sleep(DUEL_PICK_DURATION_S + 0.2)
         lobby = registry.get(code)
         if not lobby or lobby.pick is not pick or lobby.phase != "PICKING":
             return
-        await _auto_complete_pick(lobby)
+        await _finalize_pick(lobby)
 
-    async def _auto_complete_pick(lobby: Lobby) -> None:
+    async def _finalize_pick(lobby: Lobby) -> None:
+        """İki seçim de gelince (ya da süre dolunca) tur sorusunu kurup başlat.
+
+        Seçimler gizli + eşzamanlı olduğundan çiftin ORTAK oyuncusu garanti değil;
+        eksik/uyumsuzsa sunucu tamamlar → her zaman çözülebilir tur.
+        """
         pick = lobby.pick
-        if not pick:
+        if not pick or lobby.phase != "PICKING":
             return
         if len(lobby.connected_players()) < MIN_PLAYERS:
             await _end_game_abandoned(lobby, reason="opponent_left")
@@ -188,14 +204,19 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
         difficulty = lobby.settings["difficulty"]
 
         def work(c: sqlite3.Connection):
-            if pick.club_a and not pick.club_b:
-                partner = random_partner(c, pick.club_a["club_id"])
-                if partner:
-                    return pick.club_a, partner
-            if pick.club_b and not pick.club_a:
-                partner = random_partner(c, pick.club_b["club_id"])
-                if partner:
-                    return partner, pick.club_b
+            a, b = pick.club_a, pick.club_b
+            if a and b:
+                if pair_is_valid(c, a["club_id"], b["club_id"]):
+                    return a, b
+                # ponytail: ortak oyuncu yoksa B'yi A'nın bir partneriyle değiştir (nadir kenar durum)
+                partner = random_partner(c, a["club_id"])
+                return (a, partner) if partner else None
+            if a and not b:
+                partner = random_partner(c, a["club_id"])
+                return (a, partner) if partner else None
+            if b and not a:
+                partner = random_partner(c, b["club_id"])
+                return (partner, b) if partner else None
             pair = pick_club_pair(c, difficulty, lobby.recent_pairs)
             return (pair[0], pair[1]) if pair else None
 
@@ -228,7 +249,7 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
             correct_player=None,
             choices=None,
             starts_at=now,
-            ends_at=now + ROUND_DURATION_S,
+            ends_at=now + DUEL_ROUND_DURATION_S,
         )
         lobby.current_round = round_obj
 
@@ -242,14 +263,14 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
             "club2": club_b,
             "mode": "duel",
             "ends_at": round_obj.ends_at,
-            "duration_s": ROUND_DURATION_S,
+            "duration_s": DUEL_ROUND_DURATION_S,
         }, to=lobby.code)
         await _broadcast_state(lobby)
-        sio.start_background_task(_round_timer, lobby.code, round_obj.round_no)
+        sio.start_background_task(_round_timer, lobby.code, round_obj.round_no, round_obj.ends_at)
 
-    async def _round_timer(code: str, round_no: int) -> None:
-        """Süre dolarsa turu bitirir."""
-        await sio.sleep(ROUND_DURATION_S + 0.2)
+    async def _round_timer(code: str, round_no: int, ends_at: float) -> None:
+        """Süre dolarsa turu bitirir (süre moda göre: mc/free vs duel ends_at'tan gelir)."""
+        await sio.sleep(max(0.0, ends_at - time.time()) + 0.2)
         lobby = registry.get(code)
         if not lobby or not lobby.current_round:
             return
@@ -276,14 +297,16 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
             for p in lobby.players.values()
         }
 
-        # Düelloda tek "doğru" yok; tur sonunda kayda değer bir ortak oyuncu açılır.
+        # Duel: çözen olduysa TAM OLARAK bilinen oyuncu açılır (solve'da rnd.correct_player set edildi);
+        # kimse çözemediyse kayda değer bir ortak oyuncu örnek olarak gösterilir.
         correct_answer = rnd.correct_player
         solver_id = None
         if lobby.settings["mode"] == "duel":
             solver_id = rnd.first_correct_player_id
-            correct_answer = await query(
-                lambda c: pick_reveal_player(c, rnd.club1["club_id"], rnd.club2["club_id"])
-            )
+            if not rnd.correct_player:
+                correct_answer = await query(
+                    lambda c: pick_reveal_player(c, rnd.club1["club_id"], rnd.club2["club_id"])
+                )
 
         await sio.emit("round_end", {
             "round_no": rnd.round_no,
@@ -371,6 +394,10 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
         player = lobby.players.get(player_id)
         if not player or player.is_connected():
             return  # rejoin etti
+        # Tamamen boş lobiyi SİLME: host kodu paylaşmak için telefonda uygulamadan
+        # çıkmış olabilir; token ile geri dönebilsin. Gerçek terk → idle reaper (30 dk).
+        if not lobby.connected_players():
+            return
         lobby.remove_player(player_id)
         await sio.emit("player_left", {"player_id": player_id}, to=code)
         if not lobby.players:
@@ -556,6 +583,8 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
                 is_correct = matched is not None
                 if is_correct:
                     rnd.first_correct_player_id = pid
+                    # Bilinen oyuncuyu her iki ekranda göstermek için sakla (tur sonu reveal).
+                    rnd.correct_player = await query(lambda c: get_player_public(c, matched))
                     player.score += 1
                     player.was_correct = True
                     player.answered_this_round = True
@@ -627,9 +656,14 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
         if lobby.phase != "PICKING" or not lobby.pick:
             return
         pick = lobby.pick
-        current = pick.picker_a if pick.turn == "a" else pick.picker_b
-        if pid != current:
-            await _emit_error(sid, "not_your_turn", "Sıra sende değil")
+        if pid == pick.picker_a:
+            slot = "a"
+        elif pid == pick.picker_b:
+            slot = "b"
+        else:
+            return  # bu oyuncu seçici değil
+        # İlk seçim kilitlenir (gizli + eşzamanlı: rakibe göre doğrulama yapılamaz).
+        if (slot == "a" and pick.club_a) or (slot == "b" and pick.club_b):
             return
         try:
             club_id = int(data.get("club_id"))
@@ -643,21 +677,14 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
             return
         club_dict = {"club_id": club[0], "name": club[1], "logo_url": club[2]}
 
-        if pick.turn == "a":
+        if slot == "a":
             pick.club_a = club_dict
-            pick.turn = "b"
-            await sio.emit("pick_update", {"pick": pick.public_dict(lobby)}, to=lobby.code)
-            return
-
-        # B seçti — çiftin ortak oyuncusu var mı?
-        valid = await query(lambda c: pair_is_valid(c, pick.club_a["club_id"], club_id))
-        if not valid:
-            await _emit_error(sid, "no_common",
-                              "Bu iki takımın ortak oyuncusu yok, başka takım seç")
-            return
-        pick.club_b = club_dict
+        else:
+            pick.club_b = club_dict
         await sio.emit("pick_update", {"pick": pick.public_dict(lobby)}, to=lobby.code)
-        await _start_answer_phase(lobby)
+        # İki seçim de geldiyse turu kur (uyumsuz çift sunucuda düzeltilir).
+        if pick.club_a and pick.club_b:
+            await _finalize_pick(lobby)
 
     @sio.on("kick_player")
     async def on_kick_player(sid: str, data: dict[str, Any]) -> None:
@@ -718,11 +745,8 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
         player.disconnected_at = time.time()
         await sio.emit("player_disconnected", {"player_id": pid}, to=code)
 
-        # Hiç bağlı oyuncu kalmadıysa lobi'yi hemen kapat.
-        if not lobby.connected_players():
-            registry.remove(code)
-            return
-        # Aktif oyunda 2'nin altına düştüyse (1v1 rakip kaçtı) hemen bitir.
+        # Aktif oyunda 2'nin altına düştüyse (1v1 rakip kaçtı / ikisi de gitti) bitir.
+        # 0 bağlı kaldıysa _end_game_abandoned lobiyi temizler.
         if lobby.phase in ("PICKING", "IN_ROUND", "ROUND_RESULT") \
                 and len(lobby.connected_players()) < MIN_PLAYERS:
             await _end_game_abandoned(lobby, reason="opponent_left")
@@ -732,4 +756,7 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
                 and pid in (lobby.pick.picker_a, lobby.pick.picker_b):
             await _start_pick_phase(lobby)
             return
+        # Aksi halde (WAITING/GAME_OVER): grace ver. Lobi boş kalsa bile hemen silinmez;
+        # host kod paylaşıp geri dönebilsin (mobil arka plan). _disconnect_grace boş
+        # lobiyi yaşatır, idle reaper gerçek terkleri 30 dk sonra temizler.
         sio.start_background_task(_disconnect_grace, code, pid)

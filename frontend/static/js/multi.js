@@ -19,8 +19,11 @@ const multiState = {
 
 function getSocket() {
     if (multiState.socket) return multiState.socket;
-    // io global'i socket.io client CDN'den gelir
-    const s = io({ transports: ['websocket', 'polling'] });
+    // io global'i socket.io client CDN'den gelir.
+    // polling-first (socket.io default): mobil/flaky ağlarda ilk bağlantı daha
+    // güvenilir; ardından websocket'e yükseltir. websocket-first bazı mobil
+    // ağ/proxy'lerde el sıkışmada takılıp bağlantıyı düşürüyordu.
+    const s = io({ transports: ['polling', 'websocket'] });
     multiState.socket = s;
     wireSocketEvents(s);
     return s;
@@ -152,7 +155,7 @@ function wireSocketEvents(s) {
             if (location.hash.startsWith('#/gameover/')) {
                 navigate(`#/lobby/${multiState.code}`);
             }
-        }, 6000);
+        }, 10000);
     });
 
     s.on('kicked', () => {
@@ -732,44 +735,57 @@ function renderPickPhase(root, lb) {
             return `<div class="${cls.join(' ')}"><span class="sc-nick">${esc(p.nickname)}</span><span class="sc-pts">${p.score}</span></div>`;
         }).join('');
 
-    const currentPicker = pick.turn === 'a' ? pick.picker_a : pick.picker_b;
-    const myTurn = multiState.playerId === currentPicker;
+    // Eşzamanlı + gizli seçim: ikisi de aynı anda seçer. Slotlar "sen" solda,
+    // rakip sağda; kimlik gizli (kilit / seçiyor). Tur başında ikisi açılır.
+    const iAmA = multiState.playerId === pick.picker_a;
+    const iAmB = multiState.playerId === pick.picker_b;
+    const amPicker = iAmA || iAmB;
+    const iPicked = (iAmA && pick.a_chosen) || (iAmB && pick.b_chosen);
+    const oppChosen = iAmA ? pick.b_chosen : pick.a_chosen;
+    const myNick = iAmA ? pick.picker_a_nick : (iAmB ? pick.picker_b_nick : '');
+    const oppNick = iAmA ? pick.picker_b_nick : pick.picker_a_nick;
 
-    const slotA = pick.a_chosen ? pickLockedSlot(pick.picker_a_nick) : pickPendingSlot(pick.picker_a_nick, pick.turn === 'a');
-    const slotB = pick.b_chosen ? pickLockedSlot(pick.picker_b_nick) : pickPendingSlot(pick.picker_b_nick, pick.turn === 'b');
+    const meLabel = `${esc(myNick)} (${t('duel_you')})`;
+    const mySlot = iPicked ? pickLockedSlot(meLabel) : pickPendingSlot(meLabel, true);
+    const oppSlot = oppChosen ? pickLockedSlot(esc(oppNick)) : pickPendingSlot(esc(oppNick), !oppChosen);
 
     let action;
-    if (myTurn) {
-        const which = pick.turn === 'a' ? '1' : '2';
+    if (amPicker && !iPicked) {
         action = `
-            <div class="pick-yourturn">${t('duel_your_turn').replace('{n}', which)}</div>
+            <div class="pick-yourturn">${t('duel_pick_now')}</div>
             <div class="quiz-input-row" style="margin-top:0.8rem">
                 <div class="search-wrapper quiz-search-wrapper">
                     <input type="text" id="mp-club-input" autocomplete="off" placeholder="${esc(t('duel_search_team'))}">
                     <div class="dropdown" id="mp-club-dropdown"></div>
                 </div>
             </div>`;
+    } else if (amPicker && iPicked) {
+        const msg = oppChosen ? t('duel_starting') : `${esc(oppNick)} ${t('duel_is_picking')}`;
+        action = `<div class="pick-waiting"><div class="spinner"></div><div>${msg}</div></div>`;
     } else {
-        const nick = pick.turn === 'a' ? pick.picker_a_nick : pick.picker_b_nick;
-        action = `<div class="pick-waiting"><div class="spinner"></div><div>${esc(nick)} ${t('duel_is_picking')}</div></div>`;
+        action = `<div class="pick-waiting"><div class="spinner"></div><div>${t('duel_is_picking')}</div></div>`;
     }
+
+    multiState.roundEndsAt = pick.ends_at || null;
 
     root.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;flex-wrap:wrap;gap:0.6rem">
             <div style="font-size:0.85rem;color:var(--text-dim)">${t('multi_round')} ${(lb.round_no || 0) + 1}</div>
             <button class="btn btn-secondary" style="padding:0.3rem 0.7rem;font-size:0.8rem" onclick="leaveLobby()">${t('multi_leave')}</button>
         </div>
+        ${pick.ends_at ? `<div class="round-timer" id="round-timer">—</div>` : ''}
         <div class="scoreboard">${scoreChips}</div>
         <div class="pick-title">${t('duel_pick_title')}</div>
         <div class="results-header pick-slots">
-            ${slotA}
+            ${mySlot}
             <span class="vs">&amp;</span>
-            ${slotB}
+            ${oppSlot}
         </div>
         ${action}
     `;
     applyLang();
-    if (myTurn) setupClubPickSearch();
+    if (amPicker && !iPicked) setupClubPickSearch();
+    if (pick.ends_at) startRoundTimer();
 }
 
 let mpClubDebounce = null;
@@ -827,11 +843,13 @@ function renderDuelRoundResult(end) {
     } else {
         cls = 'wrong'; headline = t('duel_nobody');
     }
+    // Çözen olduysa reveal = TAM olarak bilinen oyuncu (doğru cevap); yoksa örnek.
+    const revealLabel = solverId ? t('duel_answer') : t('duel_example');
     const revealHtml = reveal ? `
         <div class="duel-reveal">
             <img src="${reveal.image_url || ''}" onerror="this.style.display='none'" alt="">
             <div class="duel-reveal-text">
-                <div class="duel-reveal-label">${t('duel_example')}</div>
+                <div class="duel-reveal-label">${revealLabel}</div>
                 <div class="duel-reveal-name">${esc(reveal.name)}</div>
             </div>
         </div>` : '';
@@ -915,7 +933,7 @@ function renderGameOverView() {
         </div>
         <div class="players-grid">${rows}</div>
         <p class="subtitle" style="text-align:center;margin-top:1rem">
-            <span id="gameover-countdown">6</span> ${t('multi_redirect_hint')}
+            <span id="gameover-countdown">10</span> ${t('multi_redirect_hint')}
         </p>
         <button class="btn share-score-btn" onclick="shareMultiScore(${myPlace}, ${myScore})" style="margin-top:0.6rem">
             ${t('share_result')}
@@ -940,7 +958,7 @@ function shareMultiScore(place, score) {
 }
 
 function startGameOverCountdown() {
-    let remaining = 6;
+    let remaining = 10;
     const tick = () => {
         const el = document.getElementById('gameover-countdown');
         if (!el) return;

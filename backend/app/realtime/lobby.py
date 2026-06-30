@@ -16,10 +16,11 @@ MAX_PLAYERS_DUEL = 2
 MIN_PLAYERS = 2
 MAX_LOBBIES = 5000               # toplam aktif lobi tavanı (bellek DoS koruması)
 
-ROUND_DURATION_S = 20
+ROUND_DURATION_S = 20            # mc/free tur süresi
+DUEL_ROUND_DURATION_S = 45       # Harman 1v1: futbolcuyu bulma süresi (değiştirilebilir)
 ROUND_RESULT_DURATION_S = 3
 DISCONNECT_GRACE_S = 30
-PICK_DURATION_S = 15  # düello: seçici takım seçmezse sunucu otomatik seçer
+DUEL_PICK_DURATION_S = 30        # Harman 1v1: iki oyuncu aynı anda takım seçer (değiştirilebilir)
 MAX_SCORELESS_ROUNDS = 8  # üst üste bu kadar tur kimse skor yapmazsa oyun biter (stalemate)
 
 # Idle lobi temizliği: bu süre boyunca hiç etkinlik görmeyen lobi kapatılır.
@@ -73,25 +74,25 @@ class Player:
 
 @dataclass
 class PickState:
-    """Düello: iki seçici sırayla birer takım seçer (önce A, sonra B)."""
+    """Harman 1v1: iki oyuncu AYNI ANDA birer takım seçer (seçimler gizli)."""
     picker_a: str
     picker_b: str
-    turn: str = "a"                     # 'a' -> 'b'
     club_a: dict[str, Any] | None = None
     club_b: dict[str, Any] | None = None
+    ends_at: float = 0.0                 # seçim fazı bitişi (süre dolarsa otomatik atama)
 
     def public_dict(self, lobby: "Lobby") -> dict[str, Any]:
         def nick(pid: str) -> str:
             p = lobby.players.get(pid)
             return p.nickname if p else "?"
         # Seçilen takımların KİMLİĞİ gizlenir: rakip, tur başlamadan görmesin.
-        # İki takım da round_start'ta aynı anda açılır. Burada yalnız "seçildi mi".
+        # İki takım da round_start'ta aynı anda açılır. Burada yalnız "seçildi mi" + süre.
         return {
             "picker_a": self.picker_a, "picker_a_nick": nick(self.picker_a),
             "picker_b": self.picker_b, "picker_b_nick": nick(self.picker_b),
-            "turn": self.turn,
             "a_chosen": self.club_a is not None,
             "b_chosen": self.club_b is not None,
+            "ends_at": self.ends_at,
         }
 
 
