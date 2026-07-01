@@ -260,7 +260,6 @@ function setupClassicSearch() {
                             <img src="${p.image_url || ''}" onerror="this.style.display='none'" alt="">
                             <div class="dp-info">
                                 <div class="dp-name">${esc(p.name)}</div>
-                                <div class="dp-meta">${posText(p.position)} · ${esc(p.country || '')}</div>
                             </div>
                         </div>`).join('');
                 }

@@ -3,24 +3,25 @@
 // ===== State =====
 let currentQuiz = null;
 let quizDifficulty = 'easy';
-let quizCorrect = 0;
-let quizTotal = 0;
 let quizLives = 0;
 let hintsUsed = 0;
+// Run (koşu) durumu: 8 can tüm koşu boyunca paylaşılır, yanlışta kalıcı azalır.
+let runStreak = 0;   // mevcut seri (atlanınca sıfırlanır, doğruda artar)
+let runMax = 0;      // koşudaki en yüksek seri
+let runTotal = 0;    // koşuda doğru bilinen futbolcu sayısı
+let runActive = false;
 const MAX_LIVES = 8;
 
 // ===== Retention: localStorage istatistikleri =====
 function getSoloStats() {
     return {
-        best:    parseInt(localStorage.getItem('solo_best_streak') || '0', 10),
-        total:   parseInt(localStorage.getItem('solo_total_correct') || '0', 10),
-        streak:  parseInt(localStorage.getItem('solo_current_streak') || '0', 10),
+        best:   parseInt(localStorage.getItem('solo_best_streak') || '0', 10),   // tüm zamanların en iyi serisi (kalıcı)
+        total:  runTotal,                                                        // KOŞU-İÇİ toplam doğru (can bitince sıfır)
+        streak: runStreak,                                                       // mevcut koşunun serisi (bellek)
     };
 }
 function setSoloStats(s) {
     localStorage.setItem('solo_best_streak', String(s.best));
-    localStorage.setItem('solo_total_correct', String(s.total));
-    localStorage.setItem('solo_current_streak', String(s.streak));
 }
 function renderSoloStats(opts) {
     const streakEl = document.getElementById('stat-streak');
@@ -35,21 +36,34 @@ function renderSoloStats(opts) {
     }
 }
 function recordCorrectAnswer() {
+    runStreak += 1;
+    runTotal  += 1;
+    if (runStreak > runMax) runMax = runStreak;
     const s = getSoloStats();
-    s.streak += 1;
-    s.total  += 1;
-    const newRecord = s.streak > s.best;
-    if (newRecord) s.best = s.streak;
+    const newRecord = runStreak > s.best;
+    if (newRecord) s.best = runStreak;     // tüm zamanların rekoru (kalıcı)
     setSoloStats(s);
     renderSoloStats({ pulseRecord: newRecord });
-    return { newRecord, streak: s.streak, best: s.best };
+    return { newRecord, streak: runStreak, best: s.best };
 }
-function resetStreak() {
-    const s = getSoloStats();
-    if (s.streak === 0) return;
-    s.streak = 0;
-    setSoloStats(s);
+function resetRunStreak() {
+    if (runStreak === 0) return;
+    runStreak = 0;
     renderSoloStats();
+}
+// Yeni koşu: canlar dolar, sayaçlar sıfırlanır (kaldığı yerden DEVAM ETMEZ).
+function startRun() {
+    quizLives = MAX_LIVES;
+    runStreak = 0;
+    runMax = 0;
+    runTotal = 0;
+    runActive = true;
+    loadQuiz();
+}
+function newRound() {
+    if (!runActive) { startRun(); return; }   // ilk giriş: koşuyu başlat
+    resetRunStreak();                          // gönüllü geçiş seriyi kırar (can harcanmaz)
+    loadQuiz();
 }
 
 // ===== Son Tahminler (yan panel) =====
@@ -188,7 +202,6 @@ async function loadQuiz() {
     const area = document.getElementById('quiz-area');
     area.innerHTML = `<div class="loading"><div class="spinner"></div><div>${t('loading')}</div></div>`;
 
-    quizLives = MAX_LIVES;
     hintsUsed = 0;
     currentQuiz = null;
     document.getElementById('quiz-wrong-feedback').innerHTML = '';
@@ -343,8 +356,6 @@ function submitGuess() {
     }
 
     if (isCorrect) {
-        quizCorrect++;
-        quizTotal++;
         const rec = recordCorrectAnswer();
         showQuizResult(true, rec);
     } else {
@@ -353,10 +364,9 @@ function submitGuess() {
         selectedGuessId = null;
 
         if (quizLives <= 0) {
-            quizTotal++;
-            resetStreak();
+            runActive = false;   // koşu bitti → game-over kartı, sonra sıfırdan
             document.getElementById('quiz-wrong-feedback').innerHTML = '';
-            showQuizResult(false);
+            showGameOver();
         } else {
             document.getElementById('quiz-wrong-feedback').innerHTML =
                 `<div class="wrong-guess">${t('wrong_guess')} ${quizLives} ${t('lives_left')}</div>`;
@@ -367,10 +377,9 @@ function submitGuess() {
 }
 
 function passQuiz() {
-    if (!currentQuiz) return;
+    if (!currentQuiz) return;   // atla: cevabı göster, seriyi kır, CAN HARCAMA, sonraki oyuncu
     document.getElementById('quiz-player-dropdown').classList.remove('show');
-    quizTotal++;
-    resetStreak();
+    resetRunStreak();
     document.getElementById('quiz-wrong-feedback').innerHTML = '';
     showQuizResult(false);
 }
@@ -417,10 +426,6 @@ function renderResultModal() {
                 </div>
             </div>` : '';
 
-    const shareBtn = correct
-        ? `<button class="btn rm-share" onclick="shareSoloScore()">&#128279; ${t('share_result')}</button>`
-        : '';
-
     const title = correct
         ? `${t('quiz_correct_title')} <span class="accent">${t('quiz_correct_accent')}</span>`
         : t('quiz_wrong_title');
@@ -444,17 +449,71 @@ function renderResultModal() {
             <button class="btn btn-primary rm-next" onclick="closeQuizModalAndNext()">
                 <span>&#9917; ${t('quiz_next_player')}</span><span class="rm-arrow">&rsaquo;</span>
             </button>
-            ${shareBtn}
         </div>`;
     document.body.appendChild(backdrop);
 }
 
-function shareSoloScore() {
-    const s = getSoloStats();
-    const caption = t('share_caption_solo')
-        .replace('{correct}', quizCorrect)
-        .replace('{total}', quizTotal)
-        .replace('{streak}', s.best);
+// Koşu bitti kartı: bilemediğin oyuncu + en yüksek seri + toplam doğru + paylaş.
+function showGameOver() {
+    const p = currentQuiz;
+    pushRecent(p, false);
+    document.getElementById('quiz-input-row').style.display = 'none';
+    document.getElementById('quiz-lives').style.display = 'none';
+    document.getElementById('quiz-hint-reveal').style.display = 'none';
+    document.getElementById('skip-btn').disabled = true;
+    document.getElementById('hint-btn').disabled = true;
+    lastResult = { gameOver: true, player: p, runMax, runTotal };
+    renderGameOverModal();
+    selectedGuessId = null;
+    currentQuiz = null;
+}
+
+function renderGameOverModal() {
+    if (!lastResult?.gameOver) return;
+    const { player: p, runMax: mx, runTotal: tot } = lastResult;
+    const existing = document.getElementById('quiz-modal-backdrop');
+    if (existing) existing.remove();
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'quiz-modal-backdrop';
+    backdrop.id = 'quiz-modal-backdrop';
+    backdrop.innerHTML = `
+        <div class="result-modal wrong">
+            <div class="rm-check">&#128128;</div>
+            <h2 class="rm-title">${t('multi_game_over')}</h2>
+            <p class="rm-sub">${t('game_over_missed')}</p>
+            <img class="rm-photo" src="${p.image_url || ''}" onerror="this.style.display='none'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+            <div class="rm-name">${esc(p.name)}</div>
+            <div class="rm-stats">
+                <div class="rm-stat">
+                    <div class="rm-stat-ico">&#128293;</div>
+                    <div class="rm-stat-meta"><div class="rm-stat-val">${mx}</div><div class="rm-stat-lbl">${t('run_max_streak')}</div></div>
+                </div>
+                <div class="rm-stat">
+                    <div class="rm-stat-ico">&#127919;</div>
+                    <div class="rm-stat-meta"><div class="rm-stat-val">${tot}</div><div class="rm-stat-lbl">${t('solo_total_correct')}</div></div>
+                </div>
+            </div>
+            <button class="btn btn-primary rm-next" onclick="restartRun()">
+                <span>&#9917; ${t('new_run')}</span>
+            </button>
+            <button class="btn rm-share" onclick="shareRunResult()">&#128279; ${t('share_result')}</button>
+        </div>`;
+    document.body.appendChild(backdrop);
+}
+
+function restartRun() {
+    const b = document.getElementById('quiz-modal-backdrop');
+    if (b) b.remove();
+    lastResult = null;
+    startRun();
+}
+
+function shareRunResult() {
+    const r = lastResult || {};
+    const caption = t('share_caption_run')
+        .replace('{total}', r.runTotal || 0)
+        .replace('{streak}', r.runMax || 0);
     shareOrCopy(caption, `${location.origin}/`);
 }
 
@@ -470,7 +529,9 @@ function closeQuizModalAndNext() {
 window.addEventListener('langchange', () => {
     renderRecent();
     renderQuizArea();
-    if (document.getElementById('quiz-modal-backdrop')) renderResultModal();
+    if (document.getElementById('quiz-modal-backdrop')) {
+        lastResult?.gameOver ? renderGameOverModal() : renderResultModal();
+    }
 });
 
 // ===== Init =====
@@ -482,8 +543,8 @@ window.addEventListener('DOMContentLoaded', () => {
     // Solo sayfasına ilk girişte otomatik bir tur yükle (tasarımdaki gibi aktif soru).
     if (typeof onRoute === 'function') {
         onRoute((route) => {
-            if (route.name === 'solo' && !currentQuiz && !document.getElementById('quiz-modal-backdrop')) {
-                loadQuiz();
+            if (route.name === 'solo' && !runActive && !document.getElementById('quiz-modal-backdrop')) {
+                startRun();
             }
         });
     }

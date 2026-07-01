@@ -179,11 +179,14 @@ const LANGS = {
         solo_total_correct: 'Toplam doğru',
         solo_streak: 'Seri',
         solo_new_record: 'Yeni rekor!',
+        run_max_streak: 'En yüksek seri',
+        game_over_missed: 'Bilemediğin oyuncu',
+        new_run: 'Yeni Oyun',
         // Paylaşım
-        share_result: 'Skorumu Paylaş',
+        share_result: 'Sonucu Paylaş',
         share_invite: 'Davet Linki',
         share_copied: 'Kopyalandı!',
-        share_caption_solo: '⚽ Careerdle\'de {correct}/{total} doğru, rekor seri: {streak}. Sen de dene:',
+        share_caption_run: '⚽ Careerdle\'de {total} futbolcu bildim, en yüksek serim {streak}! Sen de dene:',
         share_caption_multi: '⚽ Careerdle\'de {score} puanla {place}. oldum! Sen de dene:',
         // Cold-start
         waking_up: 'Sunucu uyanıyor (ilk açılışta ~30sn)...',
@@ -366,11 +369,14 @@ const LANGS = {
         solo_total_correct: 'Total correct',
         solo_streak: 'Streak',
         solo_new_record: 'New record!',
+        run_max_streak: 'Best streak',
+        game_over_missed: 'The player you missed',
+        new_run: 'New Game',
         // Share
-        share_result: 'Share Score',
+        share_result: 'Share Result',
         share_invite: 'Invite Link',
         share_copied: 'Copied!',
-        share_caption_solo: '⚽ Got {correct}/{total} on Careerdle, best streak: {streak}. Try it:',
+        share_caption_run: '⚽ Guessed {total} players on Careerdle, best streak {streak}! Try it:',
         share_caption_multi: '⚽ Finished #{place} with {score} points on Careerdle! Try it:',
         // Cold-start
         waking_up: 'Waking up server (first load ~30s)...',
