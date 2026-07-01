@@ -328,9 +328,7 @@ function setupQuizSearch() {
         if (!e.target.closest('.quiz-search-wrapper')) quizDropdown.classList.remove('show');
     });
 
-    quizInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') submitGuess();
-    });
+    attachSearchKeys(quizInput, quizDropdown, submitGuess);
 }
 
 function submitGuess() {

@@ -275,7 +275,7 @@ function setupClassicSearch() {
         }, 250);
     });
 
-    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitClassic(); });
+    attachSearchKeys(input, dropdown, submitClassic);
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.quiz-search-wrapper')) dropdown.classList.remove('show');
     }, { once: true });

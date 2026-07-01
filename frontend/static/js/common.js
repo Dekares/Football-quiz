@@ -547,6 +547,34 @@ function showToast(msg, kind) {
     }, 2200);
 }
 
+// ===== Arama dropdown'unda klavye gezinme (ok tuşları + Enter) =====
+// Tüm arama kutularında ortak. Her `.dropdown-player` zaten "seç + gönder" yapan bir
+// click handler'ına sahip → Enter'da highlight'lı öğeyi .click()'liyoruz.
+// onEnter: hiçbir öğe seçili değilken Enter'a basılınca çağrılır (elle yazıp gönderme).
+function attachSearchKeys(input, dropdown, onEnter) {
+    input.addEventListener('keydown', (e) => {
+        const items = dropdown.classList.contains('show')
+            ? [...dropdown.querySelectorAll('.dropdown-player')] : [];
+        const idx = items.findIndex(el => el.classList.contains('kbd-active'));
+        if (e.key === 'ArrowDown' && items.length) {
+            e.preventDefault();
+            highlightItem(items, (idx + 1) % items.length);
+        } else if (e.key === 'ArrowUp' && items.length) {
+            e.preventDefault();
+            highlightItem(items, (idx <= 0 ? items.length : idx) - 1);
+        } else if (e.key === 'Enter') {
+            if (idx >= 0 && items[idx]) { e.preventDefault(); items[idx].click(); }
+            else if (onEnter) onEnter();
+        } else if (e.key === 'Escape') {
+            dropdown.classList.remove('show');
+        }
+    });
+}
+function highlightItem(items, idx) {
+    items.forEach((el, i) => el.classList.toggle('kbd-active', i === idx));
+    items[idx]?.scrollIntoView({ block: 'nearest' });
+}
+
 // ===== Clipboard + share =====
 async function copyText(text) {
     try {

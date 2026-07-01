@@ -670,7 +670,7 @@ function setupFreeSearch() {
         }, 250);
     });
 
-    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitFreeAnswer(); });
+    attachSearchKeys(input, dropdown, submitFreeAnswer);
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.quiz-search-wrapper')) dropdown.classList.remove('show');
     }, { once: true });
@@ -822,6 +822,7 @@ function setupClubPickSearch() {
             } catch (_) { /* sessiz */ }
         }, 250);
     });
+    attachSearchKeys(input, dropdown);
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.quiz-search-wrapper')) dropdown.classList.remove('show');
     }, { once: true });

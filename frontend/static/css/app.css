@@ -541,7 +541,8 @@ h1 {
 }
 
 .dropdown-player { display: flex; align-items: center; gap: 0.7rem; padding: 0.55rem 0.8rem; cursor: pointer; transition: background 0.18s; }
-.dropdown-player:hover { background: rgba(31, 191, 134, 0.16); }
+.dropdown-player:hover,
+.dropdown-player.kbd-active { background: rgba(31, 191, 134, 0.16); }
 .dropdown-player img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: var(--surface); border: 1px solid var(--border); }
 .dropdown-player .dp-info { flex: 1; min-width: 0; }
 .dropdown-player .dp-name { font-size: 0.92rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
