@@ -102,6 +102,23 @@ def create_app() -> FastAPI:
                 headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
             )
 
+        def _serve_page(request: Request, filename: str) -> HTMLResponse:
+            html = (static_dir / filename).read_text(encoding="utf-8")
+            html = html.replace("{{BASE_URL}}", _public_base_url(request))
+            return HTMLResponse(html, headers={"Cache-Control": "no-cache"})
+
+        @app.get("/privacy", include_in_schema=False)
+        async def privacy(request: Request) -> HTMLResponse:
+            return _serve_page(request, "privacy.html")
+
+        @app.get("/about", include_in_schema=False)
+        async def about(request: Request) -> HTMLResponse:
+            return _serve_page(request, "about.html")
+
+        @app.get("/contact", include_in_schema=False)
+        async def contact(request: Request) -> HTMLResponse:
+            return _serve_page(request, "contact.html")
+
         @app.get("/robots.txt", include_in_schema=False)
         async def robots(request: Request) -> PlainTextResponse:
             base = _public_base_url(request)
@@ -125,6 +142,9 @@ def create_app() -> FastAPI:
                 "    <changefreq>daily</changefreq>\n"
                 "    <priority>1.0</priority>\n"
                 "  </url>\n"
+                f"  <url><loc>{base}/about</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>\n"
+                f"  <url><loc>{base}/contact</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>\n"
+                f"  <url><loc>{base}/privacy</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>\n"
                 "</urlset>\n"
             )
             return Response(

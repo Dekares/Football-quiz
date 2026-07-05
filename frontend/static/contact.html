@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#070b14">
+    <title>İletişim — Careerdle</title>
+    <meta name="description" content="Careerdle ile iletişime geç: öneri, hata bildirimi, futbolcu/kulüp verisi düzeltmesi veya iş birliği için bize yaz.">
+    <link rel="canonical" href="{{BASE_URL}}/contact">
+    <meta name="robots" content="index, follow">
+    <link rel="stylesheet" href="/static/css/app.css">
+    <link rel="icon" type="image/png" href="/static/img/icon.png">
+</head>
+<body>
+    <nav>
+        <a class="brand" href="/">
+            <img class="brand-mark" src="/static/img/logo.png" alt="Careerdle">
+            <span class="brand-name"><span class="bn-white">Career</span><span class="bn-green">dle</span></span>
+        </a>
+        <div class="nav-right">
+            <button class="lang-toggle" onclick="toggleDocLang()">EN</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- ===== TÜRKÇE ===== -->
+        <article class="legal" data-lang="tr">
+            <a class="back-link" href="/">&larr; Ana sayfa</a>
+            <h1>İletişim</h1>
+
+            <p>Careerdle'ı sen oynadıkça geliştiriyoruz. Aklına takılan bir şey mi var, bir
+            hata mı fark ettin, yoksa bir futbolcunun kariyeri eksik ya da yanlış mı görünüyor?
+            Bize ulaşman yeterli — geri bildirimlerin oyunu daha iyi hâle getirmemize yardımcı
+            oluyor.</p>
+
+            <h2>E-posta</h2>
+            <p>En hızlı yol e-posta. Aşağıdaki adrese yazabilir ya da kopyalayabilirsin:</p>
+            <p class="contact-email"><a href="mailto:emoaslan23@gmail.com">emoaslan23@gmail.com</a></p>
+
+            <h2>Ne için yazabilirsin?</h2>
+            <ul>
+                <li><strong>Hata bildirimi:</strong> oyunda bir şey bozuk mu çalışıyor?</li>
+                <li><strong>Veri düzeltmesi:</strong> bir futbolcunun kulüpleri, mevkisi veya
+                milliyeti hatalı mı görünüyor?</li>
+                <li><strong>Öneri:</strong> görmek istediğin yeni bir mod veya özellik.</li>
+                <li><strong>İş birliği:</strong> reklam, içerik veya proje teklifleri.</li>
+            </ul>
+
+            <p>Yazarken mümkün olduğunca ayrıntı (ekran görüntüsü, hangi mod, hangi oyuncu)
+            eklersen daha hızlı yardımcı olabiliriz. Genellikle birkaç gün içinde dönüş yaparız.</p>
+        </article>
+
+        <!-- ===== ENGLISH ===== -->
+        <article class="legal" data-lang="en" hidden>
+            <a class="back-link" href="/">&larr; Home</a>
+            <h1>Contact</h1>
+
+            <p>We improve Careerdle as you play it. Got a question, spotted a bug, or does a
+            player's career look incomplete or wrong? Just reach out — your feedback helps us
+            make the game better.</p>
+
+            <h2>Email</h2>
+            <p>Email is the fastest way. Write to or copy the address below:</p>
+            <p class="contact-email"><a href="mailto:emoaslan23@gmail.com">emoaslan23@gmail.com</a></p>
+
+            <h2>What to write about</h2>
+            <ul>
+                <li><strong>Bug reports:</strong> something not working right in the game?</li>
+                <li><strong>Data fixes:</strong> a player's clubs, position or nationality looks
+                incorrect?</li>
+                <li><strong>Suggestions:</strong> a new mode or feature you'd like to see.</li>
+                <li><strong>Collaboration:</strong> advertising, content or project proposals.</li>
+            </ul>
+
+            <p>The more detail you add (a screenshot, which mode, which player), the faster we can
+            help. We usually reply within a few days.</p>
+        </article>
+    </div>
+
+    <footer class="site-footer">
+        <a href="/about" data-lang="tr">Hakkında</a><a href="/about" data-lang="en" hidden>About</a>
+        <a href="/privacy" data-lang="tr">Gizlilik</a><a href="/privacy" data-lang="en" hidden>Privacy</a>
+        <a href="/contact" data-lang="tr">İletişim</a><a href="/contact" data-lang="en" hidden>Contact</a>
+        <span class="foot-copy">© 2026 Careerdle</span>
+    </footer>
+
+    <script>
+        function applyDocLang(l) {
+            document.documentElement.lang = l;
+            document.querySelectorAll('[data-lang]').forEach(el => { el.hidden = el.dataset.lang !== l; });
+            const b = document.querySelector('.lang-toggle');
+            if (b) b.textContent = l === 'tr' ? 'EN' : 'TR';
+        }
+        function toggleDocLang() {
+            const l = (localStorage.getItem('lang') || 'tr') === 'tr' ? 'en' : 'tr';
+            localStorage.setItem('lang', l);
+            applyDocLang(l);
+        }
+        applyDocLang(localStorage.getItem('lang') || 'tr');
+    </script>
+</body>
+</html>
