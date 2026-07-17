@@ -15,7 +15,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-DB = Path(__file__).resolve().parent.parent / "data" / "football_quiz.db"
+DB = Path(__file__).resolve().parent.parent / "data" / "football_quiz_v2.db"
 PORT = 8777
 
 

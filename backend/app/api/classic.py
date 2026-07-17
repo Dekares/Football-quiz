@@ -4,37 +4,23 @@ Gizli bir futbolcu var; oyuncu doğrudan isim yazar. Her tahminde tahmin edilen
 oyuncunun özellikleri gizli oyuncununkilerle kıyaslanır: 🟩 aynı / 🟥 farklı,
 sayısallarda (yaş, değer) ek olarak ↑↓ yön. Doğru oyuncuda biter.
 
-Yalnız **aktif** (güncel market değeri olan) tanınmış oyuncular havuza girer.
-Stateless: gizli oyuncu tarihten (TR saati) deterministik seçilir → herkese aynı.
+Gizli oyuncu publish sırasında global "bilindik" havuzundan kalıcı takvime yazılır.
+Bugünün kaydı Türkiye tarihine göre okunur → herkese aynı ve build'ler arasında sabit.
 Sunucuda durum yok; ilerleme/seri ve 8 tahmin hakkı istemcide (localStorage)
 yönetilir. Cevap oyun sırasında sızmaz; oyun bitince /classic/reveal ile açılır.
 """
 from __future__ import annotations
 
 import sqlite3
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime
 from typing import Any
 
 from fastapi import APIRouter, Query, Response
 
+from ..daily import daily_number, daily_today
 from ..db import query
 
 router = APIRouter(prefix="/api", tags=["classic"])
-
-_TZ = timezone(timedelta(hours=3))          # TR saati (UTC+3, DST yok)
-_EPOCH = date(2024, 1, 1)
-
-# GİZLİ oyuncu havuzu: aktif + tanınmış. Tanınırlık ölçütü ZİRVE değer
-# (highest_market_value) — güncel değer yaşlı ünlüleri (Suárez/Isco/Modrić) kaçırır.
-# Arama evreni daha geniştir (tüm aktif oyuncular; bkz. search.ACTIVE_PREDICATE).
-_PEAK_THRESHOLD = 80_000_000
-_POOL = (
-    f"market_value IS NOT NULL AND market_value > 0 AND highest_market_value >= {_PEAK_THRESHOLD} "
-    "AND is_legend = 0 "                # emekli efsaneler bayat bir güncel değer taşıyabilir → ele
-    "AND position IN ('Attack', 'Midfield', 'Defender', 'Goalkeeper') "
-    "AND country_of_citizenship IS NOT NULL AND country_of_citizenship != '' "
-    "AND EXISTS (SELECT 1 FROM player_clubs pc WHERE pc.player_id = players.player_id)"
-)
 
 # "Kısmen" (🟨) eşleşmeleri için kıta / konfederasyon haritaları.
 _CONTINENT = {
@@ -65,19 +51,15 @@ _LEAGUE_CONF = {
     "JAP1": "AS", "SA1": "AS", "RSK1": "AS", "AUS1": "AS",
 }
 
-_secret_cache: dict[int, dict[str, Any]] = {}
+_secret_cache: dict[str, dict[str, Any]] = {}
 
 
 def _today() -> date:
-    return datetime.now(_TZ).date()
+    return daily_today()
 
 
 def _day_number(d: date | None = None) -> int:
-    return ((d or _today()) - _EPOCH).days
-
-
-def _scatter(day: int, n: int) -> int:
-    return (day * 2654435761) % n
+    return daily_number(d or _today())
 
 
 def _age(dob: str | None) -> int | None:
@@ -128,24 +110,37 @@ def _player_facts(conn: sqlite3.Connection, player_id: int) -> dict[str, Any] | 
     }
 
 
-def _select_secret(conn: sqlite3.Connection, day: int) -> dict[str, Any] | None:
-    ids = [r[0] for r in conn.execute(
-        f"SELECT player_id FROM players WHERE {_POOL} ORDER BY player_id"
-    )]
-    if not ids:
+def _select_secret(
+    conn: sqlite3.Connection,
+    challenge_date: str,
+) -> dict[str, Any] | None:
+    challenge = conn.execute(
+        """
+        SELECT challenge_date, day_number, player_id
+        FROM daily_challenges
+        WHERE challenge_date = ?
+        """,
+        (challenge_date,),
+    ).fetchone()
+    if not challenge:
         return None
-    return _player_facts(conn, ids[_scatter(day, len(ids))])
+    facts = _player_facts(conn, int(challenge["player_id"]))
+    if not facts:
+        return None
+    facts["challenge_date"] = challenge["challenge_date"]
+    facts["day_number"] = int(challenge["day_number"])
+    return facts
 
 
-async def _get_secret(day: int) -> dict[str, Any] | None:
-    if day not in _secret_cache:
-        secret = await query(lambda c: _select_secret(c, day))
+async def _get_secret(challenge_date: str) -> dict[str, Any] | None:
+    if challenge_date not in _secret_cache:
+        secret = await query(lambda c: _select_secret(c, challenge_date))
         if not secret:
             return None
-        _secret_cache[day] = secret
-        for stale in [k for k in _secret_cache if k < day - 2]:
+        _secret_cache[challenge_date] = secret
+        for stale in sorted(_secret_cache)[:-3]:
             del _secret_cache[stale]
-    return _secret_cache[day]
+    return _secret_cache[challenge_date]
 
 
 def _cat(value: Any, hit: bool, partial: bool = False) -> dict[str, Any]:
@@ -201,19 +196,20 @@ _NO_STORE = "no-store"
 async def classic(response: Response) -> dict[str, Any]:
     """Bugünün meta'sı (gizli oyuncu GÖNDERİLMEZ)."""
     response.headers["Cache-Control"] = _NO_STORE
-    day = _day_number()
-    secret = await _get_secret(day)
+    secret = await _get_secret(_today().isoformat())
     if not secret:
         return {"error": "unavailable"}
-    return {"day": day, "date": _today().isoformat()}
+    return {
+        "day": secret["day_number"],
+        "date": secret["challenge_date"],
+    }
 
 
 @router.get("/classic/guess")
 async def classic_guess(response: Response, player_id: int = Query(..., ge=1)) -> dict[str, Any]:
     """Bir tahminin özellik kıyası. Doğruysa correct=true (kazanan tahmin reveal'dır)."""
     response.headers["Cache-Control"] = _NO_STORE
-    day = _day_number()
-    secret = await _get_secret(day)
+    secret = await _get_secret(_today().isoformat())
     if not secret:
         return {"error": "unavailable"}
     facts = await query(lambda c: _player_facts(c, player_id))
@@ -234,8 +230,7 @@ async def classic_guess(response: Response, player_id: int = Query(..., ge=1)) -
 async def classic_reveal(response: Response) -> dict[str, Any]:
     """Bugünün gizli oyuncusunu açar — istemci yalnız oyun BİTİNCE çağırır."""
     response.headers["Cache-Control"] = _NO_STORE
-    day = _day_number()
-    secret = await _get_secret(day)
+    secret = await _get_secret(_today().isoformat())
     if not secret:
         return {"error": "unavailable"}
     return {

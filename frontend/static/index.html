@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#070b14">
+    <meta name="theme-color" content="#f3efe6">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="google-adsense-account" content="ca-pub-5823826038472901">
+
+    <!-- Tema: flash önlemek için CSS'ten önce data-theme'i ata -->
+    <script>(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
+    <script src="/static/js/privacy-consent.js"></script>
 
     <!-- Google AdSense (Auto Ads — mobil/masaüstü responsive) -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5823826038472901"
@@ -12,10 +18,8 @@
     <!-- Google Analytics (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z9DQBC8GYW"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-Z9DQBC8GYW');
+      gtag('config', 'G-Z9DQBC8GYW', { anonymize_ip: true });
     </script>
 
     <title>Careerdle — Futbolcuyu Kariyerinden Tahmin Et | Günlük, Solo & Düello</title>
@@ -29,7 +33,7 @@
     <meta property="og:title" content="Careerdle — Futbolcuyu Kariyerinden Tahmin Et">
     <meta property="og:description" content="Kariyer geçmişine bakarak gizemli futbolcuyu bul. Günün Futbolcusu, solo tahmin ve canlı çok oyunculu düello. Ücretsiz, üyeliksiz.">
     <meta property="og:url" content="{{BASE_URL}}/">
-    <meta property="og:image" content="{{BASE_URL}}/static/img/icon.png">
+    <meta property="og:image" content="{{BASE_URL}}/static/img/logo-koyu.png">
     <meta property="og:image:alt" content="Careerdle — futbolcu tahmin oyunu">
     <meta property="og:locale" content="tr_TR">
     <meta property="og:locale:alternate" content="en_US">
@@ -38,13 +42,17 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Careerdle — Futbolcuyu Kariyerinden Tahmin Et">
     <meta name="twitter:description" content="Kariyer geçmişine bakarak gizemli futbolcuyu bul. Solo ya da arkadaşlarınla canlı yarış.">
-    <meta name="twitter:image" content="{{BASE_URL}}/static/img/icon.png">
+    <meta name="twitter:image" content="{{BASE_URL}}/static/img/logo-koyu.png">
     <meta name="twitter:image:alt" content="Careerdle — futbolcu tahmin oyunu">
 
     <link rel="preconnect" href="https://flagcdn.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/app.css">
-    <link rel="icon" type="image/png" href="/static/img/icon.png">
-    <link rel="apple-touch-icon" href="/static/img/icon.png">
+    <link rel="icon" type="image/png" href="/static/img/logo-koyu.png" media="(prefers-color-scheme: light)">
+    <link rel="icon" type="image/png" href="/static/img/logo.png" media="(prefers-color-scheme: dark)">
+    <link rel="apple-touch-icon" href="/static/img/logo-koyu.png">
 
     <!-- Yapısal veri (Google Rich Results) -->
     <script type="application/ld+json">
@@ -56,6 +64,7 @@
                 "@id": "{{BASE_URL}}/#website",
                 "url": "{{BASE_URL}}/",
                 "name": "Careerdle",
+                "image": "{{BASE_URL}}/static/img/logo-koyu.png",
                 "description": "Kariyer ve transfer geçmişine bakarak gizemli futbolcuyu tahmin etme oyunu.",
                 "inLanguage": ["tr", "en"]
             },
@@ -77,36 +86,8 @@
     </script>
 </head>
 <body>
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-
-    <nav>
-        <a class="brand" onclick="navigate('#/')">
-            <img class="brand-mark" src="/static/img/logo.png" alt="Careerdle">
-            <span class="brand-name"><span class="bn-white">Career</span><span class="bn-green">dle</span></span>
-        </a>
-
-        <div class="nav-links">
-            <button data-nav-route="menu" onclick="navigate('#/')">
-                <span class="nav-ico">&#9750;</span><span data-i18n="nav_menu">Günlük Tahmin</span>
-            </button>
-            <button data-nav-route="solo" onclick="navigate('#/solo')">
-                <span class="nav-ico">&#9679;</span><span data-i18n="menu_solo_title">Futbolcu Tahmin</span>
-            </button>
-            <button data-nav-route="multi" onclick="navigate('#/multi')">
-                <span class="nav-ico">&#9783;</span><span data-i18n="nav_multi">Düello</span>
-            </button>
-            <button data-nav-route="duel" onclick="navigate('#/duel')">
-                <span class="nav-ico">&#9876;</span><span data-i18n="nav_duel">Harman 1v1</span>
-            </button>
-        </div>
-
-        <div class="nav-right">
-            <button class="lang-toggle" onclick="toggleLang()">EN</button>
-        </div>
-    </nav>
-
-    <div class="container">
+    {{SITE_HEADER}}
+<div class="container">
 
         <noscript>
             <h1>Careerdle — Futbolcuyu Kariyerinden Tahmin Et</h1>
@@ -125,9 +106,34 @@
                 <h1 data-i18n="seo_h1">Careerdle — Futbolcuyu kariyerinden tahmin et</h1>
                 <p data-i18n="seo_intro">Her gün yeni "Günün Futbolcusu" bulmacası, kariyer ve transfer geçmişine dayalı solo futbolcu tahmin oyunu ve arkadaşlarınla 2-6 kişilik canlı düello. Ücretsiz, üyeliksiz.</p>
             </header>
-            <!-- Günün Futbolcusu (LoLdle tarzı günlük tahmin oyunu) -->
-            <div id="classic-card" class="daily-card">
-                <div class="daily-loading"><div class="spinner"></div></div>
+            <!-- Günün Futbolcusu — mockup 2-kolon editoryal düzen -->
+            <div class="daily-layout">
+                <div class="daily-main">
+                    <div id="classic-card" class="daily-card">
+                        <div class="daily-loading"><div class="spinner"></div></div>
+                    </div>
+                </div>
+
+                <aside class="daily-side">
+                    <section class="side-card" id="daily-stats-card">
+                        <div id="daily-stats"></div>
+                    </section>
+
+                    <section class="side-card how-card">
+                        <h3 class="kicker" data-i18n="how_title">Nasıl oynanır</h3>
+                        <ol class="how-steps">
+                            <li><span class="how-no">1</span><span data-i18n="how_1">Gizli bir futbolcu seçilir; herkes için aynıdır.</span></li>
+                            <li><span class="how-no">2</span><span data-i18n="how_2">Bir oyuncu adı yaz — her tahmin, milliyet, mevki, yaş, değer, kulüp ve ligi gizli oyuncuyla kıyaslar.</span></li>
+                            <li><span class="how-no">3</span><span data-i18n="how_3">🟩 aynı, 🟨 yakın, 🟥 alakasız. Sekiz hakta bul, serini koru.</span></li>
+                        </ol>
+                    </section>
+
+                    <section class="cta-card">
+                        <p class="kicker" data-i18n="cta_eyebrow">Günlük ritüel</p>
+                        <p class="cta-title" data-i18n="cta_title">Bir oyuncu. Sekiz tahmin. Her gün.</p>
+                        <p class="cta-sub" data-i18n="cta_sub">Careerdle'ı yer imlerine ekle ve yarın geri dön — seri sayacı sadık kalanı ödüllendirir.</p>
+                    </section>
+                </aside>
             </div>
         </section>
 
@@ -146,15 +152,59 @@
                     <div class="mystery-figure" aria-hidden="true">?</div>
                 </div>
 
-                <div class="difficulty-selector">
-                    <button class="active" onclick="setDifficulty('easy', this)" data-i18n="easy">Kolay</button>
-                    <button onclick="setDifficulty('medium', this)" data-i18n="medium">Orta</button>
-                    <button onclick="setDifficulty('hard', this)" data-i18n="hard">Zor</button>
+                <section class="solo-setup" id="solo-setup">
+                    <div class="solo-setup-label">
+                        <span class="kicker" data-i18n="solo_setup_kicker">Kariyer modu</span>
+                        <span data-i18n="solo_setup_note">Lig ve oyuncu havuzunu belirle</span>
+                    </div>
+                    <div class="solo-control-bar">
+                        <label class="solo-control-group league-control" for="solo-league-select">
+                            <span data-i18n="solo_league_label">Lig</span>
+                            <select id="solo-league-select" onchange="setQuizLeague(this.value)"
+                                    aria-label="Lig seç">
+                                <option value="ALL" data-i18n="loading">Yükleniyor...</option>
+                            </select>
+                        </label>
+                        <div class="solo-control-group pool-control">
+                            <span data-i18n="solo_recognition_label">Oyuncu havuzu</span>
+                            <div class="recognition-selector" id="recognition-selector">
+                                <button class="active" type="button" data-recognition="known"
+                                        onclick="setRecognition('known', this)">
+                                    <span data-i18n="known">Bilindik</span>
+                                    <small id="recognition-count-known">0</small>
+                                </button>
+                                <button type="button" data-recognition="less_known"
+                                        onclick="setRecognition('less_known', this)">
+                                    <span data-i18n="less_known">Az Bilindik</span>
+                                    <small id="recognition-count-less_known">0</small>
+                                </button>
+                                <button type="button" data-recognition="obscure"
+                                        onclick="setRecognition('obscure', this)">
+                                    <span data-i18n="obscure">Bilinmedik</span>
+                                    <small id="recognition-count-obscure">0</small>
+                                </button>
+                            </div>
+                        </div>
+                        <button class="solo-start-btn" id="solo-start-btn"
+                                type="button" onclick="startSelectedRun()" disabled>
+                            <span data-i18n="solo_start">Başlat</span>
+                            <span aria-hidden="true">&rarr;</span>
+                        </button>
+                    </div>
+                </section>
+
+                <div class="solo-active-filter" id="solo-active-filter" hidden>
+                    <div>
+                        <span class="kicker" data-i18n="solo_active_pool">Aktif havuz</span>
+                        <strong id="solo-active-filter-name">&mdash;</strong>
+                    </div>
+                    <button class="action-btn" type="button" onclick="changeSoloSelection()">
+                        <span data-i18n="solo_change_pool">Seçimi Değiştir</span>
+                    </button>
                 </div>
 
                 <div class="solo-stats">
                     <div class="stat-card">
-                        <div class="stat-ico streak">&#128293;</div>
                         <div class="stat-meta">
                             <span class="stat-label" data-i18n="solo_streak">Seri</span>
                             <span class="stat-value" id="stat-streak">0</span>
@@ -162,7 +212,6 @@
                         </div>
                     </div>
                     <div class="stat-card record">
-                        <div class="stat-ico">&#127942;</div>
                         <div class="stat-meta">
                             <span class="stat-label" data-i18n="solo_record">Rekor</span>
                             <span class="stat-value" id="stat-best">0</span>
@@ -170,7 +219,6 @@
                         </div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-ico">&#127919;</div>
                         <div class="stat-meta">
                             <span class="stat-label" data-i18n="solo_total_correct">Toplam doğru</span>
                             <span class="stat-value" id="stat-total">0</span>
@@ -181,8 +229,7 @@
 
                 <div id="quiz-area">
                     <div class="empty-state">
-                        <div class="icon">&#9917;</div>
-                        <span data-i18n="start_prompt">Başlamak için Yeni Tur'a bas</span>
+                        <span data-i18n="start_prompt">Ligini ve oyuncu havuzunu seç</span>
                     </div>
                 </div>
 
@@ -199,17 +246,14 @@
                 </div>
 
                 <div class="action-row">
-                    <button class="action-btn" id="hint-btn" onclick="useHint()">
-                        <span class="action-ico">&#128161;</span>
+                    <button class="action-btn" id="hint-btn" onclick="useHint()" disabled>
                         <span data-i18n="hint">İpucu</span>
                         <span class="action-badge" id="hint-count">3</span>
                     </button>
-                    <button class="action-btn" id="skip-btn" onclick="passQuiz()">
-                        <span class="action-ico">&#9197;</span>
+                    <button class="action-btn" id="skip-btn" onclick="passQuiz()" disabled>
                         <span data-i18n="skip">Atla</span>
                     </button>
                     <button class="action-btn" id="newround-btn" onclick="newRound()">
-                        <span class="action-ico">&#8635;</span>
                         <span data-i18n="new_round">Yeni Tur</span>
                     </button>
                 </div>
@@ -217,12 +261,12 @@
 
             <aside class="dash-side">
                 <div class="side-card">
-                    <div class="side-card-head"><span class="side-ico">&#128338;</span><span data-i18n="recent_guesses">Son Tahminler</span></div>
+                    <div class="side-card-head"><span data-i18n="recent_guesses">Son Tahminler</span></div>
                     <div id="recent-guesses" class="recent-list"></div>
                 </div>
 
                 <div class="side-card">
-                    <div class="side-card-head"><span class="side-ico">&#9733;</span><span data-i18n="quick_tips">İpuçları</span></div>
+                    <div class="side-card-head"><span data-i18n="quick_tips">İpuçları</span></div>
                     <ul class="tips-list">
                         <li data-i18n="tip_1">Mevki ve milliyet en güçlü ilk ipuçların.</li>
                         <li data-i18n="tip_2">Kariyer sırası önemli — ilk kulüp en üstte.</li>
@@ -232,104 +276,132 @@
                 </div>
             </aside>
         </section>
-
-        <!-- ===== MULTIPLAYER GİRİŞ ===== -->
-        <section class="page multi-page" data-route="multi">
-            <a class="back-link" onclick="navigate('#/')" data-i18n="multi_back">&larr; Geri</a>
-            <h1 data-i18n="multi_title">Düello</h1>
-            <p class="subtitle" data-i18n="multi_subtitle">Arkadaşlarınla gerçek zamanlı yarış</p>
-
-            <div id="multi-entry">
-                <!-- JS yüklenene kadar iskelet göster (kırık izlenim olmasın) -->
-                <div class="main-menu">
-                    <div class="menu-card skeleton">
-                        <div class="skeleton-icon"></div>
-                        <div class="menu-body">
-                            <div class="skeleton-line w60"></div>
-                            <div class="skeleton-line w80"></div>
-                        </div>
-                    </div>
-                    <div class="menu-card skeleton">
-                        <div class="skeleton-icon"></div>
-                        <div class="menu-body">
-                            <div class="skeleton-line w60"></div>
-                            <div class="skeleton-line w80"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ===== DÜELLO GİRİŞ ===== -->
-        <section class="page duel-page" data-route="duel">
-            <a class="back-link" onclick="navigate('#/')" data-i18n="multi_back">&larr; Geri</a>
-            <h1 data-i18n="duel_title">Harman 1v1</h1>
-            <p class="subtitle" data-i18n="duel_subtitle">İki takım seçilir, ortak oyuncuyu ilk söyleyen puanı kapar</p>
-
-            <div class="duel-rules">
-                <div class="duel-rule">
-                    <span class="duel-rule-no">1</span>
-                    <span data-i18n="duel_rule_1">İki oyuncu sırayla birer takım seçer.</span>
-                </div>
-                <div class="duel-rule">
-                    <span class="duel-rule-no">2</span>
-                    <span data-i18n="duel_rule_2">Herkes iki takımda da oynamış bir futbolcuyu yazmaya yarışır.</span>
-                </div>
-                <div class="duel-rule">
-                    <span class="duel-rule-no">3</span>
-                    <span data-i18n="duel_rule_3">İlk doğru cevap +1 puan; hedefe ulaşan kazanır.</span>
-                </div>
-            </div>
-
-            <div id="duel-entry">
-                <div class="main-menu">
-                    <div class="menu-card skeleton">
-                        <div class="skeleton-icon"></div>
-                        <div class="menu-body">
-                            <div class="skeleton-line w60"></div>
-                            <div class="skeleton-line w80"></div>
-                        </div>
-                    </div>
-                    <div class="menu-card skeleton">
-                        <div class="skeleton-icon"></div>
-                        <div class="menu-body">
-                            <div class="skeleton-line w60"></div>
-                            <div class="skeleton-line w80"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ===== LOBBY ===== -->
-        <section class="page" data-route="lobby">
-            <a class="back-link" onclick="navigate('#/multi')" data-i18n="multi_back">&larr; Geri</a>
-            <div id="lobby-view"></div>
-        </section>
-
-        <!-- ===== GAME ===== -->
-        <section class="page" data-route="game">
-            <div id="game-view"></div>
-        </section>
-
-        <!-- ===== GAME OVER ===== -->
-        <section class="page" data-route="gameover">
-            <div id="gameover-view"></div>
-        </section>
     </div>
 
-    <footer class="site-footer">
-        <a href="/about" data-i18n="nav_about">Hakkında</a>
-        <a href="/privacy" data-i18n="nav_privacy">Gizlilik</a>
-        <a href="/contact" data-i18n="nav_contact">İletişim</a>
-        <span class="foot-copy">© 2026 Careerdle</span>
-    </footer>
+    <section class="editorial-content" aria-labelledby="editorial-title">
+        <div class="editorial-inner" data-lang="tr">
+            <header class="editorial-lead">
+                <p class="kicker">Oyunun arkasındaki futbol hafızası</p>
+                <h2 id="editorial-title">Bir tahmin oyunundan daha fazlası</h2>
+                <p>Careerdle, yalnızca rastgele futbolcu isimleri soran bir test değildir.
+                Oyuncuların kulüp değişimlerini, kariyer sırasını, mevkilerini ve futbol
+                coğrafyasını anlamayı gerektiren günlük bir futbol bulmacasıdır. Her turda
+                verilen bilgiler, gerçek kariyer kayıtlarından türetilir ve aynı oyuncunun
+                farklı dönemlerdeki yolculuğunu okunabilir bir zaman çizelgesine dönüştürür.</p>
+            </header>
 
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+            <div class="editorial-grid">
+                <article>
+                    <h3>Hangi ligler kapsanıyor?</h3>
+                    <p>Premier Lig, LaLiga, Serie A, Bundesliga ve Ligue 1'in yanında Türkiye,
+                    Portekiz, Hollanda, Belçika ve İskoçya ligleri; ayrıca MLS ve Suudi Pro Ligi
+                    güncel kadroları izlenir. Aktif kadrolar düzenli yenilenir, oyuncuların eski
+                    kulüpleri ise kariyer sorularının tarihsel bağlamını oluşturmak için korunur.</p>
+                </article>
+                <article>
+                    <h3>Sorular nasıl hazırlanıyor?</h3>
+                    <p>Veri doğrudan oyuna aktarılmaz. Önce oyuncu, kulüp, transfer ve piyasa
+                    değeri kayıtları normalize edilir; geçersiz tarihler ve kimlik çakışmaları
+                    kontrol edilir. Kolay, orta ve zor havuzlar oyuncunun bilinirliği, kariyer
+                    çeşitliliği ve kulüp bağlantılarına göre ayrı ayrı oluşturulur.</p>
+                </article>
+                <article>
+                    <h3>Neden bazı kariyerler farklı görünebilir?</h3>
+                    <p>Kiralık dönemler, altyapı takımları, serbest kalma aralıkları ve aynı
+                    kulübe geri dönüşler futbol kariyerlerini karmaşıklaştırabilir. Careerdle
+                    tarihleri mümkün olduğunca kaynak veriye sadık biçimde gösterir; şüpheli veya
+                    eksik bir kayıt görürsen iletişim sayfasından düzeltme gönderebilirsin.</p>
+                </article>
+            </div>
+
+            <div class="editorial-faq">
+                <h3>Sık sorulanlar</h3>
+                <details>
+                    <summary>Günün Futbolcusu herkes için aynı mı?</summary>
+                    <p>Evet. Gizli oyuncu gün ve tarihe göre belirlenir; aynı gün oyunu açan
+                    herkes aynı cevabı arar. Sonuçlar sunucuda hesaplanır, seri ve kişisel oyun
+                    istatistikleri ise tarayıcında saklanır.</p>
+                </details>
+                <details>
+                    <summary>Careerdle ücretli mi veya üyelik istiyor mu?</summary>
+                    <p>Hayır. Oynamak için hesap açman, e-posta vermen veya ödeme yapman gerekmez.
+                    Site reklam desteğiyle ücretsiz tutulmak üzere tasarlanmıştır.</p>
+                </details>
+                <details>
+                    <summary>Veri hatası nasıl bildirilir?</summary>
+                    <p>Oyuncu adı, eksik görünen kulüp ve mümkünse doğru tarih bilgisiyle
+                    <a href="/contact">iletişim sayfasından</a> yazabilirsin. Bildirimler kaynak
+                    kayıtlarla karşılaştırılarak sonraki veri yayınında düzeltilir.</p>
+                </details>
+            </div>
+
+            <p class="editorial-more">
+                Veri toplama, doğrulama ve güncelleme yaklaşımının ayrıntıları için
+                <a href="/methodology">Veri Metodolojisi</a> sayfasını incele.
+            </p>
+        </div>
+
+        <div class="editorial-inner" data-lang="en" hidden>
+            <header class="editorial-lead">
+                <p class="kicker">The football memory behind the game</p>
+                <h2>More than a name guessing game</h2>
+                <p>Careerdle is not a random list of football trivia. Each puzzle asks you to
+                understand club changes, career order, positions and football geography. The
+                clues are derived from real career records and turned into a readable timeline
+                covering different stages of the same player's journey.</p>
+            </header>
+            <div class="editorial-grid">
+                <article>
+                    <h3>Which leagues are covered?</h3>
+                    <p>Alongside the Premier League, LaLiga, Serie A, Bundesliga and Ligue 1,
+                    current squads are tracked in Turkey, Portugal, the Netherlands, Belgium and
+                    Scotland, as well as MLS and the Saudi Pro League. Historical clubs remain
+                    available to give career questions their full context.</p>
+                </article>
+                <article>
+                    <h3>How are questions built?</h3>
+                    <p>Source data is never copied straight into the game. Player, club, transfer
+                    and valuation records are normalized and checked for invalid dates or identity
+                    conflicts. Difficulty pools are then built from career variety, recognition
+                    and club connections.</p>
+                </article>
+                <article>
+                    <h3>Why can careers look complicated?</h3>
+                    <p>Loans, youth teams, free-agent gaps and returns to a former club can make a
+                    career difficult to model. Careerdle stays as close to the source chronology as
+                    possible. If something looks incomplete, you can submit a correction.</p>
+                </article>
+            </div>
+            <div class="editorial-faq">
+                <h3>Frequently asked questions</h3>
+                <details>
+                    <summary>Is the Daily Player the same for everyone?</summary>
+                    <p>Yes. The hidden player is selected from the date, so everyone searches for
+                    the same answer that day. Personal streaks and game statistics stay in your
+                    browser.</p>
+                </details>
+                <details>
+                    <summary>Is Careerdle free and does it require an account?</summary>
+                    <p>It is free and requires no registration, email address or payment. The site
+                    is designed to remain free with advertising support.</p>
+                </details>
+                <details>
+                    <summary>How can I report incorrect data?</summary>
+                    <p>Send the player, missing club and correct dates through the
+                    <a href="/contact">contact page</a>. Reports are checked against source records
+                    before the next data publication.</p>
+                </details>
+            </div>
+            <p class="editorial-more">Read the <a href="/methodology">Data Methodology</a> for
+            details about collection, validation and updates.</p>
+        </div>
+    </section>
+    {{SITE_FOOTER}}
+<div class="modal-backdrop" id="app-modal" style="display:none" onclick="if(event.target===this)closeAppModal()"></div>
+
     <script src="/static/js/common.js" defer></script>
     <script src="/static/js/solo.js" defer></script>
     <script src="/static/js/router.js" defer></script>
-    <script src="/static/js/multi.js" defer></script>
     <script src="/static/js/classic.js" defer></script>
 </body>
 </html>

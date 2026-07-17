@@ -10,7 +10,7 @@ COPY backend/requirements.txt backend/requirements.txt
 RUN pip install -r backend/requirements.txt
 
 COPY backend/ backend/
-COPY data/football_quiz.db data/football_quiz.db
+COPY data/football_quiz_v2.db data/football_quiz_v2.db
 COPY frontend/ frontend/
 
 EXPOSE 8000

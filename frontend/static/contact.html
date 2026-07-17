@@ -3,100 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#070b14">
-    <title>İletişim — Careerdle</title>
-    <meta name="description" content="Careerdle ile iletişime geç: öneri, hata bildirimi, futbolcu/kulüp verisi düzeltmesi veya iş birliği için bize yaz.">
+    <meta name="theme-color" content="#f3efe6">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="google-adsense-account" content="ca-pub-5823826038472901">
+    <script>(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
+    <script src="/static/js/privacy-consent.js"></script>
+    <title>Careerdle İletişim - Hata, Veri Düzeltmesi ve Öneriler</title>
+    <meta name="description" content="Careerdle ekibine oyun hatası, futbolcu verisi düzeltmesi, özellik önerisi veya iş birliği için ulaş.">
     <link rel="canonical" href="{{BASE_URL}}/contact">
     <meta name="robots" content="index, follow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/app.css">
-    <link rel="icon" type="image/png" href="/static/img/icon.png">
+    <link rel="icon" type="image/png" href="/static/img/logo-koyu.png" media="(prefers-color-scheme: light)">
+    <link rel="icon" type="image/png" href="/static/img/logo.png" media="(prefers-color-scheme: dark)">
+    <link rel="apple-touch-icon" href="/static/img/logo-koyu.png">
 </head>
-<body>
-    <nav>
-        <a class="brand" href="/">
-            <img class="brand-mark" src="/static/img/logo.png" alt="Careerdle">
-            <span class="brand-name"><span class="bn-white">Career</span><span class="bn-green">dle</span></span>
-        </a>
-        <div class="nav-right">
-            <button class="lang-toggle" onclick="toggleDocLang()">EN</button>
+<body class="doc-body">
+    {{SITE_HEADER}}
+<main class="doc-page">
+        <section class="doc-hero" data-lang="tr">
+            <div class="doc-hero-copy">
+                <a class="doc-back" href="/">Sahaya dön</a>
+                <p class="doc-kicker">Teknik alan / Açık hat</p>
+                <h1 class="doc-title">Pasını ver.<br><span class="accent">Oyunu geliştirelim.</span></h1>
+                <p class="doc-lead">Bozuk bir özellik, eksik bir transfer, yanlış bir mevki ya da iyi bir oyun fikri gördüysen doğrudan bize yaz. En iyi geri bildirim, hangi modda ne olduğunu açıkça anlatan kısa ve net bir maç raporudur.</p>
+                <div class="doc-actions">
+                    <a class="doc-button primary" href="mailto:emoaslan23@gmail.com">E-posta gönder</a>
+                    <a class="doc-button" href="/methodology">Veri sürecini incele</a>
+                </div>
+            </div>
+            <aside class="doc-scoreboard" aria-label="İletişim özeti">
+                <div class="doc-score-head"><span>Destek kartı</span><strong>Doğrudan e-posta</strong></div>
+                <div class="doc-score-grid">
+                    <div class="doc-score"><b>01</b><span>Hata bildirimi</span></div>
+                    <div class="doc-score"><b>02</b><span>Veri düzeltmesi</span></div>
+                    <div class="doc-score"><b>03</b><span>Yeni fikir</span></div>
+                </div>
+                <div class="doc-board-visual" aria-hidden="true">
+                    <span class="doc-board-mark">!</span>
+                    <div class="doc-board-caption"><span>Bildirim gelir</span><span>Kontrol başlar</span></div>
+                </div>
+            </aside>
+        </section>
+        <section class="doc-hero" data-lang="en" hidden>
+            <div class="doc-hero-copy">
+                <a class="doc-back" href="/">Back to the pitch</a>
+                <p class="doc-kicker">Technical area / Open line</p>
+                <h1 class="doc-title">Play the pass.<br><span class="accent">Improve the game.</span></h1>
+                <p class="doc-lead">Send us a note when you find a broken feature, a missing transfer, an incorrect position or a strong idea. The best feedback is a short match report that clearly says what happened and where.</p>
+                <div class="doc-actions">
+                    <a class="doc-button primary" href="mailto:emoaslan23@gmail.com">Send an email</a>
+                    <a class="doc-button" href="/methodology">Read the data process</a>
+                </div>
+            </div>
+            <aside class="doc-scoreboard" aria-label="Contact summary">
+                <div class="doc-score-head"><span>Support card</span><strong>Direct email</strong></div>
+                <div class="doc-score-grid">
+                    <div class="doc-score"><b>01</b><span>Bug report</span></div>
+                    <div class="doc-score"><b>02</b><span>Data fix</span></div>
+                    <div class="doc-score"><b>03</b><span>New idea</span></div>
+                </div>
+                <div class="doc-board-visual" aria-hidden="true">
+                    <span class="doc-board-mark">!</span>
+                    <div class="doc-board-caption"><span>Report arrives</span><span>Review begins</span></div>
+                </div>
+            </aside>
+        </section>
+
+        <nav class="doc-tabs" aria-label="Careerdle bilgi sayfaları">
+            <a href="/about"><span data-lang="tr">Hakkında</span><span data-lang="en" hidden>About</span></a>
+            <a href="/methodology"><span data-lang="tr">Veri metodolojisi</span><span data-lang="en" hidden>Data methodology</span></a>
+            <a href="/contact" aria-current="page"><span data-lang="tr">İletişim</span><span data-lang="en" hidden>Contact</span></a>
+            <a href="/privacy"><span data-lang="tr">Gizlilik</span><span data-lang="en" hidden>Privacy</span></a>
+            <a href="/terms"><span data-lang="tr">Kullanım koşulları</span><span data-lang="en" hidden>Terms of use</span></a>
+        </nav>
+
+        <div class="doc-layout" data-lang="tr">
+            <article class="doc-content">
+                <section class="doc-section">
+                    <span class="doc-section-no">01</span>
+                    <div class="doc-section-body">
+                        <h2>Doğrudan iletişim</h2>
+                        <p>Careerdle için ayrı bir üyelik veya destek hesabı açmana gerek yok. Aşağıdaki adrese kendi e-posta uygulamandan ulaşabilirsin. Mesajın yalnızca talebini incelemek ve sana yanıt vermek amacıyla kullanılır.</p>
+                        <div class="doc-contact-strip"><span>E-posta</span><a href="mailto:emoaslan23@gmail.com">emoaslan23@gmail.com</a></div>
+                    </div>
+                </section>
+                <section class="doc-section">
+                    <span class="doc-section-no">02</span>
+                    <div class="doc-section-body">
+                        <h2>Hangi konularda yazabilirsin?</h2>
+                        <div class="doc-split">
+                            <div class="doc-mini"><b>Oyun hatası</b><p>Sayfa açılmıyor, tahmin gönderilmiyor, sonuç yanlış hesaplanıyor veya mobil görünüm bozuluyorsa cihaz ve tarayıcı bilgini ekle.</p></div>
+                            <div class="doc-mini"><b>Futbol verisi</b><p>Oyuncu adı, eksik ya da yanlış kulüp, doğru tarih ve mümkünse güvenilir kaynak bağlantısını paylaş.</p></div>
+                            <div class="doc-mini"><b>Ürün önerisi</b><p>Yeni mod, zorluk dengesi veya arayüz fikrinin hangi oyuncu sorununu çözdüğünü kısaca anlat.</p></div>
+                            <div class="doc-mini"><b>İş birliği</b><p>İçerik, reklam veya proje tekliflerinde kapsamı, hedefi ve beklenen zaman planını belirt.</p></div>
+                        </div>
+                    </div>
+                </section>
+                <section class="doc-section">
+                    <span class="doc-section-no">03</span>
+                    <div class="doc-section-body">
+                        <h2>İyi bir maç raporu nasıl yazılır?</h2>
+                        <ol>
+                            <li>Günlük Tahmin mi, Solo mu kullandığını belirt.</li>
+                            <li>Oyuncu veya kulüp adı görünüyorsa aynen yaz.</li>
+                            <li>Beklediğin sonuç ile gördüğün sonucu ayrı ayrı anlat.</li>
+                            <li>Mümkünse ekran görüntüsü, tarih, cihaz ve tarayıcı ekle.</li>
+                        </ol>
+                        <p>Bu bilgiler sorunu tekrar üretmemizi ve doğru kaydı hızlıca bulmamızı kolaylaştırır. Veri düzeltmeleri kaynaklarla karşılaştırılır ve doğrulanırsa sonraki veritabanı yayınında oyuna alınır.</p>
+                    </div>
+                </section>
+            </article>
+            <aside class="doc-rail">
+                <div class="doc-rail-block">
+                    <h2 class="doc-rail-title">Önce bakılabilecekler</h2>
+                    <ul>
+                        <li><a href="/about">Oyun nasıl çalışıyor?</a></li>
+                        <li><a href="/methodology">Veri nasıl hazırlanıyor?</a></li>
+                        <li><a href="/privacy">Mesaj verisi nasıl işleniyor?</a></li>
+                    </ul>
+                </div>
+                <div class="doc-callout"><b>Güvenlik notu</b><p>Şifre, ödeme bilgisi, kimlik belgesi veya başka hassas kişisel bilgileri e-postana ekleme.</p></div>
+            </aside>
         </div>
-    </nav>
 
-    <div class="container">
-        <!-- ===== TÜRKÇE ===== -->
-        <article class="legal" data-lang="tr">
-            <a class="back-link" href="/">&larr; Ana sayfa</a>
-            <h1>İletişim</h1>
-
-            <p>Careerdle'ı sen oynadıkça geliştiriyoruz. Aklına takılan bir şey mi var, bir
-            hata mı fark ettin, yoksa bir futbolcunun kariyeri eksik ya da yanlış mı görünüyor?
-            Bize ulaşman yeterli — geri bildirimlerin oyunu daha iyi hâle getirmemize yardımcı
-            oluyor.</p>
-
-            <h2>E-posta</h2>
-            <p>En hızlı yol e-posta. Aşağıdaki adrese yazabilir ya da kopyalayabilirsin:</p>
-            <p class="contact-email"><a href="mailto:emoaslan23@gmail.com">emoaslan23@gmail.com</a></p>
-
-            <h2>Ne için yazabilirsin?</h2>
-            <ul>
-                <li><strong>Hata bildirimi:</strong> oyunda bir şey bozuk mu çalışıyor?</li>
-                <li><strong>Veri düzeltmesi:</strong> bir futbolcunun kulüpleri, mevkisi veya
-                milliyeti hatalı mı görünüyor?</li>
-                <li><strong>Öneri:</strong> görmek istediğin yeni bir mod veya özellik.</li>
-                <li><strong>İş birliği:</strong> reklam, içerik veya proje teklifleri.</li>
-            </ul>
-
-            <p>Yazarken mümkün olduğunca ayrıntı (ekran görüntüsü, hangi mod, hangi oyuncu)
-            eklersen daha hızlı yardımcı olabiliriz. Genellikle birkaç gün içinde dönüş yaparız.</p>
-        </article>
-
-        <!-- ===== ENGLISH ===== -->
-        <article class="legal" data-lang="en" hidden>
-            <a class="back-link" href="/">&larr; Home</a>
-            <h1>Contact</h1>
-
-            <p>We improve Careerdle as you play it. Got a question, spotted a bug, or does a
-            player's career look incomplete or wrong? Just reach out — your feedback helps us
-            make the game better.</p>
-
-            <h2>Email</h2>
-            <p>Email is the fastest way. Write to or copy the address below:</p>
-            <p class="contact-email"><a href="mailto:emoaslan23@gmail.com">emoaslan23@gmail.com</a></p>
-
-            <h2>What to write about</h2>
-            <ul>
-                <li><strong>Bug reports:</strong> something not working right in the game?</li>
-                <li><strong>Data fixes:</strong> a player's clubs, position or nationality looks
-                incorrect?</li>
-                <li><strong>Suggestions:</strong> a new mode or feature you'd like to see.</li>
-                <li><strong>Collaboration:</strong> advertising, content or project proposals.</li>
-            </ul>
-
-            <p>The more detail you add (a screenshot, which mode, which player), the faster we can
-            help. We usually reply within a few days.</p>
-        </article>
-    </div>
-
-    <footer class="site-footer">
-        <a href="/about" data-lang="tr">Hakkında</a><a href="/about" data-lang="en" hidden>About</a>
-        <a href="/privacy" data-lang="tr">Gizlilik</a><a href="/privacy" data-lang="en" hidden>Privacy</a>
-        <a href="/contact" data-lang="tr">İletişim</a><a href="/contact" data-lang="en" hidden>Contact</a>
-        <span class="foot-copy">© 2026 Careerdle</span>
-    </footer>
-
-    <script>
-        function applyDocLang(l) {
-            document.documentElement.lang = l;
-            document.querySelectorAll('[data-lang]').forEach(el => { el.hidden = el.dataset.lang !== l; });
-            const b = document.querySelector('.lang-toggle');
-            if (b) b.textContent = l === 'tr' ? 'EN' : 'TR';
-        }
-        function toggleDocLang() {
-            const l = (localStorage.getItem('lang') || 'tr') === 'tr' ? 'en' : 'tr';
-            localStorage.setItem('lang', l);
-            applyDocLang(l);
-        }
-        applyDocLang(localStorage.getItem('lang') || 'tr');
-    </script>
+        <div class="doc-layout" data-lang="en" hidden>
+            <article class="doc-content">
+                <section class="doc-section">
+                    <span class="doc-section-no">01</span>
+                    <div class="doc-section-body">
+                        <h2>Direct contact</h2>
+                        <p>You do not need a Careerdle account or separate support login. Reach us from your own email application. Your message is used only to review the request and reply.</p>
+                        <div class="doc-contact-strip"><span>Email</span><a href="mailto:emoaslan23@gmail.com">emoaslan23@gmail.com</a></div>
+                    </div>
+                </section>
+                <section class="doc-section">
+                    <span class="doc-section-no">02</span>
+                    <div class="doc-section-body">
+                        <h2>What can you report?</h2>
+                        <div class="doc-split">
+                            <div class="doc-mini"><b>Game bug</b><p>If a page fails, a guess cannot be submitted, a result is wrong or mobile layout breaks, include your device and browser.</p></div>
+                            <div class="doc-mini"><b>Football data</b><p>Share the player, the missing or incorrect club, the right date and a reliable source when available.</p></div>
+                            <div class="doc-mini"><b>Product idea</b><p>For a new mode, balance change or interface idea, briefly explain the player problem it would solve.</p></div>
+                            <div class="doc-mini"><b>Collaboration</b><p>For content, advertising or project proposals, include the scope, objective and expected schedule.</p></div>
+                        </div>
+                    </div>
+                </section>
+                <section class="doc-section">
+                    <span class="doc-section-no">03</span>
+                    <div class="doc-section-body">
+                        <h2>How to write a useful match report</h2>
+                        <ol>
+                            <li>Say whether you were in Daily Guess or Solo.</li>
+                            <li>Include the exact player or club name shown.</li>
+                            <li>Separate what you expected from what actually happened.</li>
+                            <li>Add a screenshot, date, device and browser when possible.</li>
+                        </ol>
+                        <p>These details help us reproduce the problem and locate the correct record. Data corrections are compared with source material and, when verified, enter a later database release.</p>
+                    </div>
+                </section>
+            </article>
+            <aside class="doc-rail">
+                <div class="doc-rail-block">
+                    <h2 class="doc-rail-title">Useful first stops</h2>
+                    <ul>
+                        <li><a href="/about">How does the game work?</a></li>
+                        <li><a href="/methodology">How is data prepared?</a></li>
+                        <li><a href="/privacy">How is message data handled?</a></li>
+                    </ul>
+                </div>
+                <div class="doc-callout"><b>Security note</b><p>Do not include passwords, payment details, identity documents or other sensitive personal information.</p></div>
+            </aside>
+        </div>
+    </main>
+    {{SITE_FOOTER}}
+<script src="/static/js/doc-page.js"></script>
 </body>
 </html>

@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="APP_", env_file=".env", extra="ignore")
 
     # Salt-okunur quiz veritabanı (her instance ile paketlenir).
-    db_path: Path = REPO_ROOT / "data" / "football_quiz.db"
+    db_path: Path = REPO_ROOT / "data" / "football_quiz_v2.db"
     # Eşzamanlı SQLite okuması için thread havuzu boyutu.
     db_pool_size: int = 8
 

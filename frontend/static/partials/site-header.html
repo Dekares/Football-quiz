@@ -1,0 +1,67 @@
+<div class="masthead">
+    <span class="mh-date" id="mh-date">&mdash;</span>
+    <span class="mh-mid">
+        <span id="mh-no"></span>
+        <span data-lang="tr">Gece yarısı yeni oyuncu</span>
+        <span data-lang="en" hidden>New player at midnight</span>
+    </span>
+    <span class="mh-edition">
+        <span data-lang="tr">Günlük Futbol Baskısı</span>
+        <span data-lang="en" hidden>Daily Football Edition</span>
+    </span>
+</div>
+
+<nav class="site-nav">
+    <a class="brand" href="/" aria-label="Careerdle ana sayfa">
+        <img class="brand-mark" src="/static/img/logo.png" alt="" width="48" height="48">
+        <span class="brand-name"><span class="bn-white">Career</span><span class="bn-green">dle</span></span>
+    </a>
+
+    <div class="nav-links" id="nav-links">
+        <a href="/" data-nav-route="menu">
+            <span data-lang="tr">Günlük Tahmin</span>
+            <span data-lang="en" hidden>Daily Guess</span>
+        </a>
+        <a href="/#/solo" data-nav-route="solo">
+            <span data-lang="tr">Futbolcu Tahmin</span>
+            <span data-lang="en" hidden>Guess Player</span>
+        </a>
+        <a href="/about" data-shell-path="/about">
+            <span data-lang="tr">Hakkında</span>
+            <span data-lang="en" hidden>About</span>
+        </a>
+        <a href="/methodology" data-shell-path="/methodology">
+            <span data-lang="tr">Veri Metodolojisi</span>
+            <span data-lang="en" hidden>Data Methodology</span>
+        </a>
+    </div>
+
+    <div class="nav-right">
+        <button class="icon-btn theme-toggle" type="button" onclick="toggleTheme()" aria-label="Tema değiştir">&#9790;</button>
+        <button class="lang-toggle" type="button" onclick="toggleLang()">EN</button>
+        <button class="icon-btn nav-burger" type="button" onclick="toggleMobileNav()" aria-label="Menü">&#9776;</button>
+    </div>
+</nav>
+
+<div class="mobile-nav" id="mobile-nav">
+    <a href="/" onclick="closeMobileNav()">
+        <span data-lang="tr">Günlük Tahmin</span>
+        <span data-lang="en" hidden>Daily Guess</span>
+    </a>
+    <a href="/#/solo" onclick="closeMobileNav()">
+        <span data-lang="tr">Futbolcu Tahmin</span>
+        <span data-lang="en" hidden>Guess Player</span>
+    </a>
+    <a href="/about" onclick="closeMobileNav()">
+        <span data-lang="tr">Hakkında</span>
+        <span data-lang="en" hidden>About</span>
+    </a>
+    <a href="/methodology" onclick="closeMobileNav()">
+        <span data-lang="tr">Veri Metodolojisi</span>
+        <span data-lang="en" hidden>Data Methodology</span>
+    </a>
+    <a href="/contact" onclick="closeMobileNav()">
+        <span data-lang="tr">İletişim</span>
+        <span data-lang="en" hidden>Contact</span>
+    </a>
+</div>

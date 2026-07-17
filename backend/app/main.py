@@ -90,21 +90,29 @@ def create_app() -> FastAPI:
         static_dir = settings.static_dir
         app.mount("/static", RevalidateStaticFiles(directory=static_dir), name="static")
 
+        def _render_page(request: Request, filename: str) -> str:
+            html = (static_dir / filename).read_text(encoding="utf-8")
+            header = (static_dir / "partials" / "site-header.html").read_text(encoding="utf-8")
+            footer = (static_dir / "partials" / "site-footer.html").read_text(encoding="utf-8")
+            return (
+                html.replace("{{SITE_HEADER}}", header)
+                .replace("{{SITE_FOOTER}}", footer)
+                .replace("{{BASE_URL}}", _public_base_url(request))
+            )
+
         @app.get("/", include_in_schema=False)
         async def index(request: Request) -> HTMLResponse:
             # {{BASE_URL}} placeholder'ları canonical/OG/JSON-LD için mutlak URL'e
             # doldurulur. index.html asla cache'lenmemeli; aksi halde yeni
             # asset'ler görünmez.
-            html = (static_dir / "index.html").read_text(encoding="utf-8")
-            html = html.replace("{{BASE_URL}}", _public_base_url(request))
+            html = _render_page(request, "index.html")
             return HTMLResponse(
                 html,
                 headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
             )
 
         def _serve_page(request: Request, filename: str) -> HTMLResponse:
-            html = (static_dir / filename).read_text(encoding="utf-8")
-            html = html.replace("{{BASE_URL}}", _public_base_url(request))
+            html = _render_page(request, filename)
             return HTMLResponse(html, headers={"Cache-Control": "no-cache"})
 
         @app.get("/privacy", include_in_schema=False)
@@ -119,10 +127,22 @@ def create_app() -> FastAPI:
         async def contact(request: Request) -> HTMLResponse:
             return _serve_page(request, "contact.html")
 
+        @app.get("/methodology", include_in_schema=False)
+        async def methodology(request: Request) -> HTMLResponse:
+            return _serve_page(request, "methodology.html")
+
+        @app.get("/terms", include_in_schema=False)
+        async def terms(request: Request) -> HTMLResponse:
+            return _serve_page(request, "terms.html")
+
         @app.get("/robots.txt", include_in_schema=False)
         async def robots(request: Request) -> PlainTextResponse:
             base = _public_base_url(request)
             body = (
+                "User-agent: Mediapartners-Google\n"
+                "Allow: /\n\n"
+                "User-agent: AdsBot-Google\n"
+                "Allow: /\n\n"
                 "User-agent: *\n"
                 "Allow: /\n"
                 "Disallow: /api/\n\n"
@@ -143,8 +163,10 @@ def create_app() -> FastAPI:
                 "    <priority>1.0</priority>\n"
                 "  </url>\n"
                 f"  <url><loc>{base}/about</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>\n"
+                f"  <url><loc>{base}/methodology</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>\n"
                 f"  <url><loc>{base}/contact</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>\n"
                 f"  <url><loc>{base}/privacy</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>\n"
+                f"  <url><loc>{base}/terms</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>\n"
                 "</urlset>\n"
             )
             return Response(
@@ -158,7 +180,10 @@ def create_app() -> FastAPI:
             # Google AdSense yetkili satıcı doğrulaması (publisher ca-pub-5823826038472901).
             return PlainTextResponse(
                 "google.com, pub-5823826038472901, DIRECT, f08c47fec0942fa0\n",
-                headers={"Cache-Control": "public, max-age=86400"},
+                headers={
+                    "Cache-Control": "public, max-age=86400",
+                    "X-Content-Type-Options": "nosniff",
+                },
             )
 
     return app
