@@ -1,0 +1,25 @@
+{
+  "scope": "major-leagues",
+  "version": 2,
+  "leagues": [
+    {"competition_id": "GB1", "name": "Premier League", "country": "England", "tier": 1, "season_mode": "split_year"},
+    {"competition_id": "IT1", "name": "Serie A", "country": "Italy", "tier": 1, "season_mode": "split_year"},
+    {"competition_id": "ES1", "name": "LaLiga", "country": "Spain", "tier": 1, "season_mode": "split_year"},
+    {"competition_id": "L1", "name": "Bundesliga", "country": "Germany", "tier": 1, "season_mode": "split_year"},
+    {"competition_id": "FR1", "name": "Ligue 1", "country": "France", "tier": 1, "season_mode": "split_year"},
+    {"competition_id": "PO1", "name": "Liga Portugal", "country": "Portugal", "tier": 2, "season_mode": "split_year"},
+    {"competition_id": "NL1", "name": "Eredivisie", "country": "Netherlands", "tier": 2, "season_mode": "split_year"},
+    {"competition_id": "TR1", "name": "Super Lig", "country": "Turkiye", "tier": 2, "season_mode": "split_year"},
+    {"competition_id": "BE1", "name": "Jupiler Pro League", "country": "Belgium", "tier": 2, "season_mode": "split_year"},
+    {"competition_id": "SC1", "name": "Scottish Premiership", "country": "Scotland", "tier": 2, "season_mode": "split_year"},
+    {"competition_id": "MLS1", "name": "Major League Soccer", "country": "United States", "tier": 2, "season_mode": "calendar_year"},
+    {"competition_id": "SA1", "name": "Saudi Pro League", "country": "Saudi Arabia", "tier": 2, "season_mode": "split_year"}
+  ],
+  "refresh_days": {
+    "competition_clubs": 1,
+    "club_players": 1,
+    "player_profile": 30,
+    "player_transfers": 1,
+    "player_market_value": 7
+  }
+}

@@ -25,7 +25,7 @@ onRoute((route) => { if (route.name === 'menu') renderClassic(); });
 // Dil değişince (menü açıksa) günlük tahmin kartını yeniden çiz.
 window.addEventListener('langchange', () => {
     const h = location.hash;
-    if ((h === '' || h === '#' || h === '#/') && classicData) paintClassic();
+    if ((h === '' || h === '#' || h === '#/') && classicData) { fillMasthead(); paintClassic(); }
 });
 
 async function renderClassic() {
@@ -36,6 +36,7 @@ async function renderClassic() {
         catch (_) { root.style.display = 'none'; return; }
         if (!classicData || classicData.error) { root.style.display = 'none'; return; }
     }
+    fillMasthead();
     paintClassic();
 }
 
@@ -80,7 +81,47 @@ function paintClassic() {
     const root = document.getElementById('classic-card');
     if (!root) return;
     const s = classicState();
-    const over = s.solved || s.guesses.length >= CLASSIC_MAX_GUESSES;
+    const used = s.guesses.length;
+    const over = s.solved || used >= CLASSIC_MAX_GUESSES;
+    const left = Math.max(0, CLASSIC_MAX_GUESSES - used);
+    const streak = parseInt(localStorage.getItem('classic_streak') || '0', 10);
+
+    // Başlık bandı (kicker + büyük başlık + geri sayım)
+    const band = `
+        <div class="daily-band">
+            <div>
+                <p class="daily-kicker">${t('daily_kicker')} &middot; #${classicData.day}</p>
+                <h1 class="daily-headline">${t('classic_prompt')}</h1>
+            </div>
+            <div class="daily-next">
+                <span>${t('daily_next')}</span>
+                <span class="daily-countdown" id="daily-countdown">--:--:--</span>
+            </div>
+        </div>`;
+
+    // Durum şeridi (3 hücre)
+    const strip = `
+        <div class="status-strip">
+            <div class="status-cell"><span class="status-val">${used}</span><span class="status-lbl">${t('status_guess')}</span></div>
+            <div class="status-cell b"><span class="status-val${!over ? ' em' : ''}">${left}</span><span class="status-lbl">${t('status_left')}</span></div>
+            <div class="status-cell b"><span class="status-val">${streak}</span><span class="status-lbl">${t('status_streak')}</span></div>
+        </div>`;
+
+    // Deneme pip'leri
+    const pips = `<div class="attempt-pips">${Array.from({ length: CLASSIC_MAX_GUESSES }).map((_, i) => {
+        let cls = 'pip';
+        if (i < used) cls += (s.solved && i === used - 1) ? ' hit' : ' miss';
+        return `<span class="${cls}"></span>`;
+    }).join('')}</div>`;
+
+    // Sonuç banner'ı
+    let banner = '';
+    if (s.solved) {
+        const name = s.guesses[used - 1]?.guess?.name || '';
+        banner = `<div class="result-banner win"><span class="rb-ico">🏆</span><div><p class="rb-title">${t('classic_solved')}</p><p class="rb-sub">${t('banner_answer')}: <b>${esc(name)}</b> — ${used} ${t('classic_tries')}</p></div></div>`;
+    } else if (over) {
+        banner = `<div class="result-banner lose"><span class="rb-ico">🔥</span><div><p class="rb-title">${t('classic_lost')}</p><p class="rb-sub">${t('classic_tomorrow')}</p></div></div>`;
+    }
 
     const legend = `
         <div class="cl-legend">
@@ -91,7 +132,6 @@ function paintClassic() {
             <span class="cl-key-arrow">${t('classic_legend_down')}</span>
         </div>`;
 
-    // Arama + sonuçlar arama kutusunun ALTINDA
     const inputBlock = over ? '' : `
         <div class="quiz-input-row daily-input">
             <div class="search-wrapper quiz-search-wrapper">
@@ -101,7 +141,6 @@ function paintClassic() {
         </div>
         <div class="cl-poolnote">${t('classic_pool_note')}</div>`;
 
-    // En yeni tahmin en üstte. İsim tam bir satır; özellikler altında etiketli hücreler.
     const rows = [...s.guesses].reverse().map(g => `
         <div class="cl-guess${g.correct ? ' is-correct' : ''}">
             <div class="cl-guess-head">
@@ -112,34 +151,113 @@ function paintClassic() {
         </div>`).join('');
     const table = s.guesses.length ? `<div class="cl-results">${rows}</div>` : '';
 
-    const result = s.solved
-        ? `<div class="cl-win">🎉 ${t('classic_solved')} — ${s.guesses.length} ${t('classic_tries')}</div>`
-        : (over ? `<div class="cl-lose">${t('classic_lost')}</div>` : '');
-
-    // Kaybedince gizli oyuncuyu popup'ta göster ("Cevabı gör" → modal).
     const lost = over && !s.solved;
     const revealBtn = lost
         ? `<button class="btn btn-secondary" onclick="revealClassic()">${t('classic_reveal')}</button>` : '';
-
     const actions = over
-        ? `<div class="daily-actions">${revealBtn}<button class="btn share-score-btn" onclick="shareClassic()">${t('share_result')}</button></div>
-           <div class="daily-foot">${t('classic_tomorrow')}</div>`
-        : `<div class="daily-foot">${t('classic_attempts')}: ${s.guesses.length} / ${CLASSIC_MAX_GUESSES}</div>`;
+        ? `<div class="daily-actions">${revealBtn}<button class="btn share-score-btn" onclick="shareClassic()">${t('share_result')}</button></div>`
+        : '';
 
     root.style.display = '';
-    root.innerHTML = `
-        <div class="daily-head">
-            <span class="daily-badge">${t('classic_title')} · #${classicData.day}</span>
-            ${classicStreakBadge()}
-        </div>
-        <div class="daily-q">${t('classic_prompt')}</div>
-        ${legend}
-        ${inputBlock}
-        ${result}
-        ${table}
-        ${actions}`;
+    root.innerHTML = `${band}${strip}${pips}${banner}
+        <div class="daily-body">
+            ${legend}
+            ${inputBlock}
+            ${table}
+            ${actions}
+        </div>`;
 
-    if (!s.solved) setupClassicSearch();
+    startDailyCountdown();
+    renderDailyStats();
+    if (!s.solved && !over) setupClassicSearch();
+}
+
+// ---- Yan panel istatistikleri (mockup Statistics — dağılım çubukları) ----
+function classicStats() {
+    try { return JSON.parse(localStorage.getItem('classic_stats') || 'null') || null; }
+    catch (_) { return null; }
+}
+function dailyStatsHTML(withTitle) {
+    const st = classicStats() || { played: 0, wins: 0, dist: [0, 0, 0, 0, 0, 0, 0, 0] };
+    const streak = parseInt(localStorage.getItem('classic_streak') || '0', 10);
+    const best = parseInt(localStorage.getItem('classic_best') || '0', 10);
+    const winRate = st.played ? Math.round((st.wins / st.played) * 100) : 0;
+    const s = classicState();
+    const highlight = s.solved ? s.guesses.length : 0;
+
+    const cells = [
+        [st.played, t('stat_played')],
+        [winRate, t('stat_winrate')],
+        [streak, t('status_streak')],
+        [best, t('stat_best')],
+    ].map(([v, l], i) => `<div class="dstat${i ? ' b' : ''}"><span class="dstat-val">${v}</span><span class="dstat-lbl">${l}</span></div>`).join('');
+
+    const maxDist = Math.max(1, ...st.dist);
+    const bars = st.dist.map((c, i) => {
+        const pct = Math.max(Math.round((c / maxDist) * 100), c > 0 ? 12 : 6);
+        const cls = (highlight === i + 1) ? 'dbar hl' : (c > 0 ? 'dbar on' : 'dbar');
+        return `<div class="dist-row"><span class="dist-no">${i + 1}</span><div class="dist-track"><div class="${cls}" style="width:${pct}%">${c}</div></div></div>`;
+    }).join('');
+
+    return `${withTitle ? `<h3 class="kicker">${t('stats_title')}</h3>` : ''}
+        <div class="dstat-grid">${cells}</div>
+        <h4 class="kicker dist-head">${t('dist_title')}</h4>
+        <div class="dist-list">${bars}</div>`;
+}
+function renderDailyStats() {
+    const el = document.getElementById('daily-stats');
+    if (el) el.innerHTML = dailyStatsHTML(true);
+}
+
+// Topbar ikonları: yardım + istatistik modalları
+function openHelpModal() {
+    const steps = [t('help_s1'), t('help_s2'), t('help_s3'), t('help_s4')]
+        .map((s, i) => `<li><span class="how-no">${i + 1}</span><span>${s}</span></li>`).join('');
+    const clues = [['clue_nat', 'clue_nat_d'], ['clue_pos', 'clue_pos_d'], ['clue_age', 'clue_age_d'], ['clue_club', 'clue_club_d']]
+        .map(([a, b]) => `<li class="clue-row"><b>${t(a)}.</b> <span>${t(b)}</span></li>`).join('');
+    openAppModal(t('help_eyebrow'), t('help_title'), `
+        <p class="modal-intro">${t('help_intro')}</p>
+        <ol class="how-steps modal-steps">${steps}</ol>
+        <h3 class="kicker modal-sub">${t('help_clues')}</h3>
+        <ul class="clue-list">${clues}</ul>`);
+}
+function openStatsModal() {
+    openAppModal('', t('stats_title'), dailyStatsHTML(false));
+}
+
+// ---- Gece yarısına geri sayım ----
+let dailyCountdownTimer = null;
+function startDailyCountdown() {
+    if (dailyCountdownTimer) return;
+    const tick = () => {
+        const elc = document.getElementById('daily-countdown');
+        if (!elc) { clearInterval(dailyCountdownTimer); dailyCountdownTimer = null; return; }
+        const now = Date.now();
+        const trNow = new Date(now + 3 * 60 * 60 * 1000);
+        const next = Date.UTC(
+            trNow.getUTCFullYear(),
+            trNow.getUTCMonth(),
+            trNow.getUTCDate() + 1,
+        ) - 3 * 60 * 60 * 1000;
+        let d = Math.max(0, next - now);
+        const p = (n) => String(n).padStart(2, '0');
+        elc.textContent = `${p(Math.floor(d / 3.6e6))}:${p(Math.floor(d % 3.6e6 / 6e4))}:${p(Math.floor(d % 6e4 / 1e3))}`;
+    };
+    tick();
+    dailyCountdownTimer = setInterval(tick, 1000);
+}
+
+// ---- Masthead (tarih + puzzle no) ----
+function fillMasthead() {
+    const d = document.getElementById('mh-date');
+    if (d && classicData?.date) {
+        d.textContent = new Date(`${classicData.date}T12:00:00`).toLocaleDateString(
+            currentLang === 'tr' ? 'tr-TR' : 'en-US',
+            { weekday: 'long', month: 'long', day: 'numeric' },
+        );
+    }
+    const n = document.getElementById('mh-no');
+    if (n && classicData) n.textContent = 'No. ' + classicData.day + ' · ';
 }
 
 // ---- Tahmin ----
@@ -159,6 +277,19 @@ async function classicGuessById(playerId) {
 
     s.guesses.push({ guess: res.guess, attrs: res.attrs, correct: res.correct });
     if (res.correct) { s.solved = true; classicApplyStreak(); }
+
+    // İstatistik: oyun bittiğinde bir kez say (oynanan/kazanılan/dağılım).
+    const over = res.correct || s.guesses.length >= CLASSIC_MAX_GUESSES;
+    if (over && !s.counted) {
+        let st;
+        try { st = JSON.parse(localStorage.getItem('classic_stats') || 'null'); } catch (_) { st = null; }
+        if (!st) st = { played: 0, wins: 0, dist: [0, 0, 0, 0, 0, 0, 0, 0] };
+        st.played++;
+        if (res.correct) { st.wins++; const i = s.guesses.length - 1; st.dist[i] = (st.dist[i] || 0) + 1; }
+        localStorage.setItem('classic_stats', JSON.stringify(st));
+        s.counted = true;
+    }
+
     classicSave(s);
     paintClassic();
 }

@@ -9,6 +9,42 @@ const LANGS = {
         nav_about: 'Hakkında',
         nav_privacy: 'Gizlilik',
         nav_contact: 'İletişim',
+        mh_midnight: 'Gece yarısı yeni oyuncu',
+        mh_edition: 'Günlük Futbol Baskısı',
+        daily_kicker: 'Günlük Meydan Okuma',
+        daily_next: 'Sonraki oyuncu',
+        status_guess: 'Tahmin',
+        status_left: 'Kalan hak',
+        status_streak: 'Seri',
+        how_title: 'Nasıl oynanır',
+        how_1: 'Gizli bir futbolcu seçilir; herkes için aynıdır.',
+        how_2: 'Bir oyuncu adı yaz — her tahmin; milliyet, mevki, yaş, değer, kulüp ve ligi gizli oyuncuyla kıyaslar.',
+        how_3: '🟩 aynı, 🟨 yakın, 🟥 alakasız. Sekiz hakta bul, serini koru.',
+        cta_eyebrow: 'Günlük ritüel',
+        cta_title: 'Bir oyuncu. Sekiz tahmin. Her gün.',
+        cta_sub: 'Careerdle\'ı yer imlerine ekle ve yarın geri dön — seri sayacı sadık kalanı ödüllendirir.',
+        stats_title: 'İstatistik',
+        stat_played: 'Oynanan',
+        stat_winrate: 'Kazanma %',
+        stat_best: 'Rekor',
+        dist_title: 'Tahmin dağılımı',
+        banner_answer: 'Bugünkü oyuncu',
+        footer_blurb: 'Futbol tutkunları için günlük bir sınav. Kariyeri oku, oyuncuyu bul, seriyi koru. Günde tek bulmaca — uzatma yok.',
+        footer_est: '2026 · Careerdle Baskısı',
+        footer_game: 'Oyun',
+        footer_tag: 'Güzel oyun için yapıldı',
+        help_title: 'Nasıl oynanır',
+        help_eyebrow: 'Kurallar',
+        help_intro: 'Careerdle günlük bir tahmin oyunudur. Gizli futbolcuyu en az tahminle bul.',
+        help_s1: 'Her gün gizli bir futbolcu seçilir; herkes için aynıdır.',
+        help_s2: 'Bir oyuncu adı ara ve tahmin et. Her tahmin gizli oyuncuyla kıyaslanır.',
+        help_s3: '🟩 aynı, 🟨 yakın (kıta/lig), 🟥 alakasız; yaş ve değerde ▲▼ yön gösterir.',
+        help_s4: 'Sekiz hakta bul; her gün gece yarısı yeni oyuncu gelir.',
+        help_clues: 'İpuçların',
+        clue_nat: 'Milliyet', clue_nat_d: 'Aynı ülkeyse yeşil, aynı kıtaysa sarı.',
+        clue_pos: 'Mevki', clue_pos_d: 'Mevki tutarsa yeşil.',
+        clue_age: 'Yaş / Değer', clue_age_d: 'Gizli oyuncu daha büyük/küçük mü — ▲▼.',
+        clue_club: 'Kulüp / Lig', clue_club_d: 'Aynı kulüp/lig yeşil, aynı konfederasyon sarı.',
         app_title: 'Careerdle',
         app_subtitle: 'Ne oynamak istersin?',
         multi_soon: 'Çok kişilik modu yakında geliyor.',
@@ -18,10 +54,26 @@ const LANGS = {
         quiz_title_a: 'Oyuncuyu',
         quiz_title_b: 'Tahmin Et',
         quiz_subtitle: 'Kariyer yolculuğundan gizemli futbolcuyu bul.',
+        solo_setup_kicker: 'Kariyer modu',
+        solo_setup_title: 'Koşunu oluştur',
+        solo_setup_note: 'Lig ve oyuncu havuzunu belirle',
+        solo_league_label: 'Lig',
+        solo_league_note: 'Oyuncunun güncel ligi',
+        solo_recognition_label: 'Oyuncu havuzu',
+        solo_recognition_note: 'Ligdeki bilinirlik sırası',
+        solo_start: 'Başlat',
+        solo_active_pool: 'Aktif havuz',
+        solo_change_pool: 'Seçimi Değiştir',
+        all_leagues: 'Tüm Ligler',
+        career_legends: 'Kariyer Efsaneleri',
+        known: 'Bilindik',
+        less_known: 'Az Bilindik',
+        obscure: 'Bilinmedik',
+        player_count: 'oyuncu',
         easy: 'Kolay',
         medium: 'Orta',
         hard: 'Zor',
-        start_prompt: "Başlamak için Yeni Tur'a bas",
+        start_prompt: 'Ligini ve oyuncu havuzunu seç',
         guess_placeholder: 'Oyuncu adını yaz...',
         submit_guess: 'Tahmini Gönder',
         guess_btn: 'Tahmin Et',
@@ -53,6 +105,20 @@ const LANGS = {
         quiz_wrong_title: 'Bilemedin',
         quiz_wrong_sub: 'Doğru oyuncu buydu.',
         quiz_next_player: 'Yeni Oyuncu',
+        result_solved_kicker: 'Oyuncu bulundu',
+        result_skipped_kicker: 'Tur atlandı',
+        result_skipped_title: 'Oyuncuyu geçtin',
+        result_skipped_sub: 'Doğru oyuncu ve kariyer özeti aşağıda.',
+        result_answer_label: 'Doğru oyuncu',
+        result_career_summary: 'Kariyer özeti',
+        result_club_count: 'Farklı kulüp',
+        result_career_span: 'Kariyer aralığı',
+        result_last_club: 'Son kulüp',
+        result_pool: 'Seçili havuz',
+        result_route: 'Kariyer rotası',
+        result_change_pool: 'Havuzu değiştir',
+        result_lives: 'Kalan hak',
+        result_new_record: 'Yeni rekor',
         wrong_guess: 'Yanlış tahmin!',
         lives_left: 'hak kaldı',
         position: 'Mevki',
@@ -189,7 +255,7 @@ const LANGS = {
         share_result: 'Sonucu Paylaş',
         share_invite: 'Davet Linki',
         share_copied: 'Kopyalandı!',
-        share_caption_run: '⚽ Careerdle\'de {total} futbolcu bildim, en yüksek serim {streak}! Sen de dene:',
+        share_caption_run: 'Careerdle\'de {total} futbolcu bildim, en yüksek serim {streak}. Sen de dene:',
         share_caption_multi: '⚽ Careerdle\'de {score} puanla {place}. oldum! Sen de dene:',
         // Cold-start
         waking_up: 'Sunucu uyanıyor (ilk açılışta ~30sn)...',
@@ -204,6 +270,42 @@ const LANGS = {
         nav_about: 'About',
         nav_privacy: 'Privacy',
         nav_contact: 'Contact',
+        mh_midnight: 'New player at midnight',
+        mh_edition: 'Daily Football Edition',
+        daily_kicker: 'Daily Challenge',
+        daily_next: 'Next player in',
+        status_guess: 'Guesses',
+        status_left: 'Guesses left',
+        status_streak: 'Streak',
+        how_title: 'How to play',
+        how_1: 'A mystery footballer is chosen — the same one for everyone.',
+        how_2: 'Type a player name — each guess compares nationality, position, age, value, club and league with the mystery player.',
+        how_3: '🟩 exact, 🟨 close, 🟥 unrelated. Find them in eight guesses, keep your streak.',
+        cta_eyebrow: 'Daily ritual',
+        cta_title: 'One player. Eight guesses. Every day.',
+        cta_sub: 'Bookmark Careerdle and come back tomorrow — the streak counter rewards the faithful.',
+        stats_title: 'Statistics',
+        stat_played: 'Played',
+        stat_winrate: 'Win %',
+        stat_best: 'Best',
+        dist_title: 'Guess distribution',
+        banner_answer: 'Today\'s player was',
+        footer_blurb: 'A daily test for football obsessives. Read the career, name the player, keep the streak alive. One puzzle a day — no extra time.',
+        footer_est: '2026 · Careerdle Edition',
+        footer_game: 'Game',
+        footer_tag: 'Made for the beautiful game',
+        help_title: 'How to play',
+        help_eyebrow: 'The rules',
+        help_intro: 'Careerdle is a daily guessing game. Name the mystery player in as few guesses as possible.',
+        help_s1: 'A mystery footballer is chosen every day — the same one for everyone.',
+        help_s2: 'Search and guess any player. Each guess is compared with the mystery player.',
+        help_s3: '🟩 exact, 🟨 close (continent/league), 🟥 unrelated; age and value show ▲▼ direction.',
+        help_s4: 'Solve it in eight guesses; a new player arrives at midnight.',
+        help_clues: 'Your clues',
+        clue_nat: 'Nationality', clue_nat_d: 'Green for same nation, yellow for same continent.',
+        clue_pos: 'Position', clue_pos_d: 'Green if the position matches.',
+        clue_age: 'Age / Value', clue_age_d: 'Whether the mystery player is older/younger — ▲▼.',
+        clue_club: 'Club / League', clue_club_d: 'Green for same club/league, yellow for same confederation.',
         app_title: 'Careerdle',
         app_subtitle: 'What do you want to play?',
         multi_soon: 'Multiplayer mode coming soon.',
@@ -213,10 +315,26 @@ const LANGS = {
         quiz_title_a: 'Guess the',
         quiz_title_b: 'Player',
         quiz_subtitle: 'Identify the mystery footballer from their career journey.',
+        solo_setup_kicker: 'Career mode',
+        solo_setup_title: 'Build your run',
+        solo_setup_note: 'Set the league and player pool',
+        solo_league_label: 'League',
+        solo_league_note: "The player's current league",
+        solo_recognition_label: 'Player pool',
+        solo_recognition_note: 'Recognition rank in the league',
+        solo_start: 'Start',
+        solo_active_pool: 'Active pool',
+        solo_change_pool: 'Change Selection',
+        all_leagues: 'All Leagues',
+        career_legends: 'Career Legends',
+        known: 'Known',
+        less_known: 'Less Known',
+        obscure: 'Obscure',
+        player_count: 'players',
         easy: 'Easy',
         medium: 'Medium',
         hard: 'Hard',
-        start_prompt: 'Hit New Round to start',
+        start_prompt: 'Choose a league and player pool',
         guess_placeholder: "Type the player's name...",
         submit_guess: 'Submit Guess',
         guess_btn: 'Guess',
@@ -248,6 +366,20 @@ const LANGS = {
         quiz_wrong_title: 'Not quite',
         quiz_wrong_sub: 'This was the right player.',
         quiz_next_player: 'New Player',
+        result_solved_kicker: 'Player found',
+        result_skipped_kicker: 'Round skipped',
+        result_skipped_title: 'Player passed',
+        result_skipped_sub: 'The correct player and career summary are below.',
+        result_answer_label: 'Correct player',
+        result_career_summary: 'Career summary',
+        result_club_count: 'Different clubs',
+        result_career_span: 'Career span',
+        result_last_club: 'Latest club',
+        result_pool: 'Selected pool',
+        result_route: 'Career route',
+        result_change_pool: 'Change pool',
+        result_lives: 'Lives left',
+        result_new_record: 'New record',
         wrong_guess: 'Wrong guess!',
         lives_left: 'lives left',
         position: 'Position',
@@ -382,7 +514,7 @@ const LANGS = {
         share_result: 'Share Result',
         share_invite: 'Invite Link',
         share_copied: 'Copied!',
-        share_caption_run: '⚽ Guessed {total} players on Careerdle, best streak {streak}! Try it:',
+        share_caption_run: 'Guessed {total} players on Careerdle, best streak {streak}. Try it:',
         share_caption_multi: '⚽ Finished #{place} with {score} points on Careerdle! Try it:',
         // Cold-start
         waking_up: 'Waking up server (first load ~30s)...',
@@ -395,6 +527,20 @@ const LANGS = {
 let currentLang = localStorage.getItem('lang') || 'tr';
 
 function t(key) { return LANGS[currentLang][key] || key; }
+
+// ===== Tema (açık/koyu) — data-theme <html>'de; head'deki inline script ilk
+// değeri atar (flash yok), burada toggle + buton etiketi yönetilir. =====
+function applyTheme(th) {
+    document.documentElement.setAttribute('data-theme', th);
+    localStorage.setItem('theme', th);
+    const b = document.querySelector('.theme-toggle');
+    if (b) b.textContent = th === 'dark' ? '☀' : '☾'; // ☀ / ☾
+}
+function toggleTheme() {
+    const cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    applyTheme(cur === 'dark' ? 'light' : 'dark');
+}
+applyTheme(document.documentElement.getAttribute('data-theme') || 'light');
 
 function toggleLang() {
     currentLang = currentLang === 'tr' ? 'en' : 'tr';
@@ -414,6 +560,9 @@ function applyLang() {
     });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         el.placeholder = t(el.dataset.i18nPlaceholder);
+    });
+    document.querySelectorAll('[data-lang]').forEach(el => {
+        el.hidden = el.dataset.lang !== currentLang;
     });
 }
 
@@ -687,3 +836,32 @@ function hideWakeupOverlay() {
             hideWakeupOverlay();
         });
 })();
+
+// ===== Editoryal modal (yardım / istatistik) + mobil menü =====
+function openAppModal(eyebrow, title, bodyHTML) {
+    const bd = document.getElementById('app-modal');
+    if (!bd) return;
+    bd.innerHTML = `<div class="app-modal" role="dialog" aria-modal="true">
+        <div class="app-modal-head">
+            <div>${eyebrow ? `<p class="kicker">${esc(eyebrow)}</p>` : ''}<h2 class="app-modal-title">${esc(title)}</h2></div>
+            <button class="icon-btn" onclick="closeAppModal()" aria-label="Kapat">&times;</button>
+        </div>
+        <div class="app-modal-body">${bodyHTML}</div>
+    </div>`;
+    bd.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+function closeAppModal() {
+    const bd = document.getElementById('app-modal');
+    if (bd) { bd.style.display = 'none'; bd.innerHTML = ''; }
+    document.body.style.overflow = '';
+}
+function toggleMobileNav() {
+    const m = document.getElementById('mobile-nav');
+    if (m) m.classList.toggle('open');
+}
+function closeMobileNav() {
+    const m = document.getElementById('mobile-nav');
+    if (m) m.classList.remove('open');
+}
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAppModal(); });

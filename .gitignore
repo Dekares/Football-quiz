@@ -9,7 +9,7 @@ venv/
 .DS_Store
 .claude/
 
-# Ham CSV'ler — DB build edilip data/football_quiz.db olarak commit edilir
+# Devreden çıkarılan yerel CSV kaynakları (canonical kaynak API pipeline'dır)
 data/sources/*.csv
 
 # Geliştirme/arşiv
@@ -24,3 +24,6 @@ data/*.db.bak-*
 data/*.db-wal
 data/*.db-shm
 data/*.db.new
+data/transfermarkt_source.db
+data/transfermarkt_source.db-wal
+data/transfermarkt_source.db-shm

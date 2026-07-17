@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#f3efe6">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="google-adsense-account" content="ca-pub-5823826038472901">
+    <script>(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
+    <script src="/static/js/privacy-consent.js"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5823826038472901" crossorigin="anonymous"></script>
+    <title>Careerdle Veri Metodolojisi - Ligler, Transferler ve Kalite</title>
+    <meta name="description" content="Careerdle oyuncu, kulüp ve transfer verilerini nasıl toplar, kariyer dönemlerini nasıl kurar, zorluk havuzlarını ve kalite kontrollerini nasıl yönetir?">
+    <link rel="canonical" href="{{BASE_URL}}/methodology">
+    <meta name="robots" content="index, follow, max-snippet:-1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/app.css">
+    <link rel="icon" type="image/png" href="/static/img/logo-koyu.png" media="(prefers-color-scheme: light)">
+    <link rel="icon" type="image/png" href="/static/img/logo.png" media="(prefers-color-scheme: dark)">
+    <link rel="apple-touch-icon" href="/static/img/logo-koyu.png">
+</head>
+<body class="doc-body">
+    {{SITE_HEADER}}
+<main class="doc-page">
+        <section class="doc-hero" data-lang="tr">
+            <div class="doc-hero-copy">
+                <a class="doc-back" href="/">Sahaya dön</a>
+                <p class="doc-kicker">Veri odası / Yayın planı</p>
+                <h1 class="doc-title">Ham kayıttan<br><span class="accent">oynanabilir kariyere.</span></h1>
+                <p class="doc-lead">Careerdle soruları tek bir tabloya kopyalanmış isimlerden oluşmaz. Lig keşfi, kadro taraması, transfer zinciri, kimlik eşleştirme ve kalite kapıları birlikte çalışarak her futbolcuyu anlaşılır bir kariyer çizelgesine dönüştürür.</p>
+                <p class="doc-updated">Son içerik incelemesi: 16 Temmuz 2026</p>
+            </div>
+            <aside class="doc-scoreboard">
+                <div class="doc-score-head"><span>Veri raporu</span><strong>Aktif yayın</strong></div>
+                <div class="doc-score-grid">
+                    <div class="doc-score"><b>12</b><span>Aktif lig</span></div>
+                    <div class="doc-score"><b>3</b><span>Zorluk havuzu</span></div>
+                    <div class="doc-score"><b>5</b><span>Kalite katmanı</span></div>
+                </div>
+                <div class="doc-board-visual" aria-hidden="true"><span class="doc-board-mark">12</span><div class="doc-board-caption"><span>Kaynak API</span><span>Oyun DB</span></div></div>
+            </aside>
+        </section>
+        <section class="doc-hero" data-lang="en" hidden>
+            <div class="doc-hero-copy">
+                <a class="doc-back" href="/">Back to the pitch</a>
+                <p class="doc-kicker">Data room / Publication plan</p>
+                <h1 class="doc-title">From raw records<br><span class="accent">to playable careers.</span></h1>
+                <p class="doc-lead">Careerdle questions are not names copied into one table. League discovery, squad crawling, transfer chains, identity matching and quality gates work together to turn every footballer into a readable career timeline.</p>
+                <p class="doc-updated">Last content review: 16 July 2026</p>
+            </div>
+            <aside class="doc-scoreboard">
+                <div class="doc-score-head"><span>Data report</span><strong>Active release</strong></div>
+                <div class="doc-score-grid">
+                    <div class="doc-score"><b>12</b><span>Active leagues</span></div>
+                    <div class="doc-score"><b>3</b><span>Difficulty pools</span></div>
+                    <div class="doc-score"><b>5</b><span>Quality layers</span></div>
+                </div>
+                <div class="doc-board-visual" aria-hidden="true"><span class="doc-board-mark">12</span><div class="doc-board-caption"><span>Source API</span><span>Game DB</span></div></div>
+            </aside>
+        </section>
+
+        <nav class="doc-tabs" aria-label="Careerdle bilgi sayfaları">
+            <a href="/about"><span data-lang="tr">Hakkında</span><span data-lang="en" hidden>About</span></a>
+            <a href="/methodology" aria-current="page"><span data-lang="tr">Veri Metodolojisi</span><span data-lang="en" hidden>Data Methodology</span></a>
+            <a href="/contact"><span data-lang="tr">İletişim</span><span data-lang="en" hidden>Contact</span></a>
+            <a href="/privacy"><span data-lang="tr">Gizlilik</span><span data-lang="en" hidden>Privacy</span></a>
+            <a href="/terms"><span data-lang="tr">Kullanım Koşulları</span><span data-lang="en" hidden>Terms of Use</span></a>
+        </nav>
+
+        <div class="doc-layout" data-lang="tr">
+            <article class="doc-content">
+                <section class="doc-section" id="kapsam"><span class="doc-section-no">01</span><div class="doc-section-body">
+                    <h2>Lig kapsamı ve sezon mantığı</h2>
+                    <p>Aktif kadrolar Premier Lig, LaLiga, Serie A, Bundesliga, Ligue 1, Süper Lig, Liga Portugal, Eredivisie, Belçika Pro League, İskoçya Premiership, Major League Soccer ve Saudi Pro League için izlenir. Bu ligler güncel oyuncu keşfinin giriş noktasıdır; bir futbolcunun önceki kulüpleri başka bir ülkede veya alt seviyede olsa bile kariyer bağlamı için veritabanında korunabilir.</p>
+                    <p>Avrupa ligleri genellikle iki takvim yılına yayılan sezonlar kullanırken MLS takvim yılıyla ilerler. Kaynak API talep edilenden farklı fakat daha güncel bir sezon döndürürse bu cevap kaydedilir ve keşif gerçek sezon üzerinden devam eder. Böylece sabit bir yıl varsayımı yüzünden güncel kadroların atlanması önlenir.</p>
+                </div></section>
+                <section class="doc-section" id="toplama"><span class="doc-section-no">02</span><div class="doc-section-body">
+                    <h2>Toplama akışı</h2>
+                    <ol>
+                        <li>Her lig ve sezon için güncel kulüpler keşfedilir.</li>
+                        <li>Kulüp kadrolarından oyuncu kimlikleri, adlar, doğum tarihleri, mevkiler ve sözleşme bilgileri alınır.</li>
+                        <li>Her oyuncu profili transfer geçmişi ve piyasa değeri geçmişiyle ayrı ayrı zenginleştirilir.</li>
+                        <li>Ham cevaplar denetlenebilir JSON snapshot'ları olarak saklanır; normalize edilmiş tablolar bunlardan üretilir.</li>
+                        <li>Tamamlanan istekler kalıcı kuyrukta işaretlenir; kesilen çalışma kaldığı yerden devam edebilir.</li>
+                    </ol>
+                    <p>Kulüp ve kadro bilgileri transfer dönemlerinde daha sık, profil bilgileri daha seyrek yenilenebilir. Güncelleme işi tek parça değildir: farklı veri türlerinin kendi tazelik süresi vardır. Bu yaklaşım gereksiz API trafiğini azaltırken hızlı değişen transfer bilgisinin geride kalmasını engeller.</p>
+                </div></section>
+                <section class="doc-section" id="kariyer"><span class="doc-section-no">03</span><div class="doc-section-body">
+                    <h2>Kariyer dönemleri nasıl kuruluyor?</h2>
+                    <p>Transfer tarihi, ayrılan kulüp döneminin kapanışı ve katılınan kulüp döneminin başlangıcı olarak değerlendirilir. Aynı kulübe daha sonra dönüş yeni bir dönemdir; iki ayrı macera tek satırda birleştirilmez. Kiralık geçişler kaynak transfer zincirindeki yönüyle korunur. Eski kayıtlarda kesin gün bulunmuyorsa yalnızca doğrulanabilen yıl veya açık uçlu dönem kullanılır.</p>
+                    <p>Altyapı, rezerv takım, serbest kalma ve emeklilik kayıtları her kaynakta aynı biçimde sunulmaz. Oyun, belirsizliği sahte kesinliğe dönüştürmek yerine eksik kısmı sınırlı gösterir. Quiz havuzuna alınacak oyuncunun yine de ayırt edilebilir bir kariyer sırası, geçerli adı ve yeterli profil bilgisi bulunmalıdır.</p>
+                </div></section>
+                <section class="doc-section" id="efsaneler"><span class="doc-section-no">04</span><div class="doc-section-body">
+                    <h2>Aktif oyuncular ve emekli efsaneler</h2>
+                    <p>Güncel kadro taraması doğal olarak aktif futbolcuları bulur. Emekli oyuncular ise güncel bir kulüp kadrosunda görünmedikleri için ayrı editoryal listeyle eklenir. Bu kayıtlar doğum tarihi, milliyet, zirve piyasa değeri ve kulüp dönemleriyle hazırlanır; otomatik kaynak kayıtlarından ayırt edilebilmeleri için işaretlenir.</p>
+                    <p>Efsane havuzunun amacı yalnızca ünlü isim sayısını artırmak değildir. Farklı dönemleri, ligleri ve kariyer rotalarını oyuna katarken doğrulanamayan nostaljik iddiaları dışarıda bırakmaktır. Editoryal kayıtlar da normal kayıtlarla aynı yabancı anahtar ve tarih kontrollerinden geçer.</p>
+                </div></section>
+                <section class="doc-section" id="zorluk"><span class="doc-section-no">05</span><div class="doc-section-body">
+                    <h2>Zorluk ve soru üretimi</h2>
+                    <p>Kolay, Orta ve Zor havuzlar yalnızca piyasa değerine göre ayrılmaz. Oyuncunun bilinirliği, kariyerindeki kulüp sayısı, lig bağlantıları, veri bütünlüğü ve ayırt edilebilirliği birlikte değerlendirilir. Çok kısa veya tekdüze kariyerler bazı modlarda yetersiz ipucu üretebilir; aşırı belirsiz kariyerler ise haksız bir soru yaratabilir.</p>
+                    <p>Günün Futbolcusu, 1 Temmuz 2026 tarihinde başlayan kalıcı günlük takvimden okunur. Yeni tarihler Tüm Ligler içindeki global Bilindik havuzundan planlanır; yayınlanan bir günün oyuncusu sonraki veri güncellemelerinde değiştirilmez. Solo mod kariyer çizelgesine daha fazla ağırlık verir. Gerçek zamanlı kulüp çifti soruları ise iki kulüpte de oynamış doğrulanmış oyuncu ilişkilerinden üretilir.</p>
+                </div></section>
+                <section class="doc-section" id="kalite"><span class="doc-section-no">06</span><div class="doc-section-body">
+                    <h2>Kalite kapıları ve yayın</h2>
+                    <p>Yeni veritabanı doğrudan çalışan dosyanın üzerine yazılmaz. Önce geçici bir artifact oluşturulur. SQLite bütünlük kontrolü, yabancı anahtarlar, ters tarih aralıkları, boş profiller, geçersiz transferler, arama indeksleri, bilinirlik havuzları, günlük takvim kapsamı ve kulüp çifti sayıları denetlenir. Minimum oyuncu ve kariyer dönemi eşikleri sağlanmazsa yayın durur.</p>
+                    <p>Tüm kontroller geçtiğinde dosya atomik biçimde yayına alınır. Böylece yarıda kesilen bir güncelleme çalışan oyunu bozamaz. Bir hata bildirildiğinde oyuncu ve önerilen düzeltme kaynak snapshot'larıyla karşılaştırılır; doğrulanan değişiklik sonraki yayın paketine girer. Düzeltme göndermek için <a href="/contact">iletişim sayfasını</a> kullanabilirsin.</p>
+                </div></section>
+            </article>
+            <aside class="doc-rail">
+                <div class="doc-rail-block"><h2 class="doc-rail-title">Kapsanan ligler</h2><p>İngiltere, İspanya, İtalya, Almanya, Fransa, Türkiye, Portekiz, Hollanda, Belçika, İskoçya, ABD/Kanada ve Suudi Arabistan üst ligleri.</p></div>
+                <div class="doc-rail-block"><h2 class="doc-rail-title">İlgili sayfalar</h2><ul><li><a href="/about">Oyunun fikri</a></li><li><a href="/contact">Veri düzeltmesi gönder</a></li><li><a href="/terms">Veri kullanım sınırları</a></li></ul></div>
+                <div class="doc-callout"><b>Editoryal bağımsızlık</b><p>Careerdle hiçbir kulüp, lig, federasyon veya veri sağlayıcısının resmi ürünü değildir.</p></div>
+            </aside>
+        </div>
+
+        <div class="doc-layout" data-lang="en" hidden>
+            <article class="doc-content">
+                <section class="doc-section"><span class="doc-section-no">01</span><div class="doc-section-body">
+                    <h2>League coverage and seasons</h2>
+                    <p>Active squads are tracked in the Premier League, LaLiga, Serie A, Bundesliga, Ligue 1, Süper Lig, Liga Portugal, Eredivisie, Belgian Pro League, Scottish Premiership, Major League Soccer and Saudi Pro League. These competitions are entry points for current-player discovery. Earlier clubs remain in the database even when they sit in another country or lower division.</p>
+                    <p>European leagues generally span two calendar years, while MLS follows a calendar-year season. If the source API returns a different but more current season, that answer is recorded and discovery continues from the real season. This prevents current squads from disappearing because of a fixed-year assumption.</p>
+                </div></section>
+                <section class="doc-section"><span class="doc-section-no">02</span><div class="doc-section-body">
+                    <h2>Collection flow</h2>
+                    <ol>
+                        <li>Current clubs are discovered for every league and season.</li>
+                        <li>Squads provide player identities, names, birth dates, positions and contract information.</li>
+                        <li>Profiles are enriched separately with transfer and market-value histories.</li>
+                        <li>Raw responses remain as auditable JSON snapshots used to build normalized tables.</li>
+                        <li>Completed work is marked in a persistent queue so interrupted runs can resume.</li>
+                    </ol>
+                    <p>Clubs and squads can refresh more frequently during transfer windows, while slower profile fields need less frequent work. Each data type has its own freshness window. This reduces unnecessary API traffic without allowing fast-moving transfers to become stale.</p>
+                </div></section>
+                <section class="doc-section"><span class="doc-section-no">03</span><div class="doc-section-body">
+                    <h2>Building career periods</h2>
+                    <p>A transfer date closes the departing club period and opens the arriving one. A later return to the same club remains a new stint rather than being merged into one row. Loans preserve the direction of the source transfer chain. Where an older record has no exact day, only a verified year or open period is shown.</p>
+                    <p>Youth teams, reserves, free-agent gaps and retirement are not represented consistently by every source. The game avoids turning uncertainty into false precision. A player must still have a recognizable career order, a valid identity and enough profile information before entering a quiz pool.</p>
+                </div></section>
+                <section class="doc-section"><span class="doc-section-no">04</span><div class="doc-section-body">
+                    <h2>Active players and retired legends</h2>
+                    <p>Current squad crawling naturally finds active footballers. Retired players no longer appear in a live club roster, so selected legends enter through a separate editorial list. Their birth date, nationality, peak value and club periods are prepared explicitly and marked as editorial records.</p>
+                    <p>The legend pool is not designed only to increase the number of famous names. It adds different eras, leagues and career routes while excluding nostalgic claims that cannot be verified. Editorial entries pass the same foreign-key and date checks as automated records.</p>
+                </div></section>
+                <section class="doc-section"><span class="doc-section-no">05</span><div class="doc-section-body">
+                    <h2>Difficulty and question generation</h2>
+                    <p>Easy, Medium and Hard are not separated only by market value. Recognition, number of clubs, league connections, data completeness and how clearly a player can be identified all matter. A very short career may provide too few clues, while an extremely ambiguous one can produce an unfair question.</p>
+                    <p>Daily Player reads from a persistent schedule beginning on 1 July 2026. New dates are planned from the global Known pool across All Leagues, and a published day's player is not changed by later data refreshes. Solo gives more weight to the career timeline. Real-time club-pair questions use verified relationships for players who represented both clubs.</p>
+                </div></section>
+                <section class="doc-section"><span class="doc-section-no">06</span><div class="doc-section-body">
+                    <h2>Quality gates and publication</h2>
+                    <p>A new database never overwrites the live file immediately. It is first built as a temporary artifact. SQLite integrity, foreign keys, inverted dates, empty profiles, invalid transfers, search indexes, recognition pools, daily schedule coverage and club-pair counts are checked. Publication stops if minimum player or career-period thresholds fail.</p>
+                    <p>Only after every gate passes is the file published atomically. An interrupted update therefore cannot corrupt the working game. Reported errors are compared with raw source snapshots, and verified changes enter a later release. Use the <a href="/contact">contact page</a> to submit a correction.</p>
+                </div></section>
+            </article>
+            <aside class="doc-rail">
+                <div class="doc-rail-block"><h2 class="doc-rail-title">Covered leagues</h2><p>Top divisions in England, Spain, Italy, Germany, France, Turkey, Portugal, the Netherlands, Belgium, Scotland, USA/Canada and Saudi Arabia.</p></div>
+                <div class="doc-rail-block"><h2 class="doc-rail-title">Related pages</h2><ul><li><a href="/about">The game idea</a></li><li><a href="/contact">Submit a data fix</a></li><li><a href="/terms">Data-use limits</a></li></ul></div>
+                <div class="doc-callout"><b>Editorial independence</b><p>Careerdle is not an official product of any club, league, federation or data provider.</p></div>
+            </aside>
+        </div>
+    </main>
+    {{SITE_FOOTER}}
+<script src="/static/js/doc-page.js"></script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 """İsim normalizasyonu — arama ve karşılaştırma için tek kaynak.
 
-Hem çalışma anı API'si hem de data/build/build_database.py aynı kuralı kullanır;
+Hem çalışma anı API'si hem de data/pipeline/publish.py aynı kuralı kullanır;
 böylece DB'deki search_name/search_alias ile gelen sorgu birebir eşleşir.
 """
 from __future__ import annotations

@@ -1,8 +1,4 @@
-"""Tahmin oyunu: rastgele bir oyuncu + kronolojik kulüp geçmişi.
-
-Aday havuzu build anında quiz_pool'a hesaplandığı için burada tek satır çekilir
-(çalışma anı full scan yok).
-"""
+"""League-aware career quiz endpoints."""
 from __future__ import annotations
 
 import sqlite3
@@ -12,15 +8,20 @@ from fastapi import APIRouter, HTTPException, Query
 
 from ..db import query
 
+
 router = APIRouter(prefix="/api", tags=["quiz"])
 
-VALID_DIFFICULTIES = {"easy", "medium", "hard"}
-RETIREMENT_GAP_YEARS = 2  # son kulüpten bu kadar yıl geçtiyse sentetik "Emeklilik"
-MAX_EXCLUDE = 100         # client'tan gelen "son görülenler" listesi için üst sınır
+VALID_RECOGNITIONS = {"known", "less_known", "obscure"}
+DIFFICULTY_TO_RECOGNITION = {
+    "easy": "known",
+    "medium": "less_known",
+    "hard": "obscure",
+}
+RETIREMENT_GAP_YEARS = 2
+MAX_EXCLUDE = 100
 
 
 def _parse_exclude(raw: str) -> list[int]:
-    """`exclude=1,2,3` → [1,2,3]. Bozuk parçaları atar, üst sınırla kırpar."""
     out: list[int] = []
     for part in raw.split(","):
         part = part.strip()
@@ -31,28 +32,48 @@ def _parse_exclude(raw: str) -> list[int]:
     return out
 
 
-def _pick_player_id(c: sqlite3.Connection, difficulty: str, exclude: list[int]) -> int | None:
-    """Havuzdan rastgele bir oyuncu seç; mümkünse son görülenleri dışla.
-
-    Dışlananlar havuzu tüketirse (küçük havuz / çok oynanmış) dışlama yok sayılır
-    → her zaman bir oyuncu döner, oyun asla boş ekranla kilitlenmez.
-    """
+def _pick_player_id(
+    conn: sqlite3.Connection,
+    league: str,
+    recognition: str,
+    exclude: list[int],
+) -> int | None:
+    if league == "ALL":
+        table = "global_quiz_pool"
+        league_sql = ""
+        league_params: tuple[str, ...] = ()
+    else:
+        table = "quiz_pool"
+        league_sql = "AND competition_id = ?"
+        league_params = (league,)
     if exclude:
         placeholders = ",".join("?" * len(exclude))
-        row = c.execute(
-            f"SELECT player_id FROM quiz_pool WHERE difficulty = ? "
-            f"AND player_id NOT IN ({placeholders}) ORDER BY RANDOM() LIMIT 1",
-            (difficulty, *exclude),
+        row = conn.execute(
+            f"""
+            SELECT DISTINCT player_id
+            FROM {table}
+            WHERE recognition = ? {league_sql}
+              AND player_id NOT IN ({placeholders})
+            ORDER BY RANDOM()
+            LIMIT 1
+            """,
+            (recognition, *league_params, *exclude),
         ).fetchone()
         if row:
             return row["player_id"]
-    row = c.execute(
-        "SELECT player_id FROM quiz_pool WHERE difficulty = ? ORDER BY RANDOM() LIMIT 1",
-        (difficulty,),
+    row = conn.execute(
+        f"""
+        SELECT DISTINCT player_id
+        FROM {table}
+        WHERE recognition = ? {league_sql}
+        ORDER BY RANDOM()
+        LIMIT 1
+        """,
+        (recognition, *league_params),
     ).fetchone()
     return row["player_id"] if row else None
 
-# Kulüp geçmişi: placeholder kulüpler gizlenir; "Retired" kaydı her zaman en sona.
+
 _CLUBS_SQL = """
     SELECT cl.name,
            cl.logo_url,
@@ -74,32 +95,37 @@ _CLUBS_SQL = """
 """
 
 
-def _load_quiz(c: sqlite3.Connection, difficulty: str, exclude: list[int]) -> dict | None:
-    player_id = _pick_player_id(c, difficulty, exclude)
+def _load_quiz(
+    conn: sqlite3.Connection,
+    league: str,
+    recognition: str,
+    exclude: list[int],
+) -> dict | None:
+    player_id = _pick_player_id(conn, league, recognition, exclude)
     if player_id is None:
         return None
-
-    player = c.execute(
-        "SELECT player_id, name, country_of_citizenship, position, sub_position, "
-        "date_of_birth, image_url "
-        "FROM players WHERE player_id = ?",
+    player = conn.execute(
+        """
+        SELECT player_id, name, country_of_citizenship, position, sub_position,
+               date_of_birth, image_url
+        FROM players
+        WHERE player_id = ?
+        """,
         (player_id,),
     ).fetchone()
     if not player:
         return None
-
     clubs = [
         {
-            "name": r["name"],
-            "logo_url": r["logo_url"],
-            "date_from": r["date_from"],
-            "date_to": r["date_to"],
-            "is_retirement": bool(r["is_retirement"]),
+            "name": row["name"],
+            "logo_url": row["logo_url"],
+            "date_from": row["date_from"],
+            "date_to": row["date_to"],
+            "is_retirement": bool(row["is_retirement"]),
         }
-        for r in c.execute(_CLUBS_SQL, (player["player_id"],)).fetchall()
+        for row in conn.execute(_CLUBS_SQL, (player_id,)).fetchall()
     ]
     _append_synthetic_retirement(clubs)
-
     return {
         "player_id": player["player_id"],
         "name": player["name"],
@@ -109,34 +135,109 @@ def _load_quiz(c: sqlite3.Connection, difficulty: str, exclude: list[int]) -> di
         "date_of_birth": player["date_of_birth"],
         "image_url": player["image_url"],
         "clubs": clubs,
+        "league": league,
+        "recognition": recognition,
     }
 
 
 def _append_synthetic_retirement(clubs: list[dict]) -> None:
-    """DB'de Retired kaydı yoksa ama hiç aktif (date_to=NULL) kontrat yoksa ve son
-    bitiş 2+ yıl önceyse, ipucu olarak sentetik bir 'Retired' satırı eklenir."""
-    if not clubs or any(x["is_retirement"] for x in clubs):
+    if not clubs or any(item["is_retirement"] for item in clubs):
         return
-    if any(x["date_to"] is None for x in clubs):
-        return  # aktif oyuncu
-    end_dates = [x["date_to"] for x in clubs if x["date_to"]]
+    if any(item["date_to"] is None for item in clubs):
+        return
+    end_dates = [item["date_to"] for item in clubs if item["date_to"]]
     if not end_dates:
         return
     latest_end = max(end_dates)
-    cutoff = date.today().replace(year=date.today().year - RETIREMENT_GAP_YEARS).isoformat()
+    cutoff = date.today().replace(
+        year=date.today().year - RETIREMENT_GAP_YEARS
+    ).isoformat()
     if latest_end < cutoff:
         clubs.append({
-            "name": "Retired", "logo_url": None,
-            "date_from": latest_end, "date_to": None, "is_retirement": True,
+            "name": "Retired",
+            "logo_url": None,
+            "date_from": latest_end,
+            "date_to": None,
+            "is_retirement": True,
         })
 
 
+def _quiz_options(conn: sqlite3.Connection) -> dict:
+    rows = conn.execute(
+        """
+        SELECT c.competition_id, c.name, c.country, c.season_id, c.sort_order,
+               c.is_special, q.recognition, COUNT(*) AS player_count
+        FROM competitions c
+        JOIN quiz_pool q ON q.competition_id = c.competition_id
+        GROUP BY c.competition_id, q.recognition
+        ORDER BY c.sort_order
+        """
+    ).fetchall()
+    competitions: dict[str, dict] = {}
+    for row in rows:
+        item = competitions.setdefault(row["competition_id"], {
+            "id": row["competition_id"],
+            "name": row["name"],
+            "country": row["country"],
+            "season": row["season_id"],
+            "is_special": bool(row["is_special"]),
+            "counts": {key: 0 for key in VALID_RECOGNITIONS},
+        })
+        item["counts"][row["recognition"]] = row["player_count"]
+    ordered = list(competitions.values())
+    all_counts = {key: 0 for key in VALID_RECOGNITIONS}
+    for row in conn.execute(
+        """
+        SELECT recognition, COUNT(*) AS player_count
+        FROM global_quiz_pool
+        GROUP BY recognition
+        """
+    ):
+        all_counts[row["recognition"]] = row["player_count"]
+    return {
+        "leagues": [{
+            "id": "ALL",
+            "name": "All Leagues",
+            "country": "International",
+            "season": None,
+            "is_special": True,
+            "counts": all_counts,
+        }, *ordered],
+        "recognitions": ["known", "less_known", "obscure"],
+    }
+
+
+@router.get("/quiz/options")
+async def quiz_options() -> dict:
+    return await query(_quiz_options)
+
+
 @router.get("/quiz")
-async def quiz(difficulty: str = Query("easy"), exclude: str = Query("")) -> dict:
-    if difficulty not in VALID_DIFFICULTIES:
-        difficulty = "easy"
-    ex = _parse_exclude(exclude)
-    result = await query(lambda c: _load_quiz(c, difficulty, ex))
+async def quiz(
+    league: str = Query("ALL"),
+    recognition: str | None = Query(None),
+    difficulty: str | None = Query(None),
+    exclude: str = Query(""),
+) -> dict:
+    if recognition not in VALID_RECOGNITIONS:
+        recognition = DIFFICULTY_TO_RECOGNITION.get(difficulty or "", "known")
+    league = league.upper()
+    valid_league = await query(
+        lambda conn: league == "ALL" or conn.execute(
+            "SELECT 1 FROM competitions WHERE competition_id = ?",
+            (league,),
+        ).fetchone() is not None
+    )
+    if not valid_league:
+        league = "ALL"
+    result = await query(
+        lambda conn: _load_quiz(
+            conn,
+            league,
+            recognition,
+            _parse_exclude(exclude),
+        )
+    )
     if not result:
         raise HTTPException(status_code=404, detail="Oyuncu bulunamadı")
     return result
