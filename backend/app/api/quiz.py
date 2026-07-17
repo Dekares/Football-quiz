@@ -39,37 +39,43 @@ def _pick_player_id(
     exclude: list[int],
 ) -> int | None:
     if league == "ALL":
-        table = "global_quiz_pool"
-        league_sql = ""
-        league_params: tuple[str, ...] = ()
+        selection_sql = """
+            SELECT player_id FROM global_quiz_pool WHERE recognition = ?
+            UNION
+            SELECT player_id FROM quiz_pool WHERE competition_id = 'LEGENDS'
+        """
+        selection_params: tuple[str, ...] = (recognition,)
+    elif league == "LEGENDS":
+        selection_sql = """
+            SELECT player_id FROM quiz_pool WHERE competition_id = 'LEGENDS'
+        """
+        selection_params = ()
     else:
-        table = "quiz_pool"
-        league_sql = "AND competition_id = ?"
-        league_params = (league,)
+        selection_sql = """
+            SELECT player_id FROM quiz_pool
+            WHERE recognition = ? AND competition_id = ?
+        """
+        selection_params = (recognition, league)
     if exclude:
         placeholders = ",".join("?" * len(exclude))
         row = conn.execute(
             f"""
-            SELECT DISTINCT player_id
-            FROM {table}
-            WHERE recognition = ? {league_sql}
-              AND player_id NOT IN ({placeholders})
+            SELECT player_id FROM ({selection_sql})
+            WHERE player_id NOT IN ({placeholders})
             ORDER BY RANDOM()
             LIMIT 1
             """,
-            (recognition, *league_params, *exclude),
+            (*selection_params, *exclude),
         ).fetchone()
         if row:
             return row["player_id"]
     row = conn.execute(
         f"""
-        SELECT DISTINCT player_id
-        FROM {table}
-        WHERE recognition = ? {league_sql}
+        SELECT player_id FROM ({selection_sql})
         ORDER BY RANDOM()
         LIMIT 1
         """,
-        (recognition, *league_params),
+        selection_params,
     ).fetchone()
     return row["player_id"] if row else None
 
@@ -181,9 +187,12 @@ def _quiz_options(conn: sqlite3.Connection) -> dict:
             "country": row["country"],
             "season": row["season_id"],
             "is_special": bool(row["is_special"]),
+            "uses_recognition": not bool(row["is_special"]),
             "counts": {key: 0 for key in VALID_RECOGNITIONS},
+            "total_count": 0,
         })
         item["counts"][row["recognition"]] = row["player_count"]
+        item["total_count"] += row["player_count"]
     ordered = list(competitions.values())
     all_counts = {key: 0 for key in VALID_RECOGNITIONS}
     for row in conn.execute(
@@ -194,14 +203,22 @@ def _quiz_options(conn: sqlite3.Connection) -> dict:
         """
     ):
         all_counts[row["recognition"]] = row["player_count"]
+    legend_count = int(conn.execute(
+        "SELECT COUNT(DISTINCT player_id) FROM quiz_pool WHERE competition_id='LEGENDS'"
+    ).fetchone()[0])
+    world_counts = {
+        key: count + legend_count for key, count in all_counts.items()
+    }
     return {
         "leagues": [{
             "id": "ALL",
-            "name": "All Leagues",
+            "name": "World XI",
             "country": "International",
             "season": None,
             "is_special": True,
-            "counts": all_counts,
+            "uses_recognition": True,
+            "counts": world_counts,
+            "total_count": sum(all_counts.values()) + legend_count,
         }, *ordered],
         "recognitions": ["known", "less_known", "obscure"],
     }

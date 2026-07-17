@@ -27,22 +27,23 @@ Aktif oyun artifact'i: `data/football_quiz_v2.db`
 
 | Alan | Mevcut değer |
 |---|---:|
-| Build kimliği | `20260716-172641-e1b57aa7` |
-| Oyuncu | 6.737 |
-| Kulüp | 8.004 |
-| Kariyer dönemi | 54.672 |
+| Build kimliği | `20260717-120246-b087b869` |
+| Oyuncu | 6.898 |
+| Kulüp | 8.152 |
+| Kariyer dönemi | 56.580 |
 | Oyun ligi/havuzu | 13 |
-| Kulüp çifti | 979 |
-| Günlük meydan okuma | 381 |
-| Lig bazlı quiz havuzu | 6.005 |
-| Global quiz havuzu | 5.961 |
+| Kulüp çifti | 1.312 |
+| Günlük meydan okuma | 382 |
+| Lig bazlı quiz havuzu | 6.162 |
+| Global quiz havuzu | 5.960 |
 
 13 oyun havuzu, yapılandırılmış 12 lig ile özel `Kariyer Efsaneleri` havuzundan
-oluşur. Kullanıcı arayüzündeki `Tüm Ligler`, bu 13 sayısına eklenen sanal bir seçimdir
-ve bağımsız `global_quiz_pool` tablosunu kullanır.
+oluşur. Kullanıcı arayüzündeki `Dünya Karması`, bu 13 sayısına eklenen sanal bir
+seçimdir; bağımsız `global_quiz_pool` ile 202 kişilik efsane havuzunun birleşimini
+kullanır.
 
-Kaynak veritabanı `data/transfermarkt_source.db` içinde 6.737 oyuncu, 8.017 kulüp,
-50.983 transfer, 105.465 piyasa değeri kaydı ve 20.324 ham API snapshot'ı vardır.
+Kaynak veritabanı `data/transfermarkt_source.db` içinde 6.900 oyuncu, 8.234 kulüp,
+53.142 transfer, 109.280 piyasa değeri kaydı ve 21.522 ham API snapshot'ı vardır.
 Kaynak kalite doğrulaması başarılıdır; açık `error` seviyesinde veri sorunu yoktur.
 
 ### Son doğrulama durumu
@@ -50,8 +51,8 @@ Kaynak kalite doğrulaması başarılıdır; açık `error` seviyesinde veri sor
 - SQLite `quick_check`: başarılı.
 - Foreign key kontrolü: başarılı.
 - Pipeline'ın yeniden ürettiği artifact ile mevcut artifact arasında şema farkı: 0.
-- Oyuncu, kulüp, kariyer, havuz, alias ve eşleşme satır farkı: 0.
-- Birim ve uyumluluk testleri: **19/19 başarılı**.
+- Efsane kimlikleri için referans kontrolü: Ronaldinho `3373`, Maradona `8024`, Zidane `3111`.
+- Birim ve uyumluluk testleri: **20/20 başarılı**.
 - Veritabanı ve HTTP smoke testi: başarılı.
 - Masaüstü/mobil görsel regresyon testi: başarılı.
 
@@ -66,8 +67,9 @@ Kaynak kalite doğrulaması başarılıdır; açık `error` seviyesinde veri sor
 - Günlük tahminlerde milliyet, mevki, yaş, piyasa değeri, kulüp ve lig karşılaştırması.
 - Solo oyunda lig seçimi.
 - Solo oyunda `Bilindik`, `Az Bilindik`, `Bilinmedik` oyuncu havuzları.
-- `Tüm Ligler` için lig yüzdeliklerinden bağımsız global bilinirlik havuzu.
-- Kariyer Efsaneleri seçeneği ve elle bakımlı emekli oyuncular.
+- `Dünya Karması` için bağımsız global bilinirlik havuzu ile tüm efsanelerin birleşimi.
+- Kariyer Efsaneleri seçeneğinde bilinirlik kontrolünün kaldırılması.
+- 202 gerçek Transfermarkt kimliğinden oluşan, API profili ve transferleriyle beslenen efsane havuzu.
 - Kariyer yolunun kronolojik takım listesi olarak gösterilmesi.
 - Tekrarlanan kulüp dönemlerinin ve dönüş transferlerinin korunması.
 - Emeklilik durumunun kariyer sonunda sentetik veya gerçek kayıt olarak gösterilmesi.
@@ -178,16 +180,17 @@ Google tarafında aşağıdaki işler ayrıca tamamlanmalıdır:
 - Realtime lobi state'i restart sonrası kaybolur; kalıcı snapshot uygulanmadı.
 - Çok node realtime için belgelenen lobi koduna göre consistent-hash routing henüz
   üretim ortamında uygulanmadı.
-- Çalışma ağacındaki kapsamlı değişiklikler henüz temiz bir commit/release halinde
-  paketlenmedi; kritik yeni pipeline, test ve DB dosyaları Git tarafından untracked
-  görünüyor.
+- Dünya Karması ve API tabanlı efsane güncellemesi henüz commit/release halinde
+  paketlenmedi.
 
 ## 4. Bilinen hatalar ve riskler
 
-1. **Dört dead pipeline işi:** Transfermarkt API dört oyuncunun transfer endpoint'inde
-   HTTP 500 döndürdü. Oyuncu kimlikleri: `308279`, `989995`, `707802`, `468264`.
-   Kaynak validasyonu yine de başarılıdır ve açık veri hatası yoktur. Sonraki
-   `major-update` bu dead işleri tekrar kuyruğa alır.
+1. **On dead pipeline işi:** Transfermarkt API dört aktif oyuncunun transfer endpoint'inde
+   HTTP 500 döndürdü: `308279`, `989995`, `707802`, `468264`. Altı eski efsanenin
+   profil endpoint'i de 500 döndürüyor: `8021`, `8024`, `17121`, `35604`, `72347`,
+   `117633`. Bu altı oyuncunun kimlik/mevki/milliyeti API aramasından, kariyeri transfer
+   endpoint'inden tamamlandığı için 202 efsanenin tamamı oynanabilir. Kaynak validasyonu
+   başarılıdır ve açık veri hatası yoktur.
 2. **Çok oyunculu tanıtım tutarsızlığı:** Bazı README, SEO ve sayfa metinleri canlı
    çok oyunculu modu mevcutmuş gibi anlatıyor; güncel frontend bu modu sunmuyor.
 3. **Immutable DB nedeniyle restart gereksinimi:** Uygulama çalışan thread'lerde DB'yi
@@ -213,8 +216,8 @@ Google tarafında aşağıdaki işler ayrıca tamamlanmalıdır:
    doğrula.
 5. Pipeline'ı günlük veya haftalık zamanlanmış bir iş haline getir; yayın öncesi
    `validate`, yayın sonrası `smoke_app` zorunlu olsun.
-6. Dört dead transfer işinin yerel Transfermarkt API tarafındaki HTTP 500 nedenini
-   incele.
+6. On dead transfer/profile işinin yerel Transfermarkt API tarafındaki HTTP 500 nedenini
+   incele; efsane profil fallback'ini koru.
 7. CI ekle: unittest, JavaScript syntax, pipeline smoke ve Docker build.
 8. Üretim gözlemlenebilirliği ekle: hata logları, sağlık kontrolü, latency ve Socket.IO
    bağlantı metrikleri.
@@ -351,7 +354,7 @@ Veritabanı build'i sırasında yerel Transfermarkt API'nin
   --min-periods 50000
 ```
 
-Bu komut keşif, ingest, repair, kariyer türetme, efsane importu, kaynak doğrulama ve
+Bu komut keşif, ingest, repair, kariyer türetme, efsane senkronizasyonu, kaynak doğrulama ve
 sıkı artifact publish adımlarını birlikte çalıştırır. Normal çalışmada yalnızca TTL'i
 dolan kaynaklar yeniden istenir.
 
@@ -374,7 +377,10 @@ publish'i tamamla.
 ```powershell
 .\.venv\Scripts\python.exe -m data.pipeline repair
 .\.venv\Scripts\python.exe -m data.pipeline derive
-.\.venv\Scripts\python.exe -m data.pipeline import-legends
+.\.venv\Scripts\python.exe -m data.pipeline legend-update `
+  --base-url http://localhost:8000
+.\.venv\Scripts\python.exe -m data.pipeline work `
+  --base-url http://localhost:8000 --concurrency 8
 .\.venv\Scripts\python.exe -m data.pipeline validate
 .\.venv\Scripts\python.exe -m data.pipeline publish `
   --min-players 5400 `
@@ -495,7 +501,7 @@ Bu nedenle topbar veya footer değişikliği tek yerden yapılır. Sayfaları do
 | `backend/app/realtime/` | Socket.IO lobi ve oyun motoru |
 | `data/pipeline/` | Ingest, normalize, repair, derive, validate ve publish |
 | `data/pipeline/major_leagues.json` | Güncellenen lig kapsamı ve TTL ayarları |
-| `data/sources/legends.json` | Elle bakımlı emekli/efsane oyuncular |
+| `data/sources/legend_candidates.txt` | Yalnız efsane arama kimlikleri; kariyer verisi API'den gelir |
 | `frontend/static/index.html` | Günlük ve Solo ana uygulama yüzeyi |
 | `frontend/static/partials/` | Ortak header ve footer |
 | `frontend/static/js/classic.js` | Günlük oyun istemcisi |

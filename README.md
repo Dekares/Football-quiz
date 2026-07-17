@@ -26,10 +26,10 @@ biter, hedef puana ulaşan kazanır).
 - **Arama**: FTS5 trigram (index'li substring); kısa sorgularda index'li LIKE fallback.
 - **Kariyer Quiz**: oyuncular son kadro snapshot'ına göre 12 ligden birine bağlanır.
   Her ligde bilinirlik puanına göre birbirini dışlayan **Bilindik / Az Bilindik /
-  Bilinmedik** havuzları build anında `quiz_pool`'a yazılır. Emekli editoryal
-  oyuncular ayrı `Kariyer Efsaneleri` havuzunda tutulur. **Tüm Ligler** seçimi,
-  lig yüzdeliklerini birleştirmek yerine daha seçici oranlarla üretilen bağımsız
-  `global_quiz_pool` tablosunu kullanır.
+  Bilinmedik** havuzları build anında `quiz_pool`'a yazılır. API'den gerçek kimlik,
+  profil ve transfer verisi alınan oyuncular ayrı `Kariyer Efsaneleri` havuzunda
+  tutulur; bu seçimde bilinirlik filtresi gösterilmez. **Dünya Karması** seçimi,
+  bağımsız `global_quiz_pool` ile tüm efsaneleri birleştirir.
 - **Günün Futbolcusu**: `01.07.2026` tarihinden başlayan kalıcı takvim kaynak DB'de
   saklanır. Eksik günler global **Bilindik** havuzundan planlanır; yayınlanmış cevaplar
   sonraki build'lerde korunur. Seri/ilerleme istemcide `localStorage`'da tutulur.
@@ -55,7 +55,7 @@ data/
   football_quiz_v2.db  doğrulanmış oyun artifact'i (salt-okunur)
   transfermarkt_source.db canonical kaynak, snapshot ve kalıcı iş kuyruğu (gitignore)
   pipeline/           API ingest, normalize, validate ve atomik publish
-  sources/legends.json elle bakımlı efsane oyuncu kaynağı
+  sources/legend_candidates.txt yalnız efsane arama kimlikleri (futbol verisi içermez)
 frontend/static/     index.html, css, js (bağımlılıksız vanilla JS)
 render.yaml          Render Blueprint (launch: tek servis, kök konum zorunlu)
 deploy/              Dockerfile.api, Dockerfile.realtime, nginx.conf (ölçek)
@@ -84,7 +84,8 @@ TTL dolmadan yeniden çağrılmaz.
 python -m data.pipeline major-update --tiers 1,2 --with-market-values `
   --concurrency 8 --min-players 5400 --min-periods 50000
 python -m data.pipeline repair
-python -m data.pipeline import-legends
+python -m data.pipeline legend-update --base-url http://localhost:8000
+python -m data.pipeline work --base-url http://localhost:8000 --concurrency 8
 python -m data.pipeline validate
 python -m tools.smoke_app --db data/football_quiz_v2.db
 ```

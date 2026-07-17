@@ -15,9 +15,13 @@ let runTotal = 0;    // koşuda doğru bilinen futbolcu sayısı
 let runActive = false;
 const MAX_LIVES = 8;
 
+function effectiveRecognition() {
+    return selectedLeague()?.uses_recognition === false ? 'all' : quizRecognition;
+}
+
 // ===== Retention: localStorage istatistikleri =====
 function getSoloStats() {
-    const key = `solo_best_streak:${quizLeague}:${quizRecognition}`;
+    const key = `solo_best_streak:${quizLeague}:${effectiveRecognition()}`;
     const legacyBest = quizLeague === 'ALL' && quizRecognition === 'known'
         ? localStorage.getItem('solo_best_streak')
         : null;
@@ -29,7 +33,7 @@ function getSoloStats() {
 }
 function setSoloStats(s) {
     localStorage.setItem(
-        `solo_best_streak:${quizLeague}:${quizRecognition}`,
+        `solo_best_streak:${quizLeague}:${effectiveRecognition()}`,
         String(s.best),
     );
 }
@@ -124,7 +128,7 @@ const SEEN_WINDOW = 30;
 function getSeen() {
     try {
         return JSON.parse(
-            localStorage.getItem(`solo_seen:${quizLeague}:${quizRecognition}`) || '[]'
+            localStorage.getItem(`solo_seen:${quizLeague}:${effectiveRecognition()}`) || '[]'
         );
     }
     catch (_) { return []; }
@@ -134,7 +138,7 @@ function pushSeen(id) {
     const list = getSeen().filter(x => x !== id);
     list.unshift(id);
     localStorage.setItem(
-        `solo_seen:${quizLeague}:${quizRecognition}`,
+        `solo_seen:${quizLeague}:${effectiveRecognition()}`,
         JSON.stringify(list.slice(0, SEEN_WINDOW)),
     );
 }
@@ -180,6 +184,12 @@ function renderQuizOptions() {
 function renderRecognitionCounts() {
     const league = selectedLeague();
     if (!league) return;
+    const usesRecognition = league.uses_recognition !== false;
+    const poolControl = document.getElementById('solo-pool-control');
+    if (poolControl) poolControl.hidden = !usesRecognition;
+    document.querySelector('.solo-control-bar')?.classList.toggle(
+        'without-recognition', !usesRecognition
+    );
     document.querySelectorAll('#recognition-selector button').forEach(button => {
         const recognition = button.dataset.recognition;
         const count = Number(league.counts?.[recognition] || 0);
@@ -195,8 +205,9 @@ function renderRecognitionCounts() {
     document.querySelectorAll('#recognition-selector button').forEach(button => {
         button.classList.toggle('active', button.dataset.recognition === quizRecognition);
     });
-    document.getElementById('solo-start-btn').disabled =
-        !Number(league.counts?.[quizRecognition] || 0);
+    document.getElementById('solo-start-btn').disabled = usesRecognition
+        ? !Number(league.counts?.[quizRecognition] || 0)
+        : !Number(league.total_count || 0);
 }
 
 async function initializeQuizOptions() {
@@ -243,12 +254,19 @@ function setRecognition(recognition, button) {
 function updateActiveFilter() {
     const name = document.getElementById('solo-active-filter-name');
     if (!name || !quizOptions) return;
-    name.textContent = `${leagueLabel(selectedLeague())} / ${recognitionLabel(quizRecognition)}`;
+    const league = selectedLeague();
+    name.textContent = league?.uses_recognition === false
+        ? leagueLabel(league)
+        : `${leagueLabel(league)} / ${recognitionLabel(quizRecognition)}`;
 }
 
 async function startSelectedRun() {
     await initializeQuizOptions();
-    if (!selectedLeague()?.counts?.[quizRecognition]) return;
+    const league = selectedLeague();
+    const playerCount = league?.uses_recognition === false
+        ? league.total_count
+        : league?.counts?.[quizRecognition];
+    if (!playerCount) return;
     localStorage.setItem('solo_league', quizLeague);
     localStorage.setItem('solo_recognition', quizRecognition);
     await startRun();
@@ -361,10 +379,12 @@ async function loadQuiz() {
     try {
         const seen = getSeen();
         const exclude = seen.length ? '&exclude=' + seen.join(',') : '';
+        const recognition = selectedLeague()?.uses_recognition === false
+            ? ''
+            : '&recognition=' + encodeURIComponent(quizRecognition);
         currentQuiz = await safeFetch(
             '/api/quiz?league=' + encodeURIComponent(quizLeague)
-            + '&recognition=' + encodeURIComponent(quizRecognition)
-            + exclude
+            + recognition + exclude
         );
         pushSeen(currentQuiz.player_id);
     } catch (e) {
@@ -584,7 +604,9 @@ function renderResultModal() {
     const careerSpan = firstYear === '—' ? '—' : `${firstYear} – ${lastYear}`;
     const lastClub = career[career.length - 1]?.name || '—';
     const selected = quizOptions?.leagues?.find(item => item.id === league);
-    const poolName = `${leagueLabel(selected)} / ${recognitionLabel(recognition)}`;
+    const poolName = selected?.uses_recognition === false
+        ? leagueLabel(selected)
+        : `${leagueLabel(selected)} / ${recognitionLabel(recognition)}`;
     const statItems = [
         [stats.streak, t('solo_streak'), ''],
         [stats.best, t('solo_record'), recordInfo?.newRecord ? 'record' : ''],

@@ -11,7 +11,7 @@ from .database import initialize, queue_counts
 from .derive import derive_all_periods
 from .ingest import run_worker, seed_competition_seasons, seed_players
 from .major import DEFAULT_CONFIG, update_major_leagues
-from .maintenance import import_legends, repair_snapshots
+from .maintenance import repair_snapshots, sync_legends
 from .publish import publish_game_db
 from .validation import validate_source
 
@@ -61,8 +61,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("derive", help="derive player club periods from transfer facts")
     sub.add_parser("repair", help="restore fields from stored roster snapshots")
-    legends = sub.add_parser("import-legends", help="import curated legends and career periods")
-    legends.add_argument("--source", type=Path, default=Path("data/sources/legends.json"))
+    legends = sub.add_parser("legend-update", help="resolve legends through the API and enqueue enrichment")
+    legends.add_argument(
+        "--source", type=Path, default=Path("data/sources/legend_candidates.txt")
+    )
+    legends.add_argument("--base-url", default="http://localhost:8000")
+    legends.add_argument("--timeout", type=float, default=30.0)
+    legends.add_argument("--refresh", action="store_true")
+    legends.add_argument("--refresh-details", action="store_true")
     sub.add_parser("validate", help="run canonical database quality gates")
     sub.add_parser("status", help="show queue and entity counts")
 
@@ -127,8 +133,14 @@ def main(argv: list[str] | None = None) -> int:
             _print(derive_all_periods(conn))
         elif args.command == "repair":
             _print(repair_snapshots(conn))
-        elif args.command == "import-legends":
-            _print(import_legends(conn, args.source))
+        elif args.command == "legend-update":
+            _print(sync_legends(
+                conn,
+                ApiClient(args.base_url, timeout=args.timeout),
+                args.source,
+                refresh=args.refresh,
+                refresh_details=args.refresh_details,
+            ))
         elif args.command in {"validate", "status"}:
             _print(validate_source(conn))
         elif args.command == "publish":

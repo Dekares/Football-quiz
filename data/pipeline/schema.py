@@ -137,6 +137,16 @@ CREATE TABLE IF NOT EXISTS players (
     updated_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS legend_registry (
+    candidate_name TEXT PRIMARY KEY,
+    player_id INTEGER REFERENCES players(player_id) ON DELETE SET NULL,
+    resolved_name TEXT,
+    status TEXT NOT NULL CHECK (status IN ('resolved', 'not_found')),
+    last_checked_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_legend_registry_player
+    ON legend_registry(player_id);
+
 CREATE TABLE IF NOT EXISTS player_nationalities (
     player_id INTEGER NOT NULL REFERENCES players(player_id) ON DELETE CASCADE,
     nationality TEXT NOT NULL,

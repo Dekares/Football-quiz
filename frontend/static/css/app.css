@@ -274,7 +274,8 @@ h1 {
     border-bottom: 1px solid var(--border);
 }
 .solo-setup[hidden],
-.solo-active-filter[hidden] { display: none !important; }
+.solo-active-filter[hidden],
+#solo-pool-control[hidden] { display: none !important; }
 .solo-setup-label {
     display: flex;
     align-items: center;
@@ -291,6 +292,9 @@ h1 {
     gap: 0;
     align-items: stretch;
     border: 1px solid var(--border);
+}
+.solo-control-bar.without-recognition {
+    grid-template-columns: minmax(175px, 1fr) auto;
 }
 .solo-control-group {
     min-width: 0;

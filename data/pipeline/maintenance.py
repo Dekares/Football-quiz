@@ -2,15 +2,24 @@
 from __future__ import annotations
 
 import json
+import math
 import sqlite3
-import zlib
 from pathlib import Path
-from typing import Any
+from urllib.parse import quote
 
 from backend.app.text import normalize_text
 
+from .client import ApiClient, ApiError
 from .database import utcnow
-from .ingest import _date, _int, _replace_nationalities, _upsert_club, _upsert_player_stub
+from .ingest import (
+    _date,
+    _int,
+    _placeholder,
+    _replace_nationalities,
+    _upsert_club,
+    _upsert_player_stub,
+    seed_players,
+)
 
 
 def repair_roster_snapshots(conn: sqlite3.Connection) -> dict[str, int]:
@@ -120,110 +129,219 @@ def repair_competition_snapshots(conn: sqlite3.Connection) -> dict[str, int]:
     return {"snapshots": len(rows), "clubs_updated": updated}
 
 
+def repair_placeholder_flags(conn: sqlite3.Connection) -> dict[str, int]:
+    """Recompute sticky placeholder flags after legacy club-ID collisions."""
+    changed = 0
+    now = utcnow()
+    for row in conn.execute("SELECT club_id,name,is_placeholder FROM clubs"):
+        expected = _placeholder(row["name"])
+        if expected == int(row["is_placeholder"]):
+            continue
+        changed += conn.execute(
+            "UPDATE clubs SET is_placeholder=?,updated_at=? WHERE club_id=?",
+            (expected, now, row["club_id"]),
+        ).rowcount
+    conn.commit()
+    return {"clubs_changed": changed}
+
+
 def repair_snapshots(conn: sqlite3.Connection) -> dict[str, dict[str, int]]:
     return {
         "competitions": repair_competition_snapshots(conn),
         "rosters": repair_roster_snapshots(conn),
+        "placeholders": repair_placeholder_flags(conn),
     }
 
 
-def _resolve_player_id(conn: sqlite3.Connection, item: dict[str, Any], ordinal: int) -> int:
-    wanted_name = normalize_text(item.get("name"))
-    wanted_birth = _date(item.get("date_of_birth"))
-    matches = [
-        row for row in conn.execute("SELECT player_id, name, date_of_birth FROM players")
-        if normalize_text(row["name"]) == wanted_name
-    ]
-    if wanted_birth:
-        exact = [row for row in matches if row["date_of_birth"] == wanted_birth]
-        if exact:
-            return int(exact[0]["player_id"])
-    if len(matches) == 1:
-        return int(matches[0]["player_id"])
-    candidate = 9_000_001 + ordinal
-    while conn.execute("SELECT 1 FROM players WHERE player_id = ?", (candidate,)).fetchone():
-        candidate += 100
-    return candidate
+def load_legend_candidates(source_path: str | Path) -> list[str]:
+    """Read one display/search name per line; comments and blank lines are ignored."""
+    names: list[str] = []
+    seen: set[str] = set()
+    for raw in Path(source_path).read_text(encoding="utf-8").splitlines():
+        name = raw.split("#", 1)[0].strip()
+        key = normalize_text(name)
+        if name and key not in seen:
+            names.append(name)
+            seen.add(key)
+    if not names:
+        raise ValueError("Legend candidate list is empty")
+    return names
 
 
-def _resolve_club_id(conn: sqlite3.Connection, desired_id: int, name: str) -> int:
+def _search_position(value: str | None) -> str | None:
+    code = normalize_text(value).upper()
+    if code == "GK":
+        return "Goalkeeper"
+    if code in {"CB", "SW", "LB", "RB", "DEFENDER", "DEFENCE"}:
+        return "Defender"
+    if code in {"DM", "CM", "AM", "LM", "RM", "MIDFIELD", "MIDFIELDER"}:
+        return "Midfield"
+    if code in {"LW", "RW", "SS", "CF", "ATTACK", "FORWARD", "STRIKER"}:
+        return "Attack"
+    return value or None
+
+
+def _resolved_search_player(
+    name: str, results: list[dict]
+) -> tuple[int, str, str | None, list[str]] | None:
     wanted = normalize_text(name)
-    for row in conn.execute("SELECT club_id, name FROM clubs"):
-        if normalize_text(row["name"]) == wanted:
-            return int(row["club_id"])
-    existing = conn.execute("SELECT name FROM clubs WHERE club_id = ?", (desired_id,)).fetchone()
-    if existing is None or normalize_text(existing["name"]) == wanted:
-        return desired_id
-    candidate = 90_000_000 + zlib.crc32(wanted.encode("utf-8")) % 9_000_000
-    while True:
-        row = conn.execute("SELECT name FROM clubs WHERE club_id = ?", (candidate,)).fetchone()
-        if row is None or normalize_text(row["name"]) == wanted:
-            return candidate
-        candidate += 1
+    matches = [item for item in results if normalize_text(item.get("name")) == wanted]
+    if not matches:
+        return None
+    # Transfermarkt orders search results by relevance. Re-sorting exact-name
+    # matches can prefer a lesser namesake merely because their club says Retired.
+    player_id = matches[0].get("id")
+    if player_id is None or not str(player_id).isdigit():
+        return None
+    return (
+        int(player_id),
+        str(matches[0].get("name") or name),
+        _search_position(matches[0].get("position")),
+        [str(value) for value in matches[0].get("nationalities") or [] if value],
+    )
 
 
-def import_legends(conn: sqlite3.Connection, source_path: str | Path) -> dict[str, int]:
-    """Upsert curated legends and exact manual career periods."""
-    path = Path(source_path)
-    items = json.loads(path.read_text(encoding="utf-8"))
-    now = utcnow()
-    periods = 0
-    matched = 0
-    created = 0
-    for ordinal, item in enumerate(items):
-        player_id = _resolve_player_id(conn, item, ordinal)
-        exists = conn.execute("SELECT 1 FROM players WHERE player_id = ?", (player_id,)).fetchone()
-        matched += int(exists is not None)
-        created += int(exists is None)
-        _upsert_player_stub(conn, player_id, item.get("name"))
-        conn.execute(
+def _remove_legacy_manual_legends(
+    conn: sqlite3.Connection, resolved_ids: set[int]
+) -> dict[str, int]:
+    """Remove the synthetic 9xxxxxx players created by the retired JSON importer."""
+    rows = conn.execute(
+        """
+        SELECT player_id FROM players
+        WHERE is_legend = 1 AND player_id BETWEEN 9000000 AND 9999999
+        """
+    ).fetchall()
+    candidates = [int(row["player_id"]) for row in rows if row["player_id"] not in resolved_ids]
+    removed = blocked = 0
+    for player_id in candidates:
+        referenced = conn.execute(
             """
-            UPDATE players SET
-                name = COALESCE(?, name),
-                full_name = COALESCE(full_name, ?),
-                date_of_birth = COALESCE(date_of_birth, ?),
-                country_of_birth = COALESCE(country_of_birth, ?),
-                position = COALESCE(position, ?),
-                image_url = COALESCE(image_url, ?),
-                highest_market_value = CASE
-                    WHEN ? IS NULL THEN highest_market_value
-                    WHEN highest_market_value IS NULL THEN ?
-                    ELSE MAX(highest_market_value, ?) END,
-                is_retired = 1, is_legend = 1, profile_loaded = 1, updated_at = ?
-            WHERE player_id = ?
+            SELECT
+              EXISTS(SELECT 1 FROM club_rosters WHERE player_id=?) OR
+              EXISTS(SELECT 1 FROM transfers WHERE player_id=?) OR
+              EXISTS(SELECT 1 FROM daily_challenges WHERE player_id=?)
             """,
+            (player_id, player_id, player_id),
+        ).fetchone()[0]
+        if referenced:
+            blocked += 1
+            continue
+        conn.execute("DELETE FROM players WHERE player_id = ?", (player_id,))
+        removed += 1
+    return {"legacy_removed": removed, "legacy_blocked": blocked}
+
+
+def sync_legends(
+    conn: sqlite3.Connection,
+    client: ApiClient,
+    source_path: str | Path,
+    refresh: bool = False,
+    refresh_details: bool = False,
+    enqueue_details: bool = True,
+    minimum_resolution_ratio: float = 0.80,
+) -> dict[str, object]:
+    """Resolve curated names to real Transfermarkt IDs and enqueue API enrichment."""
+    names = load_legend_candidates(source_path)
+    now = utcnow()
+    resolved: dict[str, tuple[int, str, str | None, list[str]]] = {}
+    unresolved: list[str] = []
+
+    for name in names:
+        cached = conn.execute(
+            """
+            SELECT player_id, resolved_name FROM legend_registry
+            WHERE candidate_name = ? AND status = 'resolved'
+            """,
+            (name,),
+        ).fetchone()
+        cached_match = (
             (
-                item.get("name"), " ".join(filter(None, (
-                    item.get("first_name"), item.get("last_name")
-                ))) or None,
-                _date(item.get("date_of_birth")), item.get("country"), item.get("position"),
-                item.get("image_url"), _int(item.get("highest_market_value")),
-                _int(item.get("highest_market_value")), _int(item.get("highest_market_value")),
-                now, player_id,
-            ),
+                int(cached["player_id"]), cached["resolved_name"] or name, None, []
+            )
+            if cached and cached["player_id"] is not None
+            else None
         )
-        if item.get("country"):
-            _replace_nationalities(conn, player_id, [item["country"]])
-        conn.execute(
-            "DELETE FROM player_club_periods WHERE player_id = ? AND source = 'manual'",
-            (player_id,),
-        )
-        for club in item.get("clubs") or []:
-            club_id = _resolve_club_id(conn, int(club["club_id"]), str(club["name"]))
-            _upsert_club(conn, club_id, club.get("name"))
+        if cached_match and not refresh:
+            resolved[name] = cached_match
+            continue
+        try:
+            response = client.get(f"/players/search/{quote(name, safe='')}")
+        except ApiError:
+            if cached_match:
+                resolved[name] = cached_match
+            else:
+                unresolved.append(name)
+            continue
+        match = _resolved_search_player(name, list(response.payload.get("results") or []))
+        if match is None:
+            if cached_match:
+                resolved[name] = cached_match
+                continue
+            unresolved.append(name)
             conn.execute(
                 """
-                INSERT INTO player_club_periods(
-                    player_id, club_id, date_from, date_to, source, confidence, created_at
-                ) VALUES (?, ?, ?, ?, 'manual', 'exact', ?)
+                INSERT INTO legend_registry(candidate_name,status,last_checked_at)
+                VALUES (?, 'not_found', ?)
+                ON CONFLICT(candidate_name) DO UPDATE SET
+                    player_id=NULL,resolved_name=NULL,status='not_found',
+                    last_checked_at=excluded.last_checked_at
                 """,
-                (player_id, club_id, _date(club.get("from")), _date(club.get("to")), now),
+                (name, now),
             )
-            periods += 1
+            continue
+        resolved[name] = match
+        _upsert_player_stub(conn, match[0], match[1])
+        conn.execute(
+            "UPDATE players SET position=COALESCE(position, ?), updated_at=? WHERE player_id=?",
+            (match[2], now, match[0]),
+        )
+        has_nationality = conn.execute(
+            "SELECT 1 FROM player_nationalities WHERE player_id=? LIMIT 1", (match[0],)
+        ).fetchone()
+        if match[3] and not has_nationality:
+            _replace_nationalities(conn, match[0], match[3])
+        conn.execute(
+            """
+            INSERT INTO legend_registry(
+                candidate_name,player_id,resolved_name,status,last_checked_at
+            ) VALUES (?, ?, ?, 'resolved', ?)
+            ON CONFLICT(candidate_name) DO UPDATE SET
+                player_id=excluded.player_id,resolved_name=excluded.resolved_name,
+                status='resolved',last_checked_at=excluded.last_checked_at
+            """,
+            (name, match[0], match[1], now),
+        )
+
+    required = max(1, math.ceil(len(names) * minimum_resolution_ratio))
+    if len(resolved) < required:
+        conn.rollback()
+        raise ValueError(
+            f"Legend sync resolved {len(resolved)}/{len(names)}; required at least {required}"
+        )
+
+    resolved_ids = {item[0] for item in resolved.values()}
+    cleanup = _remove_legacy_manual_legends(conn, resolved_ids)
+    conn.execute("UPDATE players SET is_legend = 0 WHERE is_legend = 1")
+    for player_id, resolved_name, _position, _nationalities in resolved.values():
+        _upsert_player_stub(conn, player_id, resolved_name)
+    placeholders = ",".join("?" for _ in resolved_ids)
+    conn.execute(
+        f"UPDATE players SET is_legend = 1, updated_at = ? WHERE player_id IN ({placeholders})",
+        (now, *sorted(resolved_ids)),
+    )
+    pending_before = int(conn.execute(
+        "SELECT COUNT(*) FROM crawl_jobs WHERE status IN ('pending','retry')"
+    ).fetchone()[0])
+    if enqueue_details:
+        seed_players(conn, sorted(resolved_ids), refresh=refresh_details)
+    pending_after = int(conn.execute(
+        "SELECT COUNT(*) FROM crawl_jobs WHERE status IN ('pending','retry')"
+    ).fetchone()[0])
     conn.commit()
     return {
-        "legends": len(items),
-        "matched_existing_players": matched,
-        "created_players": created,
-        "manual_periods": periods,
+        "candidates": len(names),
+        "resolved": len(resolved),
+        "unresolved": unresolved,
+        "queued_jobs": max(0, pending_after - pending_before),
+        **cleanup,
     }

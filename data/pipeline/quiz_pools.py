@@ -181,11 +181,11 @@ def _player_metrics(game: sqlite3.Connection) -> dict[int, dict[str, Any]]:
     return players
 
 
-def _eligible(metrics: dict[str, Any]) -> bool:
+def _eligible(metrics: dict[str, Any], *, legend: bool = False) -> bool:
     return bool(
         metrics["position"]
         and metrics["country"]
-        and metrics["meaningful_clubs"] >= 2
+        and metrics["meaningful_clubs"] >= (1 if legend else 2)
     )
 
 
@@ -255,7 +255,7 @@ def build_quiz_pools(
     active_ids = set(assignments)
     legends = [
         player for player_id, player in metrics.items()
-        if player["is_legend"] and player_id not in active_ids and _eligible(player)
+        if player["is_legend"] and player_id not in active_ids and _eligible(player, legend=True)
     ]
     if legends:
         grouped["LEGENDS"] = legends

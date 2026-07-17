@@ -279,7 +279,7 @@ def validate_game_db(
             UNION ALL SELECT 'less_known'
             UNION ALL SELECT 'obscure'
         ) r
-        WHERE NOT EXISTS (
+        WHERE c.is_special = 0 AND NOT EXISTS (
             SELECT 1 FROM quiz_pool q
             WHERE q.competition_id = c.competition_id
               AND q.recognition = r.recognition

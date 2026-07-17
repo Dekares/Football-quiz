@@ -166,7 +166,7 @@ def _insert_players(source: sqlite3.Connection, game: sqlite3.Connection) -> int
                (SELECT nationality FROM player_nationalities n
                 WHERE n.player_id = p.player_id ORDER BY ordinal LIMIT 1) AS nationality
         FROM players p
-        WHERE p.profile_loaded = 1
+        WHERE (p.profile_loaded = 1 OR p.is_legend = 1)
           AND p.name IS NOT NULL AND p.name != ''
           AND EXISTS (
               SELECT 1 FROM player_club_periods pc

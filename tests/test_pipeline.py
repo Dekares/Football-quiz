@@ -17,7 +17,11 @@ from data.pipeline.major import (
     resolve_discovered_seasons,
     selected_leagues,
 )
-from data.pipeline.maintenance import import_legends, repair_roster_snapshots
+from data.pipeline.maintenance import (
+    repair_placeholder_flags,
+    repair_roster_snapshots,
+    sync_legends,
+)
 from data.pipeline.publish import pair_eligible_club, publish_game_db
 from data.pipeline.quiz_pools import recognition_score
 from data.pipeline.validation import validate_source
@@ -39,6 +43,22 @@ class FakeClient:
                 },
             )
         raise AssertionError(path)
+
+
+class FakeLegendClient:
+    def get(self, path, params=None):
+        self.path = path
+        return ApiResponse(
+            url=f"http://test{path}",
+            status=200,
+            payload={
+                "results": [{
+                    "id": "42",
+                    "name": "Legend Player",
+                    "club": {"id": "0", "name": "Retired"},
+                }],
+            },
+        )
 
 
 class PipelineTests(unittest.TestCase):
@@ -101,6 +121,24 @@ class PipelineTests(unittest.TestCase):
         self.assertFalse(pair_eligible_club("Inter Milan Primavera"))
         self.assertFalse(pair_eligible_club("Atlético Yth."))
         self.assertTrue(pair_eligible_club("BSC Young Boys"))
+
+    def test_placeholder_repair_reverses_legacy_club_id_contamination(self):
+        conn = initialize(self.source)
+        now = utcnow()
+        conn.execute(
+            """
+            INSERT INTO clubs(club_id,name,is_placeholder,created_at,updated_at)
+            VALUES (1,'Real Madrid',1,?,?)
+            """,
+            (now, now),
+        )
+        result = repair_placeholder_flags(conn)
+        self.assertEqual(result["clubs_changed"], 1)
+        self.assertEqual(
+            conn.execute("SELECT is_placeholder FROM clubs WHERE club_id=1").fetchone()[0],
+            0,
+        )
+        conn.close()
 
     def test_transfer_period_derivation_handles_return_to_club(self):
         conn = initialize(self.source)
@@ -319,6 +357,39 @@ class PipelineTests(unittest.TestCase):
             "less_known": 3,
             "obscure": 5,
         })
+        game.execute(
+            "INSERT INTO competitions VALUES ('LEGENDS','Career Legends','International',NULL,99,1)"
+        )
+        game.execute(
+            """
+            INSERT INTO players(
+                player_id,name,search_name,country_of_citizenship,position,is_legend
+            ) VALUES (99,'Legend Player','legend player','Italy','Midfield',1)
+            """
+        )
+        game.execute(
+            "INSERT INTO quiz_pool VALUES ('LEGENDS','obscure','hard',99,100,1)"
+        )
+        game.commit()
+        options = _quiz_options(game)
+        world = options["leagues"][0]
+        legends = next(item for item in options["leagues"] if item["id"] == "LEGENDS")
+        self.assertEqual(world["name"], "World XI")
+        self.assertEqual(world["counts"], {
+            "known": 2,
+            "less_known": 4,
+            "obscure": 7,
+        })
+        self.assertTrue(world["uses_recognition"])
+        self.assertFalse(legends["uses_recognition"])
+        self.assertEqual(legends["total_count"], 1)
+        legend_question = _load_quiz(game, "LEGENDS", "known", [])
+        self.assertEqual(legend_question["player_id"], 99)
+        known_global_id = game.execute(
+            "SELECT player_id FROM global_quiz_pool WHERE recognition='known'"
+        ).fetchone()[0]
+        world_legend = _load_quiz(game, "ALL", "known", [known_global_id])
+        self.assertEqual(world_legend["player_id"], 99)
         global_question = _load_quiz(game, "ALL", "known", [])
         self.assertIsNotNone(global_question)
         self.assertEqual(global_question["league"], "ALL")
@@ -421,25 +492,31 @@ class PipelineTests(unittest.TestCase):
         )
         conn.close()
 
-    def test_legend_import_creates_manual_periods(self):
+    def test_legend_sync_resolves_real_id_and_removes_legacy_player(self):
         conn = initialize(self.source)
-        source = self.root / "legends.json"
-        source.write_text(json.dumps([{
-            "name": "Legend Player", "first_name": "Legend", "last_name": "Player",
-            "country": "Italy", "position": "Midfield", "date_of_birth": "1970-01-01",
-            "highest_market_value": 50_000_000, "image_url": "https://example.test/player.jpg",
-            "clubs": [{
-                "club_id": 10, "name": "Club A", "from": "1990-01-01", "to": "1995-01-01"
-            }],
-        }]), encoding="utf-8")
-        result = import_legends(conn, source)
-        self.assertEqual(result["legends"], 1)
-        self.assertEqual(conn.execute(
-            "SELECT COUNT(*) FROM players WHERE is_legend=1"
-        ).fetchone()[0], 1)
+        now = utcnow()
+        conn.execute(
+            """
+            INSERT INTO players(player_id,name,is_legend,created_at,updated_at)
+            VALUES (9000001,'Old Manual Legend',1,?,?)
+            """,
+            (now, now),
+        )
+        source = self.root / "legend_candidates.txt"
+        source.write_text("# identities only\nLegend Player\n", encoding="utf-8")
+        client = FakeLegendClient()
+        result = sync_legends(conn, client, source)
+        self.assertEqual(result["resolved"], 1)
+        self.assertEqual(result["legacy_removed"], 1)
+        self.assertIn("Legend%20Player", client.path)
+        self.assertEqual(
+            conn.execute("SELECT player_id FROM players WHERE is_legend=1").fetchone()[0],
+            42,
+        )
         self.assertEqual(conn.execute(
             "SELECT COUNT(*) FROM player_club_periods WHERE source='manual'"
-        ).fetchone()[0], 1)
+        ).fetchone()[0], 0)
+        self.assertEqual(queue_counts(conn)["pending"], 3)
         conn.close()
 
 

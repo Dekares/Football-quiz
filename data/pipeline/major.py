@@ -11,12 +11,12 @@ from .client import ApiClient
 from .database import enqueue_job, initialize, make_request_key, utcnow
 from .derive import derive_all_periods
 from .ingest import run_worker
-from .maintenance import import_legends, repair_snapshots
+from .maintenance import repair_snapshots, sync_legends
 from .publish import publish_game_db
 from .validation import validate_source
 
 DEFAULT_CONFIG = Path(__file__).with_name("major_leagues.json")
-DEFAULT_LEGENDS = Path(__file__).resolve().parents[1] / "sources" / "legends.json"
+DEFAULT_LEGENDS = Path(__file__).resolve().parents[1] / "sources" / "legend_candidates.txt"
 
 
 def load_config(path: str | Path = DEFAULT_CONFIG) -> dict[str, Any]:
@@ -259,6 +259,22 @@ def update_major_leagues(
             result["validation"] = validate_source(conn)
             return result
 
+        if DEFAULT_LEGENDS.exists():
+            result["legends"] = sync_legends(
+                conn,
+                client,
+                DEFAULT_LEGENDS,
+                refresh=force,
+                enqueue_details=False,
+            )
+            legend_ids = [
+                int(row["player_id"])
+                for row in conn.execute(
+                    "SELECT player_id FROM players WHERE is_legend=1 ORDER BY player_id"
+                )
+            ]
+            player_ids = sorted(set(player_ids) | set(legend_ids))
+
         detail_jobs = prepare_players(
             conn, player_ids, refresh_days, force, include_market_values
         )
@@ -269,8 +285,6 @@ def update_major_leagues(
         ) if detail_total else {"claimed": 0, "succeeded": 0, "failed": 0}
         result["repair"] = repair_snapshots(conn)
         result["derived"] = derive_all_periods(conn)
-        if DEFAULT_LEGENDS.exists():
-            result["legends"] = import_legends(conn, DEFAULT_LEGENDS)
         result["validation"] = validate_source(conn)
         if publish_output is not None:
             result["publish"] = publish_game_db(

@@ -23,7 +23,8 @@ python -m data.pipeline work --limit 100 --concurrency 2
 python -m data.pipeline status
 python -m data.pipeline derive
 python -m data.pipeline repair
-python -m data.pipeline import-legends
+python -m data.pipeline legend-update --base-url http://localhost:8000
+python -m data.pipeline work --concurrency 2
 python -m data.pipeline validate
 python -m data.pipeline publish --allow-incomplete
 ```
@@ -53,6 +54,20 @@ python -m data.pipeline crawl `
 The queue is persistent and idempotent. Interrupted runs resume with `work`.
 Completed discovery jobs are only repeated when `seed --refresh` is used.
 
+## Legend identities
+
+`data/sources/legend_candidates.txt` contains only curated search names. It does
+not contain profiles, club IDs, career dates or market values. `legend-update`
+resolves those names through `/players/search`, records real Transfermarkt IDs,
+and enqueues the standard profile, transfer and market-value jobs. A sync is
+applied only when at least 80% of candidates resolve, so a partial API outage
+cannot replace the working legend set. Use `--refresh` to resolve identities
+again and `--refresh-details` when completed detail jobs must also be requeued.
+
+The Legends game option ignores recognition buckets and accepts one-club players.
+World XI keeps its active-player recognition selection and adds the full legend
+pool to every selection.
+
 ## Publication contract
 
 Publishing performs these checks before replacing the target artifact:
@@ -64,7 +79,7 @@ Publishing performs these checks before replacing the target artifact:
   bucket inside that competition;
 - known, less-known and obscure pools are non-empty for every published league;
 - every active league player belongs to exactly one independently ranked global
-  recognition bucket used by the All Leagues option;
+  recognition bucket used by the World XI option;
 - the persistent daily schedule starts at `2026-07-01`, has valid sequential day
   numbers and covers at least the next 30 Türkiye-calendar days;
 - production quiz pools and club-pair candidates are non-empty;

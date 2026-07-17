@@ -94,13 +94,13 @@
                 </div></section>
                 <section class="doc-section" id="efsaneler"><span class="doc-section-no">04</span><div class="doc-section-body">
                     <h2>Aktif oyuncular ve emekli efsaneler</h2>
-                    <p>Güncel kadro taraması doğal olarak aktif futbolcuları bulur. Emekli oyuncular ise güncel bir kulüp kadrosunda görünmedikleri için ayrı editoryal listeyle eklenir. Bu kayıtlar doğum tarihi, milliyet, zirve piyasa değeri ve kulüp dönemleriyle hazırlanır; otomatik kaynak kayıtlarından ayırt edilebilmeleri için işaretlenir.</p>
-                    <p>Efsane havuzunun amacı yalnızca ünlü isim sayısını artırmak değildir. Farklı dönemleri, ligleri ve kariyer rotalarını oyuna katarken doğrulanamayan nostaljik iddiaları dışarıda bırakmaktır. Editoryal kayıtlar da normal kayıtlarla aynı yabancı anahtar ve tarih kontrollerinden geçer.</p>
+                    <p>Güncel kadro taraması aktif futbolcuları bulur. Emekli oyuncular için tutulan aday listesi yalnız arama adlarını içerir; gerçek oyuncu kimliği, profil, transferler, milliyet, mevki ve piyasa değeri Transfermarkt API üzerinden alınır. Elle yazılmış kulüp veya kariyer tarihi oyun verisine aktarılmaz.</p>
+                    <p>Efsane senkronizasyonu adayların en az yüzde 80'ini gerçek kimliğe çözmeden çalışan havuzu değiştirmez. Eski profil sayfası okunamayan oyuncularda kimlik ve mevki arama yanıtından, kariyer yolu ise transfer yanıtından oluşturulur. Efsaneler tek havuzdur ve bilinirlik sınıfına ayrılmaz.</p>
                 </div></section>
                 <section class="doc-section" id="zorluk"><span class="doc-section-no">05</span><div class="doc-section-body">
                     <h2>Zorluk ve soru üretimi</h2>
                     <p>Kolay, Orta ve Zor havuzlar yalnızca piyasa değerine göre ayrılmaz. Oyuncunun bilinirliği, kariyerindeki kulüp sayısı, lig bağlantıları, veri bütünlüğü ve ayırt edilebilirliği birlikte değerlendirilir. Çok kısa veya tekdüze kariyerler bazı modlarda yetersiz ipucu üretebilir; aşırı belirsiz kariyerler ise haksız bir soru yaratabilir.</p>
-                    <p>Günün Futbolcusu, 1 Temmuz 2026 tarihinde başlayan kalıcı günlük takvimden okunur. Yeni tarihler Tüm Ligler içindeki global Bilindik havuzundan planlanır; yayınlanan bir günün oyuncusu sonraki veri güncellemelerinde değiştirilmez. Solo mod kariyer çizelgesine daha fazla ağırlık verir. Gerçek zamanlı kulüp çifti soruları ise iki kulüpte de oynamış doğrulanmış oyuncu ilişkilerinden üretilir.</p>
+                    <p>Günün Futbolcusu, 1 Temmuz 2026 tarihinde başlayan kalıcı günlük takvimden okunur. Yeni tarihler Dünya Karması'nın aktif oyuncular için üretilen global Bilindik havuzundan planlanır; yayınlanan bir günün oyuncusu sonraki veri güncellemelerinde değiştirilmez. Solo mod kariyer çizelgesine daha fazla ağırlık verir. Gerçek zamanlı kulüp çifti soruları ise iki kulüpte de oynamış doğrulanmış oyuncu ilişkilerinden üretilir.</p>
                 </div></section>
                 <section class="doc-section" id="kalite"><span class="doc-section-no">06</span><div class="doc-section-body">
                     <h2>Kalite kapıları ve yayın</h2>
@@ -140,13 +140,13 @@
                 </div></section>
                 <section class="doc-section"><span class="doc-section-no">04</span><div class="doc-section-body">
                     <h2>Active players and retired legends</h2>
-                    <p>Current squad crawling naturally finds active footballers. Retired players no longer appear in a live club roster, so selected legends enter through a separate editorial list. Their birth date, nationality, peak value and club periods are prepared explicitly and marked as editorial records.</p>
-                    <p>The legend pool is not designed only to increase the number of famous names. It adds different eras, leagues and career routes while excluding nostalgic claims that cannot be verified. Editorial entries pass the same foreign-key and date checks as automated records.</p>
+                    <p>Current squad crawling finds active footballers. The retired-player candidate list contains search names only; real player IDs, profiles, transfers, nationality, position and market values come from the Transfermarkt API. No hand-written club or career dates enter the game database.</p>
+                    <p>A legend sync cannot replace the working pool unless at least 80 percent of candidates resolve to real identities. When an old profile page cannot be parsed, identity and position come from search while the career route comes from transfers. Legends use one pool without recognition tiers.</p>
                 </div></section>
                 <section class="doc-section"><span class="doc-section-no">05</span><div class="doc-section-body">
                     <h2>Difficulty and question generation</h2>
                     <p>Easy, Medium and Hard are not separated only by market value. Recognition, number of clubs, league connections, data completeness and how clearly a player can be identified all matter. A very short career may provide too few clues, while an extremely ambiguous one can produce an unfair question.</p>
-                    <p>Daily Player reads from a persistent schedule beginning on 1 July 2026. New dates are planned from the global Known pool across All Leagues, and a published day's player is not changed by later data refreshes. Solo gives more weight to the career timeline. Real-time club-pair questions use verified relationships for players who represented both clubs.</p>
+                    <p>Daily Player reads from a persistent schedule beginning on 1 July 2026. New dates are planned from the active-player global Known pool inside World XI, and a published day's player is not changed by later data refreshes. Solo gives more weight to the career timeline. Real-time club-pair questions use verified relationships for players who represented both clubs.</p>
                 </div></section>
                 <section class="doc-section"><span class="doc-section-no">06</span><div class="doc-section-body">
                     <h2>Quality gates and publication</h2>

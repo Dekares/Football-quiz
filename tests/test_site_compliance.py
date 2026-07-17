@@ -99,6 +99,9 @@ class SiteComplianceTests(unittest.TestCase):
         self.assertIn("/api/quiz/options", solo)
         self.assertIn("recognition=", solo)
         self.assertIn("league=", solo)
+        self.assertIn("effectiveRecognition", solo)
+        self.assertIn("uses_recognition", solo)
+        self.assertIn("Dünya Karması", read("js/common.js"))
         for marker in (
             "solo-result-modal",
             "rm-quick-facts",
