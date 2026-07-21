@@ -1,512 +1,301 @@
 # Careerdle Proje Durumu
 
-Son güncelleme: **17 Temmuz 2026**
+Son güncelleme: **21 Temmuz 2026**
 
-Bu belge, mevcut çalışma ağacındaki kod ve veritabanı esas alınarak hazırlanmıştır.
-README'den farklı bir bilgi varsa, bu belgedeki "Mevcut durum" ve "Yarım kalan
-işler" bölümleri güncel uygulama davranışını ifade eder.
+Bu belge çalışma ağacındaki uygulama, pipeline ve yayın veritabanı incelenerek
+hazırlanmıştır. Üretimde kullanılacak gerçek alan adı ve AdSense hesap işlemleri gibi
+repo dışı adımlar ayrıca belirtilmiştir.
 
-## 1. Projenin mevcut durumu
+## 1. Mevcut durum
 
-Careerdle, futbolcuyu kariyer geçmişinden tahmin etmeye dayalı, FastAPI ve vanilla
-JavaScript ile geliştirilmiş bir futbol oyunudur. Kullanıcıya açık ve aktif iki oyun
-akışı vardır:
+Careerdle, futbolcuyu kariyer ve transfer geçmişinden tahmin etmeye dayalı FastAPI ve
+vanilla JavaScript uygulamasıdır. Yayındaki arayüz iki oyun sunar:
 
-1. **Günün Futbolcusu:** Her gün herkes için aynı aktif oyuncu seçilir. Tahminler
-   milliyet, mevki, yaş, değer, kulüp ve lig bilgileriyle karşılaştırılır.
-2. **Futbolcu Tahmin / Solo:** Lig ve bilinirlik havuzu seçilir; oyuncu kariyerindeki
-   kulüp sırasından tahmin edilir.
+1. **Günün Futbolcusu:** Her tarihte herkes için aynı aktif ve global Bilindik
+   havuzundan oyuncu. Sekiz tahminde milliyet, mevki, yaş, piyasa değeri, kulüp ve lig
+   karşılaştırılır.
+2. **Futbolcu Tahmin:** Lig ve bilinirlik havuzu seçilir; kronolojik kariyer yolundan
+   oyuncu bulunur. Dünya Karması global sıralamayı, Kariyer Efsaneleri ise bilinirlik
+   filtresi olmayan özel havuzu kullanır.
 
-Realtime çok oyunculu backend kodu mevcuttur; ancak güncel frontend router'da çok
-oyunculu ekran veya rota yoktur. Bu nedenle çok oyunculu mod şu anda kullanıcıya açık
-tamamlanmış bir özellik olarak kabul edilmemelidir.
+Realtime `mc`, `free` ve `duel` backend'i deneysel olarak korunur. Güncel frontend'de
+çok oyunculu ekran yoktur; bu mod üretimde tamamlanmış özellik sayılmaz.
 
-### Güncel veri durumu
+### Yayın veritabanı
 
-Aktif oyun artifact'i: `data/football_quiz_v2.db`
+Aktif artifact: `data/football_quiz_v2.db`
 
-| Alan | Mevcut değer |
+| Alan | Değer |
 |---|---:|
-| Build kimliği | `20260717-120246-b087b869` |
+| Build kimliği | `20260721-013929-06485908` |
 | Oyuncu | 6.898 |
 | Kulüp | 8.152 |
 | Kariyer dönemi | 56.580 |
-| Oyun ligi/havuzu | 13 |
+| Oyun havuzu | 13 |
 | Kulüp çifti | 1.312 |
-| Günlük meydan okuma | 382 |
-| Lig bazlı quiz havuzu | 6.162 |
-| Global quiz havuzu | 5.960 |
+| Lig bazlı quiz kaydı | 6.162 |
+| Global quiz kaydı | 5.960 |
+| Global Bilindik | 477 |
+| Global Az Bilindik | 1.609 |
+| Global Bilinmedik | 3.874 |
+| Günlük meydan okuma | 386 |
 
-13 oyun havuzu, yapılandırılmış 12 lig ile özel `Kariyer Efsaneleri` havuzundan
-oluşur. Kullanıcı arayüzündeki `Dünya Karması`, bu 13 sayısına eklenen sanal bir
-seçimdir; bağımsız `global_quiz_pool` ile 202 kişilik efsane havuzunun birleşimini
-kullanır.
+Günlük takvim `2026-07-01` ile `2027-07-21` arasını kapsar. Geçmiş ve bugünkü
+cevaplar değişmez; gelecekteki cevaplar oyuncu global Bilindik havuzundan çıkarsa
+yeniden planlanır.
 
-Kaynak veritabanı `data/transfermarkt_source.db` içinde 6.900 oyuncu, 8.234 kulüp,
-53.142 transfer, 109.280 piyasa değeri kaydı ve 21.522 ham API snapshot'ı vardır.
-Kaynak kalite doğrulaması başarılıdır; açık `error` seviyesinde veri sorunu yoktur.
-
-### Son doğrulama durumu
-
-- SQLite `quick_check`: başarılı.
-- Foreign key kontrolü: başarılı.
-- Pipeline'ın yeniden ürettiği artifact ile mevcut artifact arasında şema farkı: 0.
-- Efsane kimlikleri için referans kontrolü: Ronaldinho `3373`, Maradona `8024`, Zidane `3111`.
-- Birim ve uyumluluk testleri: **20/20 başarılı**.
-- Veritabanı ve HTTP smoke testi: başarılı.
-- Masaüstü/mobil görsel regresyon testi: başarılı.
+Canonical kaynak `data/transfermarkt_source.db` içinde 6.900 oyuncu, 8.234 kulüp,
+56.580 kariyer dönemi, 53.142 transfer, 109.280 piyasa değeri ve 21.522 ham snapshot
+vardır. Kuyrukta bekleyen veya çalışan iş yoktur. Kaynak doğrulaması başarılıdır.
 
 ## 2. Tamamlanan özellikler
 
-### Oyunlar
+### Veri ve oyun mantığı
 
-- Günün Futbolcusu için kalıcı, tarih bazlı günlük oyuncu seçimi.
-- Günlük takvimin `2026-07-01` tarihinden başlaması.
-- Yayınlanmış günlük cevapların sonraki DB build'lerinde değişmeden korunması.
-- Günlük oyuncunun global `Bilindik` havuzundan seçilmesi.
-- Günlük tahminlerde milliyet, mevki, yaş, piyasa değeri, kulüp ve lig karşılaştırması.
-- Solo oyunda lig seçimi.
-- Solo oyunda `Bilindik`, `Az Bilindik`, `Bilinmedik` oyuncu havuzları.
-- `Dünya Karması` için bağımsız global bilinirlik havuzu ile tüm efsanelerin birleşimi.
-- Kariyer Efsaneleri seçeneğinde bilinirlik kontrolünün kaldırılması.
-- 202 gerçek Transfermarkt kimliğinden oluşan, API profili ve transferleriyle beslenen efsane havuzu.
-- Kariyer yolunun kronolojik takım listesi olarak gösterilmesi.
-- Tekrarlanan kulüp dönemlerinin ve dönüş transferlerinin korunması.
-- Emeklilik durumunun kariyer sonunda sentetik veya gerçek kayıt olarak gösterilmesi.
-- Doğru cevap ve atlama sonuç pencerelerinin sade, tema uyumlu hale getirilmesi.
-- Solo seri, rekor, toplam doğru ve son oyuncuların `localStorage` ile saklanması.
-- Günlük oyun ilerlemesi ve serisinin `localStorage` ile saklanması.
+- 12 büyük lig: Premier League, Serie A, LaLiga, Bundesliga, Ligue 1, Liga Portugal,
+  Eredivisie, Süper Lig, Belçika Pro League, Scottish Premiership, MLS ve Saudi Pro
+  League.
+- Split-year ve calendar-year liglerde güncel sezon keşfi ve API fallback'i.
+- Kadro, profil, transfer ve piyasa değeri ingest'i; ham yanıt snapshot'ları.
+- Kesintiden devam eden idempotent iş kuyruğu ve TTL tabanlı güncelleme.
+- Transferlerden kronolojik kariyer dönemleri; dönüş transferleri ve emeklilik kaydı.
+- Aynı oyuncudaki birden fazla açık dönemi tek güncel kulübe indiren veri onarımı.
+- Gerçek Transfermarkt kimlikleri ve API verisiyle beslenen efsane havuzu.
+- Lig bazlı ve global `known`, `less_known`, `obscure` sıralamaları.
+- Kalıcı günlük takvim; yayınlanmış cevapları koruyan gelecek yeniden planlama kuralı.
+- `<output>.new` üzerinde build, foreign key/kalite kontrolü ve atomik yayın.
+- Eski istemciler için `easy`, `medium`, `hard` uyumluluk alanları.
 
-### Ligler ve veri kapsamı
+### Backend ve güvenlik
 
-- Premier League, Serie A, LaLiga, Bundesliga ve Ligue 1.
-- Liga Portugal, Eredivisie, Süper Lig, Jupiler Pro League ve Scottish Premiership.
-- Major League Soccer.
-- Saudi Pro League.
-- Güncel sezonun split-year ve calendar-year ligler için otomatik hesaplanması.
-- API istenen sezonu döndürmezse keşfedilen en güncel sezona geri düşülmesi.
-- Oyuncu profilleri, kadrolar, transferler ve piyasa değeri geçmişlerinin alınması.
-- Transferlerden normalize kariyer dönemlerinin türetilmesi.
-- Ham API cevaplarının snapshot olarak saklanması.
-- Kesintiden sonra devam edebilen kalıcı ve idempotent iş kuyruğu.
+- FastAPI HTTP API, Socket.IO realtime servisi ve salt okunur immutable SQLite.
+- FTS5 trigram oyuncu/kulüp araması ve kısa sorgularda kontrollü fallback.
+- Arama uzunluğu/kelime sınırı ve HTTP rate limiting.
+- Same-origin CORS varsayılanı; açık wildcard kaldırıldı.
+- `TrustedHostMiddleware`; doğrulanmamış `Host` ve forwarded header yansıması kapatıldı.
+- CSP, HSTS, `nosniff`, frame engeli, referrer, permissions ve opener başlıkları.
+- Dinamik görseller için yalnız güvenli HTTP(S) URL kabulü ve HTML escaping.
+- Socket bağlantı/lobi oluşturma limitleri ve 1.000 aktif lobi tavanı.
+- Realtime tur başlatma, seçim ve rövanş akışlarında yarış durumu koruması.
+- Boş lobilerin bağlantı toleransı sonunda silinmesi.
+- Merkezi futbol konfederasyonu ve bayrak kodu eşlemesi; aktif 136 ülke kapsanıyor.
+- Non-root Docker kullanıcıları ve container healthcheck'leri.
+- Sabitlenmiş runtime/dev bağımlılıkları ve `pip-audit` kontrolü.
+- GitHub Actions: Python/JavaScript syntax, 30 test, DB smoke ve dependency audit.
 
-### Veritabanı pipeline'ı
+### Arayüz, erişilebilirlik ve kullanıcı devamlılığı
 
-- Mutable canonical kaynak DB ile immutable oyun DB'sinin ayrılması.
-- Kaynak DB: `data/transfermarkt_source.db`.
-- Yayın artifact'i: `data/football_quiz_v2.db`.
-- TTL tabanlı güncelleme:
-  - Kulüp ve kadro keşfi: 1 gün.
-  - Transferler: 1 gün.
-  - Oyuncu profilleri: 30 gün.
-  - Piyasa değerleri: 7 gün.
-- Kaynak ve çıktı foreign key kontrolleri.
-- Minimum oyuncu ve kariyer dönemi eşikleri.
-- Her lig için birbirini dışlayan üç bilinirlik havuzu.
-- Global bilinirlik havuzunun ayrı sıralanması.
-- Realtime oyun için kulüp çifti adaylarının build sırasında üretilmesi.
-- `<output>.new` üzerinde build ve doğrulama sonrası atomik yayın.
-- Başarılı eski artifact'ler için en fazla üç otomatik yedek.
-- Güncel backend formatıyla pipeline uyumluluğu doğrulandı.
+- Koyu/açık tema ve temaya göre `logo.png` / `logo-koyu.png`.
+- Tek kaynaktan enjekte edilen ortak header ve footer.
+- Türkçe/İngilizce içerik; responsive masaüstü ve mobil düzen.
+- Lig/havuz seçimi, aktif havuz özeti, can, ipucu, seri, rekor ve son tahminler.
+- Son görülen 30 oyuncuyu dışlayarak yakın tekrarları azaltma.
+- Sade doğru/atlandı/oyun bitti pencereleri ve kariyer özeti.
+- Mobilde oyun akışını istatistiklerin önüne alan içerik sırası.
+- Klavyeyle arama menüsü, combobox/listbox ARIA durumu, görünür focus ve modal focus
+  trap/Escape/focus restore davranışı.
+- Arama isteklerinde hata ve geç dönen eski cevap koruması.
+- Tema başlangıç ve analytics kodunun ortak dosyalara ayrılması.
+- Kişisel veri veya oyuncu adı taşımayan, Consent Mode'a bağlı olay ölçümü.
+- About, Methodology, Contact, Privacy ve Terms sayfaları; canonical, sitemap,
+  robots.txt, ads.txt, AdSense kimliği ve Consent Mode v2 başlangıcı.
 
-### Backend ve platform
+### Kod temizliği
 
-- FastAPI HTTP API.
-- Socket.IO realtime backend ve in-memory lobi kayıt defteri.
-- SQLite'ın `mode=ro&immutable=1` ile salt okunur açılması.
-- Bloklayıcı SQLite sorgularının sabit thread pool üzerinde çalıştırılması.
-- FTS5 trigram oyuncu ve kulüp araması; kısa sorgular için LIKE fallback.
-- HTTP API rate limiting.
-- Tek process geliştirme/launch modeli: API + statik dosyalar + Socket.IO.
-- Ayrı ölçekleme için API ve realtime Dockerfile'ları ile nginx örneği.
-- Render ve Docker dağıtım yapılandırmaları.
-- Sağlık kontrolü ve build kimliği endpoint'i.
-- İsteğe bağlı OpenAPI dokümantasyonu (`/api/docs`).
-
-### Arayüz ve içerik
-
-- Koyu ve açık tema.
-- Koyu temada `logo.png`, açık temada `logo-koyu.png` kullanımı.
-- Tüm sayfalarda ortak üst ve alt bar.
-- Ortak kabuk dosyaları:
-  - `frontend/static/partials/site-header.html`
-  - `frontend/static/partials/site-footer.html`
-- Header/footer'ın FastAPI tarafından tüm HTML sayfalarına enjekte edilmesi.
-- Türkçe ve İngilizce arayüz/içerik desteği.
-- Mobil navigasyon ve responsive sayfa düzenleri.
-- About, Data Methodology, Contact, Privacy ve Terms of Use sayfaları.
-- Logo, favicon, Open Graph ve Twitter görselleri.
-- `robots.txt`, `sitemap.xml` ve `ads.txt` endpoint'leri.
-- AdSense publisher meta etiketleri ve Auto Ads script'i.
-- Consent Mode v2 varsayılanlarının reddedilmiş olarak başlatılması.
-- AdSense/SEO/site uyumluluğu için otomatik statik kontroller.
+- Kullanılmayan eski çok oyunculu frontend CSS/çeviri/modal parçaları kaldırıldı.
+- Çağrılmayan router ve modal yardımcıları kaldırıldı.
+- Tekrarlanan ülke haritası merkezi backend verisine taşındı.
+- Kullanılmayan `data/football_quiz.db`, `img/icon.png` ve `img/logo-text.png`
+  kaldırıldı; yaklaşık 43 MB eski artifact artık repoda tutulmuyor.
+- Frontend CSS ve JavaScript toplamında yüzlerce satır ölü kod temizlendi.
+- Sunulmayan çok oyunculu özellik SEO ve tanıtım metinlerinden çıkarıldı.
 
 ## 3. Yarım kalan işler
 
-### Çok oyunculu frontend
+### Üretim ve AdSense
 
-Realtime backend; lobi oluşturma, katılma, yeniden bağlanma, ayar değiştirme, oyun
-başlatma, cevap gönderme, kulüp seçme, oyuncu atma ve rövanş event'lerini içerir.
-Ancak eski `frontend/static/js/multi.js` kaldırılmış ve güncel router'da yalnızca
-`#/` ile `#/solo` rotaları kalmıştır.
+- Gerçek alan adı için `APP_PUBLIC_BASE_URL` ve `APP_TRUSTED_HOSTS` girilmeli.
+- AdSense tarafında alan adı ve `ads.txt` doğrulanmalı.
+- EEA/UK/İsviçre için Google sertifikalı CMP mesajı Funding Choices üzerinden
+  yayınlanmalı. Repo içindeki Consent Mode başlangıcı tek başına CMP değildir.
+- Üretim hata izleme, latency, rate-limit ve Socket.IO metrikleri henüz yok.
+- Pipeline zamanlanmış bir veri güncelleme workflow'una bağlanmadı; CI yalnız mevcut
+  artifact'i doğruluyor.
 
-Tamamlanması için:
+### Ürün
 
-- Çok oyunculu ekranın yeni temaya göre yeniden tasarlanması.
-- Socket.IO istemcisinin yeniden bağlanması.
-- MC, serbest yazma ve düello akışlarının uçtan uca test edilmesi.
-- Mobil lobi ve bağlantı kopması senaryolarının test edilmesi.
-- Özellik açılana kadar SEO metinlerindeki “canlı düello / 2-6 kişi” ifadelerinin
-  kaldırılması veya “yakında” olarak değiştirilmesi.
-
-### AdSense operasyonu
-
-Teknik site hazırlıkları tamamlanmıştır; ancak AdSense onayı kodla garanti edilemez.
-Google tarafında aşağıdaki işler ayrıca tamamlanmalıdır:
-
-- Alan adının AdSense hesabında doğrulanması.
-- `ads.txt` durumunun Google panelinde doğrulanması.
-- EEA/UK/İsviçre için Google sertifikalı CMP mesajının Funding Choices üzerinden
-  yayınlanması.
-- Site sahipliği, politika ve içerik incelemesinin Google tarafından onaylanması.
-- Gerçek alan adı belli olduğunda `APP_PUBLIC_BASE_URL` değerinin sabitlenmesi.
-
-### Operasyon ve dağıtım
-
-- Online veritabanına geçiş henüz yapılmadı. Mevcut mimari paketlenmiş salt-okunur
-  SQLite kullanıyor ve şu an için bilinçli tercih budur.
-- Pipeline güncellemeleri zamanlanmış CI/cron göreviyle otomatik çalışmıyor.
-- GitHub Actions veya eşdeğer CI yapılandırması yok.
-- Realtime lobi state'i restart sonrası kaybolur; kalıcı snapshot uygulanmadı.
-- Çok node realtime için belgelenen lobi koduna göre consistent-hash routing henüz
-  üretim ortamında uygulanmadı.
-- Dünya Karması ve API tabanlı efsane güncellemesi henüz commit/release halinde
-  paketlenmedi.
+- Realtime backend için yeni frontend ve iki gerçek istemciyle uçtan uca test yok.
+- İstatistikler tarayıcı `localStorage` alanında; cihazlar arası senkronizasyon ve
+  hesap sistemi yok.
+- Anonim olaylar üretim analytics panelinde dönüşüm hunisi olarak yapılandırılmadı.
+- Günlük paylaşım, geri dönüş ve havuz değiştirme olayları bir süre ölçülüp arayüz
+  kararları gerçek kullanım verisiyle doğrulanmalı.
 
 ## 4. Bilinen hatalar ve riskler
 
-1. **On dead pipeline işi:** Transfermarkt API dört aktif oyuncunun transfer endpoint'inde
-   HTTP 500 döndürdü: `308279`, `989995`, `707802`, `468264`. Altı eski efsanenin
-   profil endpoint'i de 500 döndürüyor: `8021`, `8024`, `17121`, `35604`, `72347`,
-   `117633`. Bu altı oyuncunun kimlik/mevki/milliyeti API aramasından, kariyeri transfer
-   endpoint'inden tamamlandığı için 202 efsanenin tamamı oynanabilir. Kaynak validasyonu
-   başarılıdır ve açık veri hatası yoktur.
-2. **Çok oyunculu tanıtım tutarsızlığı:** Bazı README, SEO ve sayfa metinleri canlı
-   çok oyunculu modu mevcutmuş gibi anlatıyor; güncel frontend bu modu sunmuyor.
-3. **Immutable DB nedeniyle restart gereksinimi:** Uygulama çalışan thread'lerde DB'yi
-   immutable bağlantıyla açık tuttuğu için yeni artifact yayınlandıktan sonra uygulama
+1. Kaynak kuyrukta 10 `dead` iş vardır. Dört aktif oyuncunun transfer ve altı eski
+   efsanenin profil endpoint'i yerel Transfermarkt API'den HTTP 500 döndürmektedir.
+   Fallback verileri nedeniyle artifact doğrulaması ve oyun havuzu sağlamdır; altı
+   oyuncu profil yenilemesi beklemektedir.
+2. Realtime lobi durumu process belleğindedir. Process yeniden başlarsa aktif lobiler
+   kaybolur; çok node için ortak Socket.IO manager ve state deposu gerekir.
+3. Oyun DB'si `immutable=1` açılır. Yeni artifact yayınlandıktan sonra uygulama
    process'i yeniden başlatılmalıdır.
-4. **Realtime state kaybı:** Tek realtime process yeniden başlarsa aktif lobiler ve
-   maçlar kaybolur.
-5. **AdSense dış bağımlılığı:** Teknik dosyalar doğru olsa bile Google hesabı, CMP ve
-   politika onayı tamamlanmadan reklam gösterimi başlamaz.
+4. CSP, mevcut inline event handler'ları ve reklam entegrasyonu nedeniyle
+   `script-src 'unsafe-inline'` içerir. Dinamik içerik escape edilir fakat uzun vadede
+   handler'lar event delegation'a, üçüncü taraf scriptler nonce/hash modeline
+   taşınmalıdır.
+5. Bayrak ve oyuncu/kulüp görselleri üçüncü taraf HTTPS kaynaklarından gelir. Kaynak
+   kapanırsa oyun çalışır, yalnız görsel fallback gösterilir.
+6. AdSense onayı kodla garanti edilemez; içerik ve teknik sinyaller hazır olsa da son
+   karar Google politika ve hesap incelemesidir.
 
-## 5. Sonraki yapılması gereken adımlar
+## 5. Sonraki adımlar
 
-Önerilen öncelik sırası:
+1. Değişiklikleri gözden geçirip tek sürümlü commit olarak yayınla.
+2. Gerçek domain değişkenlerini Render'a gir, deploy sonrası canonical/sitemap/headers
+   kontrolünü gerçek HTTPS origin'inde tekrarla.
+3. Google CMP, domain ve `ads.txt` doğrulamalarını tamamla.
+4. Pipeline için zamanlanmış workflow ekle: `major-update -> validate -> publish ->
+   smoke`; artifact değiştiğinde kontrollü deploy/restart uygula.
+5. Üretim gözlemlenebilirliği ve alarm eşikleri ekle.
+6. Realtime özelliğinin ürün kararını ver. Açılacaksa ortak state, frontend ve E2E;
+   açılmayacaksa deneysel backend'i ayrı paket veya branch'e taşı.
+7. CSP inline handler temizliğini ayrı, görsel regresyon testli bir çalışma olarak yap.
+8. Kullanım verisi yeterli olduğunda günlük tamamlama, solo tur devamı ve ertesi gün
+   geri dönüş oranlarına göre mevcut iki modu iyileştir.
 
-1. Çalışma ağacını gözden geçir, üretilmiş/geçici dosyaları ayır ve mevcut çalışan
-   durumu tek bir sürümlü commit olarak güvenceye al.
-2. Çok oyunculu modun ürün kapsamına karar ver:
-   - Yeniden açılacaksa frontend ve E2E testlerini tamamla.
-   - Yakın vadede açılmayacaksa SEO, README ve tanıtım metinlerinden çıkar.
-3. Gerçek üretim alan adını belirle ve `APP_PUBLIC_BASE_URL`, CORS ve AdSense site
-   doğrulamasını üretim değerleriyle yapılandır.
-4. Google sertifikalı CMP mesajını yayınla ve AdSense panelindeki `ads.txt` durumunu
-   doğrula.
-5. Pipeline'ı günlük veya haftalık zamanlanmış bir iş haline getir; yayın öncesi
-   `validate`, yayın sonrası `smoke_app` zorunlu olsun.
-6. On dead transfer/profile işinin yerel Transfermarkt API tarafındaki HTTP 500 nedenini
-   incele; efsane profil fallback'ini koru.
-7. CI ekle: unittest, JavaScript syntax, pipeline smoke ve Docker build.
-8. Üretim gözlemlenebilirliği ekle: hata logları, sağlık kontrolü, latency ve Socket.IO
-   bağlantı metrikleri.
-9. Trafik gerçekten gerektirirse API/statik/realtime ayrık dağıtımına geç; online DB'ye
-   yalnızca yazma veya çoklu bölge gereksinimi oluştuğunda karar ver.
+## 6. Çalıştırma
 
-## 6. Projeyi çalıştırma
-
-### Gereksinimler
-
-- Python 3.11 veya 3.12.
-- PowerShell komutları için Windows.
-- Veritabanı güncellemesi yapılacaksa çalışan yerel Transfermarkt API.
-- Görsel QA için Google Chrome.
-
-### Bağımlılık kurulumu
+### Kurulum
 
 ```powershell
 cd "D:\projects\hazır veriseti"
-
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install -r backend\requirements.txt
+python -m pip install -r requirements-dev.txt
 ```
 
-### Careerdle geliştirme sunucusu
+### Geliştirme sunucusu
 
-Transfermarkt API `8000` portunda çalışıyorsa Careerdle için `8011` kullan:
+Yerel Transfermarkt API `8000` kullanır. Careerdle için bu makinede ayrılmamış `9001`
+portu kullanılır:
 
 ```powershell
-cd "D:\projects\hazır veriseti"
-
 $env:APP_DB_PATH = "data/football_quiz_v2.db"
 $env:APP_SERVE_STATIC = "true"
 $env:APP_ENABLE_DOCS = "true"
 
 .\.venv\Scripts\python.exe -m uvicorn backend.app.realtime.server:app `
-  --host 127.0.0.1 `
-  --port 8011 `
-  --workers 1
+  --host 127.0.0.1 --port 9001 --workers 1
 ```
 
-- Site: `http://127.0.0.1:8011`
-- Sağlık: `http://127.0.0.1:8011/api/health`
-- OpenAPI: `http://127.0.0.1:8011/api/docs`
+- Site: `http://127.0.0.1:9001`
+- Sağlık: `http://127.0.0.1:9001/api/health`
+- OpenAPI: `http://127.0.0.1:9001/api/docs`
 
-Sadece stateless HTTP API çalıştırmak için:
-
-```powershell
-$env:APP_SERVE_STATIC = "false"
-.\.venv\Scripts\python.exe -m uvicorn backend.app.main:app `
-  --host 127.0.0.1 --port 8011
-```
-
-## 7. Test komutları
-
-### Birim ve uyumluluk testleri
+## 7. Test ve build komutları
 
 ```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py"
-```
+# Python syntax
+.\.venv\Scripts\python.exe -m compileall -q backend data tools tests
 
-Beklenen güncel sonuç: `Ran 19 tests ... OK`.
+# Tüm JavaScript dosyaları
+$js = rg --files frontend -g '*.js'
+foreach ($file in $js) { node --check $file }
 
-### Python ve JavaScript syntax kontrolleri
+# 30 test
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
 
-```powershell
-.\.venv\Scripts\python.exe -m compileall -q backend data\pipeline tools
-
-node --check frontend\static\js\common.js
-node --check frontend\static\js\classic.js
-node --check frontend\static\js\solo.js
-node --check frontend\static\js\router.js
-node --check frontend\static\js\doc-page.js
-node --check frontend\static\js\privacy-consent.js
-```
-
-### Kaynak DB kontrolü
-
-```powershell
+# Kaynak veri kalite kontrolü
 .\.venv\Scripts\python.exe -m data.pipeline status
 .\.venv\Scripts\python.exe -m data.pipeline validate
-```
 
-### Artifact smoke testi
+# Artifact kontratı
+.\.venv\Scripts\python.exe -m tools.smoke_app --db data\football_quiz_v2.db
 
-Sunucu olmadan yalnızca DB kontratını test etmek için:
-
-```powershell
-.\.venv\Scripts\python.exe -m tools.smoke_app `
-  --db data\football_quiz_v2.db
-```
-
-Çalışan siteyle HTTP ve Socket.IO dahil test etmek için:
-
-```powershell
+# Çalışan HTTP ve Socket.IO
 .\.venv\Scripts\python.exe -m tools.smoke_app `
   --db data\football_quiz_v2.db `
-  --base-url http://127.0.0.1:8011 `
-  --socket-url http://127.0.0.1:8011
-```
+  --base-url http://127.0.0.1:9001 `
+  --socket-url http://127.0.0.1:9001
 
-### Görsel regresyon testi
-
-Araç kendi geçici sunucusunu başlatır ve masaüstü/mobil ekran görüntüleri üretir:
-
-```powershell
+# Masaüstü/mobil görsel QA
 .\.venv\Scripts\python.exe tools\visual_qa.py `
-  --output-dir .tmp-visual-qa `
-  --port 8013 `
+  --output-dir .tmp-visual-qa --port 9003 `
   --db data\football_quiz_v2.db
+
+# Bağımlılık güvenliği
+$env:PYTHONUTF8 = "1"
+.\.venv\Scripts\python.exe -m pip_audit -r requirements-dev.txt
 ```
 
-Tek bir görsel işi çalıştırmak için örnek:
+Frontend vanilla HTML/CSS/JavaScript olduğu için npm build adımı yoktur.
 
-```powershell
-.\.venv\Scripts\python.exe tools\visual_qa.py `
-  --only result-skipped-mobile
-```
+### Veritabanını güncelle
 
-## 8. Veritabanı güncelleme ve build komutları
-
-Veritabanı build'i sırasında yerel Transfermarkt API'nin
-`http://localhost:8000` adresinde çalışması gerekir.
-
-### Üretim kapsamındaki tüm büyük ligleri güncelle
+Yerel Transfermarkt API `http://localhost:8000` üzerinde çalışırken:
 
 ```powershell
 .\.venv\Scripts\python.exe -m data.pipeline major-update `
-  --tiers 1,2 `
-  --with-market-values `
-  --concurrency 8 `
-  --min-players 5400 `
-  --min-periods 50000
+  --tiers 1,2 --with-market-values --concurrency 8 `
+  --min-players 5400 --min-periods 50000
 ```
 
-Bu komut keşif, ingest, repair, kariyer türetme, efsane senkronizasyonu, kaynak doğrulama ve
-sıkı artifact publish adımlarını birlikte çalıştırır. Normal çalışmada yalnızca TTL'i
-dolan kaynaklar yeniden istenir.
+Komut discovery, ingest, repair, derive, legend sync, validate ve atomik publish
+adımlarını çalıştırır. Normalde yalnız TTL'i dolan kayıtlar istenir. `--force` sadece
+tam yenileme gerektiğinde kullanılmalıdır.
 
-TTL'i yok sayarak her şeyi tekrar istemek için yalnızca gerektiğinde `--force` ekle.
-
-### Kesilen işi devam ettir
+Kesilen işi sürdürmek için:
 
 ```powershell
 .\.venv\Scripts\python.exe -m data.pipeline status
 .\.venv\Scripts\python.exe -m data.pipeline work `
-  --base-url http://localhost:8000 `
-  --concurrency 8
-```
-
-Worker bittikten sonra `major-update` komutunu yeniden çalıştırarak kalan aşamaları ve
-publish'i tamamla.
-
-### Manuel aşamalar
-
-```powershell
-.\.venv\Scripts\python.exe -m data.pipeline repair
-.\.venv\Scripts\python.exe -m data.pipeline derive
-.\.venv\Scripts\python.exe -m data.pipeline legend-update `
-  --base-url http://localhost:8000
-.\.venv\Scripts\python.exe -m data.pipeline work `
   --base-url http://localhost:8000 --concurrency 8
-.\.venv\Scripts\python.exe -m data.pipeline validate
-.\.venv\Scripts\python.exe -m data.pipeline publish `
-  --min-players 5400 `
-  --min-periods 50000
 ```
 
-`--allow-incomplete` yalnızca küçük pilot datasetlerde kullanılmalıdır; üretim
-artifact'i için kullanılmamalıdır.
+Ardından `major-update` tekrar çalıştırılır. Publish sonrası uygulama yeniden
+başlatılır ve health build kimliği ile HTTP/Socket smoke kontrol edilir.
 
-### Yayın sonrası
-
-1. Careerdle process'ini yeniden başlat.
-2. `/api/health` içindeki build kimliğinin değiştiğini doğrula.
-3. DB + HTTP smoke testini çalıştır.
-4. Günlük oyuncu ve Solo akışını tarayıcıdan kontrol et.
-
-### Frontend build
-
-Frontend vanilla HTML/CSS/JavaScript'tir; npm tabanlı compile veya bundle aşaması
-yoktur. Statik dosyalar doğrudan `frontend/static/` altından sunulur.
-
-## 9. Docker ve dağıtım komutları
-
-### Tek servis Docker build
+### Docker
 
 ```powershell
 docker build -t careerdle .
-docker run --rm -p 8000:8000 careerdle
-```
+docker run --rm -p 9001:8000 careerdle
 
-### Ayrık servis build'leri
-
-```powershell
 docker build -f deploy\Dockerfile.api -t careerdle-api .
 docker build -f deploy\Dockerfile.realtime -t careerdle-realtime .
 ```
 
-Basit üretim dağıtımı için kökteki `render.yaml`, tek process API + statik + Socket.IO
-modelini kullanır. Ayrık yüksek trafik modeli için `deploy/nginx.conf` örneği vardır.
-
-## 10. Önemli mimari kararlar
-
-### Canonical DB ve read model ayrımı
-
-Pipeline doğrudan oyun DB'sine yazmaz. Veri akışı:
+## 8. Mimari kararlar ve genel akış
 
 ```text
 Yerel Transfermarkt API (:8000)
         |
         v
 transfermarkt_source.db
-  - crawl queue
-  - raw snapshots
-  - normalize oyuncu/kulüp/transfer/değer verisi
-  - kalıcı günlük takvim
+  crawl queue + raw snapshot + normalize kayıtlar + kalıcı günlük takvim
         |
-        | derive + repair + validate + publish
+        | repair + derive + legend sync + validate + publish
         v
 football_quiz_v2.db
-  - salt-okunur oyun artifact'i
-  - FTS indexleri
-  - quiz/global havuzlar
-  - kulüp çiftleri
-  - günlük meydan okumalar
+  read-only oyuncu/kulüp/kariyer + FTS + quiz havuzları + günlükler
         |
         v
-FastAPI / Socket.IO -> vanilla frontend
+FastAPI / Socket.IO
+        |
+        v
+Vanilla HTML/CSS/JS arayüzü
 ```
 
-Bu ayrım, yarım kalan veya hatalı bir crawl'ın canlı oyunu bozmasını engeller.
-
-### SQLite'ın paketlenmiş ve immutable kullanılması
-
-Oyun DB'si runtime'da yazılmaz. Bunun sonuçları:
-
-- API replica'ları ortak DB sunucusuna ihtiyaç duymaz.
-- Okuma sorguları kilitsiz ve hızlıdır.
-- Artifact Docker image veya deploy paketiyle birlikte dağıtılabilir.
-- Yeni DB yayınlandıktan sonra process restart gerekir.
-- Kullanıcı istatistikleri şimdilik sunucuda değil tarayıcıda tutulur.
-
-Online DB'ye geçiş ancak kullanıcı hesabı, sunucu tarafı ilerleme, canlı yazma,
-çoklu bölge güncelleme veya merkezi realtime state gereksinimi oluştuğunda anlamlıdır.
-
-### Bilinirlik modeli
-
-Lig havuzları ve global havuz build sırasında hesaplanır. Runtime her istekte pahalı
-sıralama yapmaz. `known`, `less_known`, `obscure` değerleri birbirini dışlar. Legacy
-istemciler için `easy`, `medium`, `hard` alanları da artifact'te korunur.
-
-### Günlük oyuncu kararlılığı
-
-Günlük cevaplar kaynak DB'de kalıcıdır. Bir oyuncunun sonraki build'de bilinirlik
-puanı değişse bile yayınlanmış günün cevabı değiştirilmez. Takvim global Bilindik
-havuzundan deterministik olarak ileri uzatılır.
-
-### Realtime ölçekleme
-
-Lobiler process belleğindedir. Bu nedenle realtime servisi tek worker çalışır. HTTP API
-stateless olduğu için yatay ölçeklenebilir. Çok realtime node gerektiğinde sticky veya
-lobi koduna göre consistent-hash routing gerekir; Redis şu an mimarinin zorunlu parçası
-değildir.
-
-### Ortak site kabuğu
-
-HTML sayfaları header ve footer kopyası taşımaz. `{{SITE_HEADER}}` ve
-`{{SITE_FOOTER}}` işaretçileri FastAPI tarafından ortak partial dosyalarıyla değiştirilir.
-Bu nedenle topbar veya footer değişikliği tek yerden yapılır. Sayfaları doğrudan diskten
-`file://` ile açmak yerine uygulama sunucusu üzerinden çalıştırmak gerekir.
-
-## 11. Temel dosyalar
-
-| Dosya/dizin | Sorumluluk |
-|---|---|
-| `backend/app/main.py` | FastAPI fabrikası, statik sayfalar, ortak partial render, SEO endpoint'leri |
-| `backend/app/db.py` | Salt-okunur SQLite bağlantı/thread havuzu |
-| `backend/app/api/` | Health, arama, solo quiz ve günlük oyuncu API'leri |
-| `backend/app/realtime/` | Socket.IO lobi ve oyun motoru |
-| `data/pipeline/` | Ingest, normalize, repair, derive, validate ve publish |
-| `data/pipeline/major_leagues.json` | Güncellenen lig kapsamı ve TTL ayarları |
-| `data/sources/legend_candidates.txt` | Yalnız efsane arama kimlikleri; kariyer verisi API'den gelir |
-| `frontend/static/index.html` | Günlük ve Solo ana uygulama yüzeyi |
-| `frontend/static/partials/` | Ortak header ve footer |
-| `frontend/static/js/classic.js` | Günlük oyun istemcisi |
-| `frontend/static/js/solo.js` | Solo oyun istemcisi |
-| `tests/test_pipeline.py` | Pipeline, havuz, günlük takvim ve API kontrat testleri |
-| `tests/test_site_compliance.py` | Sayfa, tema, AdSense ve ortak kabuk kontrolleri |
-| `tools/smoke_app.py` | DB, HTTP ve Socket.IO smoke testi |
-| `tools/visual_qa.py` | Chrome masaüstü/mobil görsel regresyon testi |
+- **Canonical/read model ayrımı:** Eksik bir crawl canlı oyun artifact'ini bozmaz.
+- **Paketlenmiş SQLite:** Okuma yoğun, hesapsız oyun için basit ve hızlıdır. Online DB,
+  sunucu tarafı kullanıcı ilerlemesi veya merkezi realtime state gerektiğinde anlamlıdır.
+- **Build-time havuzlar:** Bilinirlik ve kulüp çiftleri istek sırasında hesaplanmaz.
+- **Kalıcı günlük cevap:** Geçmiş cevaplar build'ler arasında değişmez.
+- **Same-origin varsayımı:** Frontend, API ve Socket.IO aynı origin'de çalışır; CORS
+  yalnız gerçekten ayrı bir istemci gerektiğinde açılır.
+- **Tek shared shell:** Header/footer partial'ları FastAPI tarafından her HTML sayfasına
+  enjekte edilir; gezinme ve marka değişikliği tek yerden yapılır.
+- **Gizlilik:** Hesap yoktur; oyun istatistikleri yereldir. Analytics olayları yalnız
+  sınırlı sayısal/kategorik alan taşır ve Consent Mode kararına tabidir.

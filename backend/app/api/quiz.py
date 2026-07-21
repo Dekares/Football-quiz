@@ -7,6 +7,7 @@ from datetime import date
 from fastapi import APIRouter, HTTPException, Query
 
 from ..db import query
+from ..country_data import flag_code_for
 
 
 router = APIRouter(prefix="/api", tags=["quiz"])
@@ -136,6 +137,7 @@ def _load_quiz(
         "player_id": player["player_id"],
         "name": player["name"],
         "country": player["country_of_citizenship"],
+        "country_code": flag_code_for(player["country_of_citizenship"]),
         "position": player["position"],
         "sub_position": player["sub_position"],
         "date_of_birth": player["date_of_birth"],

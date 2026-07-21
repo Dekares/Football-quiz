@@ -13,11 +13,14 @@ import sqlite3
 from fastapi import APIRouter, Query
 
 from ..db import query
+from ..country_data import flag_code_for
 from ..text import normalize_text
 
 router = APIRouter(prefix="/api", tags=["search"])
 
 FTS_MIN_LEN = 3  # trigram tokenizer alt sınırı
+QUERY_MAX_LEN = 80
+QUERY_MAX_WORDS = 6
 
 # "Günün Futbolcusu" tahmin evreni = TÜM aktif oyuncular (güncel market değeri olan).
 # Gizli oyuncu havuzu daha dardır (classic.py); arama ise tüm aktifleri kapsar.
@@ -25,7 +28,7 @@ ACTIVE_PREDICATE = "(p.market_value IS NOT NULL AND p.market_value > 0)"
 
 
 def _words(q: str) -> list[str]:
-    return normalize_text(q).split()
+    return normalize_text(q[:QUERY_MAX_LEN]).split()[:QUERY_MAX_WORDS]
 
 
 def _fts_match(words: list[str]) -> str | None:
@@ -52,7 +55,7 @@ def _bucket_params(words: list[str]) -> dict[str, str]:
 
 
 @router.get("/search-club")
-async def search_club(q: str = Query("", min_length=0)) -> list[dict]:
+async def search_club(q: str = Query("", min_length=0, max_length=QUERY_MAX_LEN)) -> list[dict]:
     words = _words(q.strip())
     if not words or len(q.strip()) < 2:
         return []
@@ -113,7 +116,7 @@ def _dedupe_clubs(rows: list[sqlite3.Row], limit: int = 20) -> list[dict]:
 
 @router.get("/search-player")
 async def search_player(
-    q: str = Query("", min_length=0),
+    q: str = Query("", min_length=0, max_length=QUERY_MAX_LEN),
     active: int = Query(0),
 ) -> list[dict]:
     words = _words(q.strip())
@@ -166,6 +169,7 @@ async def search_player(
             "player_id": r["player_id"],
             "name": r["name"],
             "country": r["country_of_citizenship"],
+            "country_code": flag_code_for(r["country_of_citizenship"]),
             "position": r["position"],
             "image_url": r["image_url"],
         }

@@ -1,5 +1,5 @@
 # Stateless HTTP API — yatay ölçeklenir (N replica). Gömülü salt-okunur DB.
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
@@ -11,9 +11,15 @@ COPY backend/ backend/
 COPY data/football_quiz_v2.db data/football_quiz_v2.db
 COPY frontend/ frontend/
 
-# Prod'da statikler CDN/nginx'ten gelir.
-ENV APP_SERVE_STATIC=false
+RUN groupadd --system careerdle && useradd --system --gid careerdle --home /app careerdle \
+    && chown -R careerdle:careerdle /app
+
+# HTML şablonları ve yasal rotalar API tarafından render edilir; /static Nginx/CDN'dedir.
+ENV APP_SERVE_STATIC=true
+USER careerdle
 EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=2)"
 
 # Stateless → process başına çok worker; ayrıca birden çok replica çalıştırılır.
 CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

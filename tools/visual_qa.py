@@ -57,7 +57,11 @@ async def capture(
     action: str | None = None,
 ) -> dict:
     output.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(dir=output.parent) as profile:
+    # Chrome on Windows can briefly keep Cache/Journal locked after exit.
+    with tempfile.TemporaryDirectory(
+        dir=output.parent,
+        ignore_cleanup_errors=True,
+    ) as profile:
         browser = subprocess.Popen(
             [
                 str(chrome),
@@ -199,7 +203,7 @@ async def capture(
 async def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", type=Path, default=Path(".tmp-adsense-qa"))
-    parser.add_argument("--port", type=int, default=8013)
+    parser.add_argument("--port", type=int, default=9003)
     parser.add_argument("--db", type=Path, default=Path("data/football_quiz_v2.db"))
     parser.add_argument("--only", action="append", help="Capture only the named job; repeat as needed.")
     args = parser.parse_args()
@@ -225,11 +229,19 @@ async def main() -> int:
         cwd=ROOT,
         env=server_env,
         stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        text=True,
     )
     try:
         base = f"http://127.0.0.1:{args.port}"
-        wait_for(f"{base}/api/health")
+        try:
+            wait_for(f"{base}/api/health")
+        except RuntimeError as exc:
+            if server.poll() is not None and server.stderr:
+                details = server.stderr.read().strip()
+                if details:
+                    raise RuntimeError(f"{exc}\n{details}") from exc
+            raise
         pages = (
             ("about", "/about"),
             ("methodology", "/methodology"),

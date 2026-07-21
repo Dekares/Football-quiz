@@ -19,28 +19,10 @@ from fastapi import APIRouter, Query, Response
 
 from ..daily import daily_number, daily_today
 from ..db import query
+from ..country_data import confederation_for, flag_code_for
 
 router = APIRouter(prefix="/api", tags=["classic"])
 
-# "Kısmen" (🟨) eşleşmeleri için kıta / konfederasyon haritaları.
-_CONTINENT = {
-    "Austria": "EU", "Belgium": "EU", "Bosnia-Herzegovina": "EU", "Croatia": "EU",
-    "Czech Republic": "EU", "Denmark": "EU", "England": "EU", "France": "EU",
-    "Georgia": "EU", "Germany": "EU", "Greece": "EU", "Hungary": "EU", "Ireland": "EU",
-    "Italy": "EU", "Montenegro": "EU", "Netherlands": "EU", "Norway": "EU", "Poland": "EU",
-    "Portugal": "EU", "Scotland": "EU", "Serbia": "EU", "Slovakia": "EU", "Slovenia": "EU",
-    "Spain": "EU", "Sweden": "EU", "Switzerland": "EU", "Türkiye": "EU", "Turkey": "EU",
-    "Ukraine": "EU", "Wales": "EU",
-    "Argentina": "SA", "Brazil": "SA", "Chile": "SA", "Colombia": "SA", "Ecuador": "SA",
-    "Uruguay": "SA", "Paraguay": "SA", "Peru": "SA", "Venezuela": "SA", "Bolivia": "SA",
-    "Canada": "NA", "Jamaica": "NA", "Mexico": "NA", "United States": "NA", "USA": "NA",
-    "Algeria": "AF", "Burkina Faso": "AF", "Cameroon": "AF", "Cote d'Ivoire": "AF",
-    "Ivory Coast": "AF", "DR Congo": "AF", "Egypt": "AF", "Gabon": "AF", "Ghana": "AF",
-    "Guinea": "AF", "Morocco": "AF", "Nigeria": "AF", "Senegal": "AF", "The Gambia": "AF",
-    "Mali": "AF", "Tunisia": "AF",
-    "Japan": "AS", "Korea, South": "AS", "South Korea": "AS", "Australia": "AS",
-    "Saudi Arabia": "AS", "Iran": "AS",
-}
 _LEAGUE_CONF = {
     "TR1": "EU", "UKR1": "EU", "IT1": "EU", "GB1": "EU", "FR1": "EU", "PO1": "EU",
     "RU1": "EU", "ES1": "EU", "L1": "EU", "GR1": "EU", "NL1": "EU", "BE1": "EU",
@@ -101,6 +83,7 @@ def _player_facts(conn: sqlite3.Connection, player_id: int) -> dict[str, Any] | 
         "name": p["name"],
         "image_url": p["image_url"],
         "country": p["country_of_citizenship"],
+        "country_code": flag_code_for(p["country_of_citizenship"]),
         "position": p["position"],
         "age": _age(p["date_of_birth"]),
         "value": p["market_value"] or 0,
@@ -171,10 +154,14 @@ def _compare(secret: dict[str, Any], g: dict[str, Any]) -> dict[str, dict]:
     gc, sc = g["country"], secret["country"]
     gl, sl = g["league"], secret["league"]
     return {
-        "nationality": _cat(
-            gc, gc == sc,
-            bool(_CONTINENT.get(gc)) and _CONTINENT.get(gc) == _CONTINENT.get(sc),
-        ),
+        "nationality": {
+            **_cat(
+                gc, gc == sc,
+                bool(confederation_for(gc))
+                and confederation_for(gc) == confederation_for(sc),
+            ),
+            "code": g["country_code"],
+        },
         "position": _cat(g["position"], g["position"] == secret["position"]),
         "age": _num(g["age"], secret["age"], near=2),
         "value": _num_value(g["value"], secret["value"]),
@@ -239,6 +226,7 @@ async def classic_reveal(response: Response) -> dict[str, Any]:
             "name": secret["name"],
             "image_url": secret["image_url"],
             "country": secret["country"],
+            "country_code": secret["country_code"],
             "position": secret["position"],
             "club_name": secret["club_name"],
         }

@@ -6,11 +6,13 @@ Realtime (socket.io) ayrı servistir; bkz. backend/app/realtime/server.py.
 from __future__ import annotations
 
 from datetime import date
+from urllib.parse import urlsplit
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.responses import Response
 
 from .api import classic, health, quiz, search
@@ -21,18 +23,17 @@ from .ratelimit import RateLimiter
 def _public_base_url(request: Request) -> str:
     """Canonical/OG/sitemap için site kökü (scheme + host), sondaki / olmadan.
 
-    Ayar verilmişse onu kullanır; aksi halde isteği reverse-proxy başlıklarından
-    türetir (Render TLS'i proxy'de sonlandırır → X-Forwarded-Proto=https).
+    Ayar verilmişse onu kullanır; aksi halde TrustedHostMiddleware tarafından
+    doğrulanmış istek URL'sini kullanır. Ham proxy başlıkları burada okunmaz.
     """
-    if settings.public_base_url:
-        return settings.public_base_url.rstrip("/")
-    proto = request.headers.get("x-forwarded-proto", request.url.scheme)
-    host = (
-        request.headers.get("x-forwarded-host")
-        or request.headers.get("host")
-        or request.url.netloc
-    )
-    return f"{proto}://{host}"
+    candidate = settings.public_base_url or f"{request.url.scheme}://{request.url.netloc}"
+    parsed = urlsplit(candidate)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise RuntimeError("APP_PUBLIC_BASE_URL must be an absolute HTTP(S) origin")
+    if parsed.username or parsed.password or parsed.path not in {"", "/"} \
+            or parsed.query or parsed.fragment:
+        raise RuntimeError("APP_PUBLIC_BASE_URL must contain only scheme and host")
+    return f"{parsed.scheme}://{parsed.netloc}".rstrip("/")
 
 # Per-IP HTTP hız limiti. Asıl pahalı yol arama autocomplete'i (LIKE tarama);
 # insan kullanımı için bol, tarayıcı/abuse için dar.
@@ -40,9 +41,8 @@ _api_limiter = RateLimiter(rate_per_sec=15, burst=30)
 
 
 def _client_ip(request: Request) -> str:
-    xff = request.headers.get("x-forwarded-for")
-    if xff:
-        return xff.split(",")[0].strip()
+    # Proxy header güveni Uvicorn --forwarded-allow-ips seviyesinde kurulmalıdır.
+    # Uygulama doğrulanmamış X-Forwarded-For değerini asla yorumlamaz.
     return request.client.host if request.client else "unknown"
 
 
@@ -68,12 +68,46 @@ def create_app() -> FastAPI:
         openapi_url="/api/openapi.json" if settings.enable_docs else None,
     )
 
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.cors_origins,
-        allow_methods=["GET"],
-        allow_headers=["*"],
-    )
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.trusted_hosts)
+    if settings.cors_origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=settings.cors_origins,
+            allow_methods=["GET"],
+            allow_headers=["Accept", "Content-Type"],
+        )
+
+    @app.middleware("http")
+    async def _security_headers(request: Request, call_next):
+        response = await call_next(request)
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.headers.setdefault(
+            "Permissions-Policy",
+            "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+        )
+        response.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin-allow-popups")
+        content_security_policy = (
+            "default-src 'self'; base-uri 'self'; object-src 'none'; "
+            "frame-ancestors 'none'; form-action 'self'; "
+            "script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com "
+            "https://www.googletagmanager.com https://www.google-analytics.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com data:; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self' https://www.google-analytics.com "
+            "https://region1.google-analytics.com; "
+            "frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com"
+        )
+        if request.url.scheme == "https":
+            content_security_policy += "; upgrade-insecure-requests"
+        response.headers.setdefault("Content-Security-Policy", content_security_policy)
+        if settings.enable_hsts and request.url.scheme == "https":
+            response.headers.setdefault(
+                "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+            )
+        return response
 
     @app.middleware("http")
     async def _rate_limit(request: Request, call_next):

@@ -1,5 +1,5 @@
 # HTTP API + realtime ortak bağımlılıkları
-fastapi==0.115.6
-uvicorn[standard]==0.34.0
-pydantic-settings==2.7.1
-python-socketio==5.12.1
+fastapi==0.139.2
+uvicorn[standard]==0.51.0
+pydantic-settings==2.14.2
+python-socketio==5.16.3

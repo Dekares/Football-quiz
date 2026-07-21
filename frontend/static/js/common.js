@@ -47,9 +47,8 @@ const LANGS = {
         clue_club: 'Kulüp / Lig', clue_club_d: 'Aynı kulüp/lig yeşil, aynı konfederasyon sarı.',
         app_title: 'Careerdle',
         app_subtitle: 'Ne oynamak istersin?',
-        multi_soon: 'Çok kişilik modu yakında geliyor.',
         seo_h1: 'Careerdle — Futbolcuyu kariyerinden tahmin et',
-        seo_intro: 'Her gün yeni "Günün Futbolcusu" bulmacası, kariyer ve transfer geçmişine dayalı solo futbolcu tahmin oyunu ve arkadaşlarınla 2-6 kişilik canlı düello. Ücretsiz, üyeliksiz.',
+        seo_intro: 'Her gün yeni "Günün Futbolcusu" bulmacası ve kariyer geçmişine dayalı lig bazlı solo tahmin oyunu. Ücretsiz, üyeliksiz.',
         solo_eyebrow: 'FUTBOLCU TAHMİN',
         quiz_title_a: 'Oyuncuyu',
         quiz_title_b: 'Tahmin Et',
@@ -75,6 +74,7 @@ const LANGS = {
         hard: 'Zor',
         start_prompt: 'Ligini ve oyuncu havuzunu seç',
         guess_placeholder: 'Oyuncu adını yaz...',
+        guess_player_label: 'Oyuncu adı',
         submit_guess: 'Tahmini Gönder',
         guess_btn: 'Tahmin Et',
         next_question: 'Sonraki Soru',
@@ -138,87 +138,7 @@ const LANGS = {
         hint_years_old: 'yaşında',
         // Menu / nav
         menu_solo_title: 'Futbolcu Tahmin',
-        // Harman 1v1 sayfası
-        duel_title: 'Harman 1v1',
-        duel_subtitle: 'İki takım seçilir, ortak oyuncuyu ilk söyleyen puanı kapar',
-        duel_rule_1: 'İki oyuncu aynı anda birer takım seçer.',
-        duel_rule_2: 'Herkes iki takımda da oynamış bir futbolcuyu yazmaya yarışır.',
-        duel_rule_3: 'İlk doğru cevap +1 puan; hedefe ulaşan kazanır.',
-        // Multi (Düello lobi)
-        multi_title: 'Düello',
-        multi_subtitle: 'Arkadaşlarınla gerçek zamanlı yarış',
-        multi_create: 'Lobi Kur',
-        multi_join: 'Koda Katıl',
-        multi_create_desc: 'Yeni bir lobi aç ve arkadaşlarını davet et',
-        multi_join_desc: 'Sana verilen 6 haneli kodla lobiye katıl',
-        multi_create_hint: 'Oyun ayarlarını seç, lobi kodun otomatik üretilir',
-        multi_join_hint: 'Lobi sahibinden aldığın kodu yaz',
-        multi_target_hint: '3 ile 50 arasında bir sayı seç',
-        multi_nickname: 'Takma ad',
-        multi_nickname_ph: 'Takma ad gir...',
-        multi_code: 'Lobi kodu',
-        multi_code_ph: 'Kod gir (6 karakter)',
-        multi_back: '← Geri',
-        multi_lobby_code: 'Lobi kodu',
-        multi_players: 'Oyuncular',
-        multi_lobby_hint: 'Arkadaşlarına bu kodu gönder',
-        multi_mode: 'Cevap modu',
-        multi_mode_mc: '4 Şıklı',
-        multi_mode_free: 'Serbest Yazma',
-        multi_mode_duel: 'Düello',
-        multi_difficulty: 'Zorluk',
-        multi_target: 'Hedef puan',
-        multi_start: 'Oyunu Başlat',
-        multi_leave: 'Lobiden Çık',
-        multi_waiting: 'Host oyunu başlatmayı bekliyor...',
-        multi_min_players: 'Başlatmak için en az 2 oyuncu gerekli',
-        multi_round: 'Tur',
-        multi_already_answered: 'Cevabın alındı. Diğer oyuncular bekleniyor...',
-        multi_round_result: 'Tur Sonucu',
-        multi_free_correct: 'Doğru cevap!',
-        multi_free_wrong: 'Yanlış cevap',
-        multi_free_no_answer: 'Süre doldu',
-        multi_free_no_answer_hint: 'Bu turda cevap göndermedin',
-        multi_free_correct_count: 'oyuncu doğru bildi',
-        multi_duel_retry: 'Yanlış — tekrar dene',
-        duel_pick_title: 'Takımları seçin',
-        duel_your_turn: 'Senin sıran: {n}. takımı seç',
-        duel_search_team: 'Takım adı yaz...',
-        duel_is_picking: 'takım seçiyor...',
-        duel_pick_now: 'Takımını seç',
-        duel_you: 'sen',
-        duel_starting: 'Başlıyor…',
-        duel_answer: 'Doğru cevap',
-        duel_solved_by: 'bildi!',
-        duel_nobody: 'Kimse bilemedi',
-        duel_example: 'Örnek ortak oyuncu',
-        no_result: 'Sonuç bulunamadı',
         multi_game_over: 'Oyun Bitti',
-        multi_winner: 'Kazanan',
-        multi_rematch: 'Yeniden Oyna',
-        multi_to_menu: 'Ana Menüye',
-        multi_back_to_lobby: 'Lobiye Dön',
-        multi_redirect_hint: 'saniye sonra lobiye dönüp host\'u bekleyeceksin...',
-        multi_host_left: 'Host ayrıldı, yeni host atandı',
-        multi_connecting: 'Bağlanıyor...',
-        multi_disconnected: 'Bağlantı koptu, yeniden bağlanıyor...',
-        multi_kicked: 'Lobiden çıkarıldın',
-        multi_kick_confirm: 'Oyuncu lobiden çıkarılsın mı?',
-        // Sunucu hata kodları (socket 'error' event'i → kullanıcıya gösterilen mesaj)
-        err_rate_limited: 'Çok hızlı, biraz yavaşla',
-        err_server_busy: 'Sunucu şu an dolu, sonra tekrar dene',
-        err_invalid_code: 'Geçersiz lobi kodu',
-        err_lobby_full: 'Lobi dolu',
-        err_in_game: 'Oyun zaten başladı',
-        err_unknown_player: 'Bu lobide bu oyuncu yok',
-        err_not_host: 'Bunu sadece host yapabilir',
-        err_cannot_start: 'Başlatılamadı (en az 2 oyuncu gerekli)',
-        err_not_your_turn: 'Sıra sende değil',
-        err_no_common: 'Bu iki takımın ortak oyuncusu yok, başka takım seç',
-        err_no_question: 'Bu zorluk için uygun soru bulunamadı',
-        err_generic: 'Bir hata oluştu',
-        // Hero / landing
-        hero_hook: 'Kulüp geçmişine bak, gizemli oyuncuyu bul.',
         // Günün Futbolcusu (LoLdle tarzı)
         classic_title: 'Günün Futbolcusu',
         classic_prompt: 'Bir futbolcu adı yaz; her tahminde özellikler kıyaslanır.',
@@ -308,9 +228,8 @@ const LANGS = {
         clue_club: 'Club / League', clue_club_d: 'Green for same club/league, yellow for same confederation.',
         app_title: 'Careerdle',
         app_subtitle: 'What do you want to play?',
-        multi_soon: 'Multiplayer mode coming soon.',
         seo_h1: 'Careerdle — Guess the footballer from their career',
-        seo_intro: 'A new "Player of the Day" puzzle every day, a solo footballer guessing game based on career and transfer history, plus live 2-6 player duels with friends. Free, no sign-up.',
+        seo_intro: 'A new "Player of the Day" puzzle every day and a league-based solo guessing game built from career history. Free, no sign-up.',
         solo_eyebrow: 'FOOTBALLER GUESS',
         quiz_title_a: 'Guess the',
         quiz_title_b: 'Player',
@@ -336,6 +255,7 @@ const LANGS = {
         hard: 'Hard',
         start_prompt: 'Choose a league and player pool',
         guess_placeholder: "Type the player's name...",
+        guess_player_label: 'Player name',
         submit_guess: 'Submit Guess',
         guess_btn: 'Guess',
         next_question: 'Next Question',
@@ -398,86 +318,7 @@ const LANGS = {
         hint_initials: 'Initials',
         hint_years_old: 'years old',
         menu_solo_title: 'Footballer Guess',
-        // Harman 1v1 page
-        duel_title: 'Harman 1v1',
-        duel_subtitle: 'Two teams are picked; first to name a shared player scores',
-        duel_rule_1: 'Two players each pick a team at the same time.',
-        duel_rule_2: 'Everyone races to name a player who played for both teams.',
-        duel_rule_3: 'First correct answer scores +1; first to the target wins.',
-        multi_title: 'Duel',
-        multi_subtitle: 'Real-time competition with friends',
-        multi_create: 'Create Lobby',
-        multi_join: 'Join by Code',
-        multi_create_desc: 'Open a new lobby and invite your friends',
-        multi_join_desc: 'Join with the 6-character code you were given',
-        multi_create_hint: 'Pick game settings; your lobby code is generated',
-        multi_join_hint: 'Enter the code from the lobby host',
-        multi_target_hint: 'Pick a number between 3 and 50',
-        multi_nickname: 'Nickname',
-        multi_nickname_ph: 'Enter a nickname...',
-        multi_code: 'Lobby code',
-        multi_code_ph: 'Enter code (6 chars)',
-        multi_back: '← Back',
-        multi_lobby_code: 'Lobby code',
-        multi_players: 'Players',
-        multi_lobby_hint: 'Share this code with your friends',
-        multi_mode: 'Answer mode',
-        multi_mode_mc: '4-Choice',
-        multi_mode_free: 'Free type',
-        multi_mode_duel: 'Duel',
-        multi_difficulty: 'Difficulty',
-        multi_target: 'Target score',
-        multi_start: 'Start Game',
-        multi_leave: 'Leave Lobby',
-        multi_waiting: 'Waiting for host to start...',
-        multi_min_players: 'Need at least 2 players to start',
-        multi_round: 'Round',
-        multi_already_answered: 'Your answer is in. Waiting for others...',
-        multi_round_result: 'Round Result',
-        multi_free_correct: 'Correct!',
-        multi_free_wrong: 'Wrong answer',
-        multi_free_no_answer: "Time's up",
-        multi_free_no_answer_hint: "You didn't submit an answer",
-        multi_free_correct_count: 'players got it right',
-        multi_duel_retry: 'Wrong — try again',
-        duel_pick_title: 'Pick the teams',
-        duel_your_turn: 'Your turn: pick team {n}',
-        duel_search_team: 'Type a team name...',
-        duel_is_picking: 'is picking a team...',
-        duel_pick_now: 'Pick your team',
-        duel_you: 'you',
-        duel_starting: 'Starting…',
-        duel_answer: 'Correct answer',
-        duel_solved_by: 'got it!',
-        duel_nobody: 'Nobody got it',
-        duel_example: 'Example common player',
-        no_result: 'No results found',
         multi_game_over: 'Game Over',
-        multi_winner: 'Winner',
-        multi_rematch: 'Rematch',
-        multi_to_menu: 'Main Menu',
-        multi_back_to_lobby: 'Back to Lobby',
-        multi_redirect_hint: 'seconds until you return to the lobby and wait for the host...',
-        multi_host_left: 'Host left, new host assigned',
-        multi_connecting: 'Connecting...',
-        multi_disconnected: 'Disconnected, reconnecting...',
-        multi_kicked: "You've been removed from the lobby",
-        multi_kick_confirm: 'Remove this player from the lobby?',
-        // Server error codes (socket 'error' event → message shown to user)
-        err_rate_limited: 'Too fast, slow down a bit',
-        err_server_busy: 'Server is busy right now, try again later',
-        err_invalid_code: 'Invalid lobby code',
-        err_lobby_full: 'Lobby is full',
-        err_in_game: 'Game already in progress',
-        err_unknown_player: 'This player is not in the lobby',
-        err_not_host: 'Only the host can do this',
-        err_cannot_start: 'Cannot start (at least 2 players required)',
-        err_not_your_turn: "It's not your turn",
-        err_no_common: 'These two teams share no player, pick another',
-        err_no_question: 'No suitable question for this difficulty',
-        err_generic: 'Something went wrong',
-        // Hero / landing
-        hero_hook: 'Read the club history, name the mystery player.',
         // Daily Footballer (LoLdle-style)
         classic_title: 'Daily Footballer',
         classic_prompt: 'Type a player; each guess compares their attributes.',
@@ -534,7 +375,11 @@ function applyTheme(th) {
     document.documentElement.setAttribute('data-theme', th);
     localStorage.setItem('theme', th);
     const b = document.querySelector('.theme-toggle');
-    if (b) b.textContent = th === 'dark' ? '☀' : '☾'; // ☀ / ☾
+    if (b) {
+        b.textContent = th === 'dark' ? '☀' : '☾'; // ☀ / ☾
+        b.setAttribute('aria-pressed', String(th === 'dark'));
+        b.setAttribute('aria-label', currentLang === 'tr' ? 'Temayı değiştir' : 'Change theme');
+    }
 }
 function toggleTheme() {
     const cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
@@ -546,7 +391,13 @@ function toggleLang() {
     currentLang = currentLang === 'tr' ? 'en' : 'tr';
     localStorage.setItem('lang', currentLang);
     const toggle = document.querySelector('.lang-toggle');
-    if (toggle) toggle.textContent = currentLang === 'tr' ? 'EN' : 'TR';
+    if (toggle) {
+        toggle.textContent = currentLang === 'tr' ? 'EN' : 'TR';
+        toggle.setAttribute(
+            'aria-label',
+            currentLang === 'tr' ? 'Switch to English' : 'Türkçeye geç',
+        );
+    }
     document.documentElement.lang = currentLang;
     applyLang();
     // Dinamik render edilen ekranlar (lobi/oyun/günlük tahmin/solo) statik
@@ -585,43 +436,6 @@ function subPosText(pos) {
     return currentLang === 'tr' ? (SUBPOS_TR[pos] || pos) : pos;
 }
 
-// ===== Ülke kodları =====
-const COUNTRY_CODES = {
-    'Brazil': 'br', 'France': 'fr', 'Spain': 'es', 'Italy': 'it', 'Germany': 'de',
-    'England': 'gb-eng', 'Wales': 'gb-wls', 'Scotland': 'gb-sct', 'Northern Ireland': 'gb-nir',
-    'Ireland': 'ie', 'Republic of Ireland': 'ie', 'United Kingdom': 'gb',
-    'Netherlands': 'nl', 'Belgium': 'be', 'Portugal': 'pt',
-    'Argentina': 'ar', 'Uruguay': 'uy', 'Chile': 'cl', 'Colombia': 'co',
-    'Mexico': 'mx', 'United States': 'us', 'USA': 'us', 'Canada': 'ca',
-    'Peru': 'pe', 'Ecuador': 'ec', 'Venezuela': 've', 'Paraguay': 'py', 'Bolivia': 'bo',
-    'Costa Rica': 'cr', 'Panama': 'pa', 'Honduras': 'hn', 'Jamaica': 'jm',
-    'Czech Republic': 'cz', 'Czechia': 'cz', 'Slovakia': 'sk', 'Poland': 'pl',
-    'Ukraine': 'ua', 'Russia': 'ru', 'Belarus': 'by',
-    'Croatia': 'hr', 'Serbia': 'rs', 'Bosnia-Herzegovina': 'ba', 'Bosnia and Herzegovina': 'ba',
-    'Slovenia': 'si', 'North Macedonia': 'mk', 'Macedonia': 'mk', 'Montenegro': 'me', 'Albania': 'al', 'Kosovo': 'xk',
-    'Sweden': 'se', 'Norway': 'no', 'Denmark': 'dk', 'Finland': 'fi', 'Iceland': 'is',
-    'Switzerland': 'ch', 'Austria': 'at', 'Hungary': 'hu', 'Romania': 'ro', 'Bulgaria': 'bg', 'Greece': 'gr',
-    'Türkiye': 'tr', 'Turkey': 'tr', 'Cyprus': 'cy',
-    'Iran': 'ir', 'Iraq': 'iq', 'Saudi Arabia': 'sa', 'United Arab Emirates': 'ae',
-    'Qatar': 'qa', 'Kuwait': 'kw', 'Bahrain': 'bh', 'Oman': 'om', 'Jordan': 'jo',
-    'Lebanon': 'lb', 'Syria': 'sy', 'Israel': 'il', 'Palestine': 'ps',
-    'Egypt': 'eg', 'Morocco': 'ma', 'Algeria': 'dz', 'Tunisia': 'tn', 'Libya': 'ly',
-    'Senegal': 'sn', 'Nigeria': 'ng', 'Ghana': 'gh', 'Mali': 'ml', 'Cameroon': 'cm',
-    'Ivory Coast': 'ci', "Cote d'Ivoire": 'ci',
-    'South Africa': 'za', 'Kenya': 'ke', 'Ethiopia': 'et', 'Sudan': 'sd',
-    'Congo DR': 'cd', 'DR Congo': 'cd', 'Congo': 'cg', 'Gabon': 'ga', 'Angola': 'ao',
-    'Burkina Faso': 'bf', 'Guinea': 'gn', 'Togo': 'tg', 'Benin': 'bj', 'Zambia': 'zm', 'Zimbabwe': 'zw',
-    'Cape Verde': 'cv', 'Mauritania': 'mr', 'Niger': 'ne', 'Madagascar': 'mg',
-    'Japan': 'jp', 'South Korea': 'kr', 'Korea, South': 'kr', 'North Korea': 'kp',
-    'China': 'cn', "China PR": 'cn', 'Australia': 'au', 'New Zealand': 'nz',
-    'Indonesia': 'id', 'Malaysia': 'my', 'Singapore': 'sg', 'Thailand': 'th', 'Vietnam': 'vn',
-    'Philippines': 'ph', 'India': 'in', 'Pakistan': 'pk', 'Bangladesh': 'bd',
-    'Uzbekistan': 'uz', 'Kazakhstan': 'kz', 'Azerbaijan': 'az', 'Armenia': 'am', 'Georgia': 'ge',
-    'Estonia': 'ee', 'Latvia': 'lv', 'Lithuania': 'lt', 'Moldova': 'md',
-    'Luxembourg': 'lu', 'Malta': 'mt', 'San Marino': 'sm', 'Andorra': 'ad', 'Liechtenstein': 'li',
-    'Faroe Islands': 'fo', 'Gibraltar': 'gi'
-};
-
 // ===== Lig kodu → görünür isim (Günün Futbolcusu) =====
 const LEAGUE_NAMES = {
     GB1: 'Premier Lig', ES1: 'LaLiga', IT1: 'Serie A', L1: 'Bundesliga', FR1: 'Ligue 1',
@@ -634,9 +448,8 @@ const LEAGUE_NAMES = {
     SA1: 'Suudi Pro Lig', RSK1: 'K League', AUS1: 'A-League',
 };
 
-function flagHtml(country, large) {
-    if (!country) return '';
-    const code = COUNTRY_CODES[country];
+function flagHtml(country, large, countryCode) {
+    const code = String(countryCode || '').toLowerCase();
     if (!code) return '';
     const cls = large ? 'flag-img flag-lg' : 'flag-img';
     return `<img class="${cls}" src="https://flagcdn.com/w40/${code}.png" srcset="https://flagcdn.com/w80/${code}.png 2x" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.style.display='none'">`;
@@ -662,6 +475,40 @@ function esc(s) {
     return d.innerHTML;
 }
 
+// API/veritabanı kaynaklı URL'ler HTML içine yalnızca güvenli bir resim
+// protokolüyle girer. javascript:, data: ve kullanıcı bilgisi taşıyan URL'ler
+// ikinci-order attribute XSS'e dönüşmesin.
+function safeImageUrl(value) {
+    if (!value) return '';
+    try {
+        const url = new URL(String(value), window.location.origin);
+        const sameOriginHttp = url.origin === window.location.origin
+            && (url.protocol === 'http:' || url.protocol === 'https:');
+        if (url.protocol !== 'https:' && !sameOriginHttp) return '';
+        if (url.username || url.password) return '';
+        return url.href;
+    } catch (_) {
+        return '';
+    }
+}
+
+// Kimliksiz ürün olayları. Google Consent Mode saklama iznini yönetir;
+// bu sınırlı listeye oyuncu adı, ID veya serbest metin asla girmez.
+function trackEvent(name, details = {}) {
+    if (typeof window.gtag !== 'function') return;
+    const allowed = new Set([
+        'mode', 'league', 'recognition', 'result', 'attempts', 'hints', 'lives', 'total', 'streak',
+    ]);
+    const safeDetails = {};
+    Object.entries(details).forEach(([key, value]) => {
+        if (!allowed.has(key)) return;
+        safeDetails[key] = typeof value === 'number'
+            ? Math.max(0, Math.round(value))
+            : String(value).slice(0, 32);
+    });
+    window.gtag('event', String(name).slice(0, 40), safeDetails);
+}
+
 // ===== Confetti =====
 function fireConfetti() {
     const colors = ['#6c5ce7', '#00cec9', '#00d68f', '#ffd43b', '#ff4757', '#8474f5'];
@@ -679,11 +526,6 @@ function fireConfetti() {
         document.body.appendChild(piece);
         setTimeout(() => piece.remove(), 4000);
     }
-}
-
-// ===== Basit avatar: nickname'in baş harfi =====
-function avatarLetter(nick) {
-    return (nick || '?').trim().charAt(0).toUpperCase() || '?';
 }
 
 // ===== Toast (küçük bildirim) =====
@@ -722,13 +564,72 @@ function attachSearchKeys(input, dropdown, onEnter) {
             else if (onEnter) onEnter();
         } else if (e.key === 'Escape') {
             dropdown.classList.remove('show');
+            input.setAttribute('aria-expanded', 'false');
+            input.removeAttribute('aria-activedescendant');
         }
     });
 }
 function highlightItem(items, idx) {
-    items.forEach((el, i) => el.classList.toggle('kbd-active', i === idx));
+    items.forEach((el, i) => {
+        const active = i === idx;
+        el.classList.toggle('kbd-active', active);
+        el.setAttribute('aria-selected', String(active));
+    });
+    if (items[idx]) {
+        if (!items[idx].id) items[idx].id = `search-option-${Date.now()}-${idx}`;
+        const input = items[idx].closest('.search-wrapper')?.querySelector('[role="combobox"]');
+        input?.setAttribute('aria-activedescendant', items[idx].id);
+    }
     items[idx]?.scrollIntoView({ block: 'nearest' });
 }
+
+let activeDialog = null;
+function activateDialog(backdrop, onClose) {
+    const dialog = backdrop?.querySelector('[role="dialog"], .result-modal');
+    if (!dialog) return;
+    const previousFocus = document.activeElement;
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-modal', 'true');
+    if (!dialog.hasAttribute('tabindex')) dialog.tabIndex = -1;
+    activeDialog = { backdrop, dialog, onClose, previousFocus };
+    requestAnimationFrame(() => {
+        const first = dialog.querySelector('button:not(:disabled), a[href], input:not(:disabled)');
+        (first || dialog).focus();
+    });
+}
+function deactivateDialog(backdrop) {
+    if (!activeDialog || activeDialog.backdrop !== backdrop) return;
+    const previousFocus = activeDialog.previousFocus;
+    activeDialog = null;
+    if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
+}
+
+document.addEventListener('keydown', (event) => {
+    if (!activeDialog) return;
+    if (event.key === 'Escape') {
+        event.preventDefault();
+        activeDialog.onClose?.();
+        return;
+    }
+    if (event.key !== 'Tab') return;
+    const focusable = [...activeDialog.dialog.querySelectorAll(
+        'button:not(:disabled), a[href], input:not(:disabled), [tabindex]:not([tabindex="-1"])',
+    )];
+    if (!focusable.length) {
+        event.preventDefault();
+        activeDialog.dialog.focus();
+        return;
+    }
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+    }
+});
 
 // ===== Clipboard + share =====
 async function copyText(text) {
@@ -760,14 +661,6 @@ async function shareOrCopy(text, url) {
     await copyText(`${text} ${url}`);
     showToast(t('share_copied'));
     return 'copied';
-}
-
-// ===== URL params =====
-function getQueryParam(name) {
-    try {
-        const params = new URLSearchParams(location.search);
-        return params.get(name);
-    } catch (_) { return null; }
 }
 
 // ===== safeFetch: timeout + hata yönetimi =====
@@ -837,31 +730,18 @@ function hideWakeupOverlay() {
         });
 })();
 
-// ===== Editoryal modal (yardım / istatistik) + mobil menü =====
-function openAppModal(eyebrow, title, bodyHTML) {
-    const bd = document.getElementById('app-modal');
-    if (!bd) return;
-    bd.innerHTML = `<div class="app-modal" role="dialog" aria-modal="true">
-        <div class="app-modal-head">
-            <div>${eyebrow ? `<p class="kicker">${esc(eyebrow)}</p>` : ''}<h2 class="app-modal-title">${esc(title)}</h2></div>
-            <button class="icon-btn" onclick="closeAppModal()" aria-label="Kapat">&times;</button>
-        </div>
-        <div class="app-modal-body">${bodyHTML}</div>
-    </div>`;
-    bd.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-}
-function closeAppModal() {
-    const bd = document.getElementById('app-modal');
-    if (bd) { bd.style.display = 'none'; bd.innerHTML = ''; }
-    document.body.style.overflow = '';
-}
 function toggleMobileNav() {
     const m = document.getElementById('mobile-nav');
-    if (m) m.classList.toggle('open');
+    if (!m) return;
+    const open = m.classList.toggle('open');
+    m.setAttribute('aria-hidden', String(!open));
+    document.querySelector('.nav-burger')?.setAttribute('aria-expanded', String(open));
 }
 function closeMobileNav() {
     const m = document.getElementById('mobile-nav');
-    if (m) m.classList.remove('open');
+    if (m) {
+        m.classList.remove('open');
+        m.setAttribute('aria-hidden', 'true');
+    }
+    document.querySelector('.nav-burger')?.setAttribute('aria-expanded', 'false');
 }
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAppModal(); });

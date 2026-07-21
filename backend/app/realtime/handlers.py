@@ -66,6 +66,9 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
 
     # Per-sid event hız limiti (spam / DoS koruması).
     event_limiter = RateLimiter(rate_per_sec=10, burst=20)
+    connect_limiter = RateLimiter(rate_per_sec=1, burst=8, max_keys=10_000)
+    create_limiter = RateLimiter(rate_per_sec=0.1, burst=3, max_keys=10_000)
+    sid_ips: dict[str, str] = {}
     reaper_state = {"started": False}
 
     # ---------- Idle lobi temizleyici ----------
@@ -90,16 +93,24 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
         await sio.emit("error", {"code": code, "message": message}, to=sid)
 
     async def _start_new_round(lobby: Lobby) -> None:
-        if lobby.round_no > 0 and len(lobby.connected_players()) < MIN_PLAYERS:
+        if len(lobby.connected_players()) < MIN_PLAYERS:
             await _end_game_abandoned(lobby, reason="opponent_left")
             return
         if lobby.settings["mode"] == "duel":
             await _start_pick_phase(lobby)
             return
 
+        # Tur kurulurken fazı rezerve et. Zamanlayıcı, çift tıklama veya bağlantı
+        # kopması aynı DB sorgusu sırasında ikinci bir tur başlatamasın.
+        lobby.phase = "STARTING"
         pair, question = await query(
             lambda c: _pick_round(c, lobby.settings, lobby.recent_pairs)
         )
+        if registry.get(lobby.code) is not lobby or lobby.phase != "STARTING":
+            return
+        if len(lobby.connected_players()) < MIN_PLAYERS:
+            await _end_game_abandoned(lobby, reason="opponent_left")
+            return
         if not pair or not question:
             await sio.emit("error", {
                 "code": "no_question",
@@ -198,6 +209,9 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
         pick = lobby.pick
         if not pick or lobby.phase != "PICKING":
             return
+        # Timer ve ikinci seçim aynı anda buraya girebilir. DB await'inden önce
+        # fazı rezerve ederek yalnızca ilk coroutine'in devam etmesini sağla.
+        lobby.phase = "STARTING"
         if len(lobby.connected_players()) < MIN_PLAYERS:
             await _end_game_abandoned(lobby, reason="opponent_left")
             return
@@ -208,7 +222,7 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
             if a and b:
                 if pair_is_valid(c, a["club_id"], b["club_id"]):
                     return a, b
-                # ponytail: ortak oyuncu yoksa B'yi A'nın bir partneriyle değiştir (nadir kenar durum)
+                # Ortak oyuncu yoksa B'yi A'nın geçerli bir partneriyle değiştir.
                 partner = random_partner(c, a["club_id"])
                 return (a, partner) if partner else None
             if a and not b:
@@ -221,6 +235,11 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
             return (pair[0], pair[1]) if pair else None
 
         res = await query(work)
+        if lobby.pick is not pick or lobby.phase != "STARTING":
+            return
+        if len(lobby.connected_players()) < MIN_PLAYERS:
+            await _end_game_abandoned(lobby, reason="opponent_left")
+            return
         if not res:
             lobby.phase = "WAITING"
             lobby.pick = None
@@ -377,7 +396,7 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
 
     async def _after_player_removed(lobby: Lobby) -> None:
         """Bir oyuncu (leave/kick/grace) silindikten sonra oyun durumunu toparla."""
-        if lobby.phase not in ("PICKING", "IN_ROUND", "ROUND_RESULT"):
+        if lobby.phase not in ("STARTING", "PICKING", "IN_ROUND", "ROUND_RESULT"):
             return
         if len(lobby.connected_players()) < MIN_PLAYERS:
             await _end_game_abandoned(lobby, reason="opponent_left")
@@ -394,9 +413,10 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
         player = lobby.players.get(player_id)
         if not player or player.is_connected():
             return  # rejoin etti
-        # Tamamen boş lobiyi SİLME: host kodu paylaşmak için telefonda uygulamadan
-        # çıkmış olabilir; token ile geri dönebilsin. Gerçek terk → idle reaper (30 dk).
+        # Grace sonunda tamamen boş kalan lobi artık geri dönülebilir bir oturum
+        # değildir; kaydı tutmak bellek tüketim saldırısına dönüşebilir.
         if not lobby.connected_players():
+            registry.remove(code)
             return
         lobby.remove_player(player_id)
         await sio.emit("player_left", {"player_id": player_id}, to=code)
@@ -409,7 +429,11 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
     # ---------- Events ----------
 
     @sio.on("connect")
-    async def on_connect(sid: str, environ: dict, auth: Any = None) -> None:
+    async def on_connect(sid: str, environ: dict, auth: Any = None) -> bool | None:
+        client_ip = str(environ.get("REMOTE_ADDR") or "unknown")
+        if not connect_limiter.allow(client_ip):
+            return False
+        sid_ips[sid] = client_ip
         # Reaper'ı ilk bağlantıda (event-loop kesin çalışırken) başlat.
         if not reaper_state["started"]:
             reaper_state["started"] = True
@@ -419,6 +443,9 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
     async def on_create_lobby(sid: str, data: dict[str, Any]) -> None:
         if not event_limiter.allow(sid):
             await _emit_error(sid, "rate_limited", "Çok hızlı, biraz yavaşla")
+            return
+        if not create_limiter.allow(sid_ips.get(sid, "unknown")):
+            await _emit_error(sid, "rate_limited", "Yeni lobi oluşturmak için biraz bekle")
             return
         if registry.count() >= MAX_LOBBIES:
             await _emit_error(sid, "server_busy", "Sunucu şu an dolu, sonra tekrar dene")
@@ -454,7 +481,7 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
         if lobby.is_full():
             await _emit_error(sid, "lobby_full", "Lobi dolu")
             return
-        if lobby.phase == "IN_ROUND":
+        if lobby.phase not in ("WAITING", "GAME_OVER"):
             await _emit_error(sid, "in_game", "Oyun zaten başladı")
             return
 
@@ -522,7 +549,7 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
         if pid != lobby.host_id:
             await _emit_error(sid, "not_host", "Sadece host ayarları değiştirebilir")
             return
-        if lobby.phase == "IN_ROUND":
+        if lobby.phase not in ("WAITING", "GAME_OVER"):
             await _emit_error(sid, "in_game", "Tur sırasında değiştirilemez")
             return
         lobby.settings = validate_settings(data or {})
@@ -540,6 +567,9 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
         if not lobby.can_start():
             await _emit_error(sid, "cannot_start", "Başlatılamaz (en az 2 oyuncu gerekli)")
             return
+        # Aynı hostun art arda gelen start event'leri DB sorgusu sırasında
+        # ikinci oyun başlatamasın.
+        lobby.phase = "STARTING"
         for p in lobby.players.values():
             p.score = 0
         lobby.round_no = 0
@@ -718,6 +748,10 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
             return
         if lobby.phase != "GAME_OVER":
             return
+        if not lobby.can_start():
+            await _emit_error(sid, "cannot_start", "Rövanş için en az 2 oyuncu gerekli")
+            return
+        lobby.phase = "STARTING"
         for p in lobby.players.values():
             p.score = 0
         lobby.round_no = 0
@@ -731,6 +765,7 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
     @sio.on("disconnect")
     async def on_disconnect(sid: str) -> None:
         event_limiter.forget(sid)
+        sid_ips.pop(sid, None)
         info = registry.unbind_sid(sid)
         if not info:
             return
@@ -747,7 +782,7 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
 
         # Aktif oyunda 2'nin altına düştüyse (1v1 rakip kaçtı / ikisi de gitti) bitir.
         # 0 bağlı kaldıysa _end_game_abandoned lobiyi temizler.
-        if lobby.phase in ("PICKING", "IN_ROUND", "ROUND_RESULT") \
+        if lobby.phase in ("STARTING", "PICKING", "IN_ROUND", "ROUND_RESULT") \
                 and len(lobby.connected_players()) < MIN_PLAYERS:
             await _end_game_abandoned(lobby, reason="opponent_left")
             return
@@ -756,7 +791,5 @@ def register_handlers(sio: socketio.AsyncServer) -> None:
                 and pid in (lobby.pick.picker_a, lobby.pick.picker_b):
             await _start_pick_phase(lobby)
             return
-        # Aksi halde (WAITING/GAME_OVER): grace ver. Lobi boş kalsa bile hemen silinmez;
-        # host kod paylaşıp geri dönebilsin (mobil arka plan). _disconnect_grace boş
-        # lobiyi yaşatır, idle reaper gerçek terkleri 30 dk sonra temizler.
+        # Aksi halde (WAITING/GAME_OVER): kısa yeniden bağlanma süresi ver.
         sio.start_background_task(_disconnect_grace, code, pid)

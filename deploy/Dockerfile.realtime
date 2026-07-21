@@ -1,6 +1,6 @@
 # Realtime (socket.io) — TEK worker (in-memory lobi state). Dikey ölçeklenir.
-# Çok-node gerekirse LB'de lobi koduna göre sticky/hash routing eklenir (README).
-FROM python:3.11-slim
+# Çok-node için paylaşımlı Socket.IO manager ve lobi state'i gerekir.
+FROM python:3.11-slim-bookworm
 
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
@@ -11,8 +11,14 @@ RUN pip install -r backend/requirements.txt
 COPY backend/ backend/
 COPY data/football_quiz_v2.db data/football_quiz_v2.db
 
+RUN groupadd --system careerdle && useradd --system --gid careerdle --home /app careerdle \
+    && chown -R careerdle:careerdle /app
+
 ENV APP_SERVE_STATIC=false
+USER careerdle
 EXPOSE 8001
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/api/health', timeout=2)"
 
 # In-memory state → tek worker. Yüksek eşzamanlılık asyncio ile sağlanır.
 CMD ["uvicorn", "backend.app.realtime.server:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]

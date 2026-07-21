@@ -8,6 +8,7 @@ const ATTR_ORDER = ['nationality', 'position', 'age', 'value', 'club', 'league']
 let classicData = null;     // /api/classic yanıtı (gün boyu sabit)
 let classicSearchDebounce = null;
 let classicBusy = false;
+let classicOutsideClickBound = false;
 
 // ---- localStorage durum ----
 function classicState() {
@@ -59,7 +60,7 @@ function leagueName(code) {
 
 function cellHtml(kind, a) {
     let inner;
-    if (kind === 'nationality') inner = `${flagHtml(a.value) || ''}<span>${esc(a.value || '—')}</span>`;
+    if (kind === 'nationality') inner = `${flagHtml(a.value, false, a.code) || ''}<span>${esc(a.value || '—')}</span>`;
     else if (kind === 'position') inner = esc(posText(a.value));
     else if (kind === 'age') inner = `${a.value ?? '—'} ${arrowHtml(a.dir)}`;
     else if (kind === 'value') inner = `${fmtVal(a.value)} ${arrowHtml(a.dir)}`;
@@ -70,11 +71,6 @@ function cellHtml(kind, a) {
             <span class="cl-cell-label">${t('attr_' + kind)}</span>
             <span class="cl-cell-val">${inner}</span>
         </div>`;
-}
-
-function classicStreakBadge() {
-    const streak = parseInt(localStorage.getItem('classic_streak') || '0', 10);
-    return streak > 0 ? `<span class="daily-streak">🔥 ${streak}</span>` : '';
 }
 
 function paintClassic() {
@@ -118,9 +114,9 @@ function paintClassic() {
     let banner = '';
     if (s.solved) {
         const name = s.guesses[used - 1]?.guess?.name || '';
-        banner = `<div class="result-banner win"><span class="rb-ico">🏆</span><div><p class="rb-title">${t('classic_solved')}</p><p class="rb-sub">${t('banner_answer')}: <b>${esc(name)}</b> — ${used} ${t('classic_tries')}</p></div></div>`;
+        banner = `<div class="result-banner win"><div><p class="rb-title">${t('classic_solved')}</p><p class="rb-sub">${t('banner_answer')}: <b>${esc(name)}</b> — ${used} ${t('classic_tries')}</p></div></div>`;
     } else if (over) {
-        banner = `<div class="result-banner lose"><span class="rb-ico">🔥</span><div><p class="rb-title">${t('classic_lost')}</p><p class="rb-sub">${t('classic_tomorrow')}</p></div></div>`;
+        banner = `<div class="result-banner lose"><div><p class="rb-title">${t('classic_lost')}</p><p class="rb-sub">${t('classic_tomorrow')}</p></div></div>`;
     }
 
     const legend = `
@@ -135,8 +131,10 @@ function paintClassic() {
     const inputBlock = over ? '' : `
         <div class="quiz-input-row daily-input">
             <div class="search-wrapper quiz-search-wrapper">
-                <input type="text" id="classic-input" autocomplete="off" placeholder="${esc(t('guess_placeholder'))}">
-                <div class="dropdown" id="classic-dropdown"></div>
+                <label class="visually-hidden" for="classic-input">${esc(t('guess_placeholder'))}</label>
+                <input type="text" id="classic-input" autocomplete="off" maxlength="80" placeholder="${esc(t('guess_placeholder'))}"
+                       role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="classic-dropdown">
+                <div class="dropdown" id="classic-dropdown" role="listbox"></div>
             </div>
         </div>
         <div class="cl-poolnote">${t('classic_pool_note')}</div>`;
@@ -144,7 +142,7 @@ function paintClassic() {
     const rows = [...s.guesses].reverse().map(g => `
         <div class="cl-guess${g.correct ? ' is-correct' : ''}">
             <div class="cl-guess-head">
-                <img src="${g.guess.image_url || ''}" onerror="this.style.display='none'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+                <img src="${esc(safeImageUrl(g.guess.image_url))}" onerror="this.style.display='none'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">
                 <span class="cl-guess-name">${esc(g.guess.name)}</span>
             </div>
             <div class="cl-attrs">${ATTR_ORDER.map(k => cellHtml(k, g.attrs[k])).join('')}</div>
@@ -209,22 +207,6 @@ function renderDailyStats() {
     if (el) el.innerHTML = dailyStatsHTML(true);
 }
 
-// Topbar ikonları: yardım + istatistik modalları
-function openHelpModal() {
-    const steps = [t('help_s1'), t('help_s2'), t('help_s3'), t('help_s4')]
-        .map((s, i) => `<li><span class="how-no">${i + 1}</span><span>${s}</span></li>`).join('');
-    const clues = [['clue_nat', 'clue_nat_d'], ['clue_pos', 'clue_pos_d'], ['clue_age', 'clue_age_d'], ['clue_club', 'clue_club_d']]
-        .map(([a, b]) => `<li class="clue-row"><b>${t(a)}.</b> <span>${t(b)}</span></li>`).join('');
-    openAppModal(t('help_eyebrow'), t('help_title'), `
-        <p class="modal-intro">${t('help_intro')}</p>
-        <ol class="how-steps modal-steps">${steps}</ol>
-        <h3 class="kicker modal-sub">${t('help_clues')}</h3>
-        <ul class="clue-list">${clues}</ul>`);
-}
-function openStatsModal() {
-    openAppModal('', t('stats_title'), dailyStatsHTML(false));
-}
-
 // ---- Gece yarısına geri sayım ----
 let dailyCountdownTimer = null;
 function startDailyCountdown() {
@@ -275,12 +257,18 @@ async function classicGuessById(playerId) {
     classicBusy = false;
     if (!res || res.error) { showToast(t('quiz_load_error'), 'error'); return; }
 
+    if (s.guesses.length === 0) trackEvent('daily_start', { mode: 'daily' });
     s.guesses.push({ guess: res.guess, attrs: res.attrs, correct: res.correct });
     if (res.correct) { s.solved = true; classicApplyStreak(); }
 
     // İstatistik: oyun bittiğinde bir kez say (oynanan/kazanılan/dağılım).
     const over = res.correct || s.guesses.length >= CLASSIC_MAX_GUESSES;
     if (over && !s.counted) {
+        trackEvent('daily_finish', {
+            mode: 'daily',
+            result: res.correct ? 'solved' : 'failed',
+            attempts: s.guesses.length,
+        });
         let st;
         try { st = JSON.parse(localStorage.getItem('classic_stats') || 'null'); } catch (_) { st = null; }
         if (!st) st = { played: 0, wins: 0, dist: [0, 0, 0, 0, 0, 0, 0, 0] };
@@ -332,7 +320,7 @@ async function revealClassic() {
 function openRevealModal(r) {
     closeRevealModal();
     const meta = [
-        `<span class="rm-pill">${flagHtml(r.country, true) || ''} ${esc(r.country || '?')}</span>`,
+        `<span class="rm-pill">${flagHtml(r.country, true, r.country_code) || ''} ${esc(r.country || '?')}</span>`,
         `<span class="rm-pill">${esc(posText(r.position))}</span>`,
         r.club_name ? `<span class="rm-pill">${esc(r.club_name)}</span>` : '',
     ].join('');
@@ -344,17 +332,18 @@ function openRevealModal(r) {
         <div class="result-modal reveal">
             <button class="rm-close" onclick="closeRevealModal()" aria-label="${esc(t('close'))}">&times;</button>
             <div class="rm-sub" style="text-transform:uppercase;letter-spacing:0.05em">${t('classic_answer')}</div>
-            <img class="rm-photo" src="${r.image_url || ''}" onerror="this.style.display='none'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+            <img class="rm-photo" src="${esc(safeImageUrl(r.image_url))}" onerror="this.style.display='none'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">
             <div class="rm-name">${esc(r.name)}</div>
             <div class="rm-pills">${meta}</div>
             <button class="btn btn-primary rm-next" onclick="closeRevealModal()">${t('close')}</button>
         </div>`;
     document.body.appendChild(backdrop);
+    activateDialog(backdrop, closeRevealModal);
 }
 
 function closeRevealModal() {
     const b = document.getElementById('classic-reveal-backdrop');
-    if (b) b.remove();
+    if (b) { deactivateDialog(b); b.remove(); }
 }
 
 function shareClassic() {
@@ -379,35 +368,56 @@ function setupClassicSearch() {
     input.addEventListener('input', () => {
         clearTimeout(classicSearchDebounce);
         const q = input.value.trim();
-        if (q.length < 2) { dropdown.classList.remove('show'); return; }
+        if (q.length < 2) {
+            dropdown.classList.remove('show');
+            input.setAttribute('aria-expanded', 'false');
+            return;
+        }
         classicSearchDebounce = setTimeout(async () => {
             try {
-                const players = await (await fetch('/api/search-player?active=1&q=' + encodeURIComponent(q))).json();
+                const response = await fetch('/api/search-player?active=1&q=' + encodeURIComponent(q));
+                if (!response.ok) throw new Error(`search failed: ${response.status}`);
+                const players = await response.json();
+                if (input.value.trim() !== q) return;
                 if (!players.length) {
                     dropdown.innerHTML = `<div style="padding:0.8rem;color:var(--text-dim)">${t('no_player')}</div>`;
                 } else {
                     dropdown.innerHTML = players.map(p => `
-                        <div class="dropdown-player" data-id="${p.player_id}" data-name="${esc(p.name)}">
-                            <img src="${p.image_url || ''}" onerror="this.style.display='none'" alt="">
+                        <div class="dropdown-player" role="option" aria-selected="false" data-id="${p.player_id}" data-name="${esc(p.name)}">
+                            <img src="${esc(safeImageUrl(p.image_url))}" onerror="this.style.display='none'" alt="">
                             <div class="dp-info">
                                 <div class="dp-name">${esc(p.name)}</div>
                             </div>
                         </div>`).join('');
                 }
                 dropdown.classList.add('show');
+                input.setAttribute('aria-expanded', 'true');
                 dropdown.querySelectorAll('.dropdown-player').forEach(item => {
                     item.addEventListener('click', () => {
                         dropdown.classList.remove('show');
+                        input.setAttribute('aria-expanded', 'false');
                         input.value = '';
                         classicGuessById(parseInt(item.dataset.id, 10));
                     });
                 });
-            } catch (_) { /* sessiz */ }
+            } catch (_) {
+                if (input.value.trim() === q) {
+                    dropdown.classList.remove('show');
+                    input.setAttribute('aria-expanded', 'false');
+                }
+            }
         }, 250);
     });
 
     attachSearchKeys(input, dropdown, submitClassic);
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.quiz-search-wrapper')) dropdown.classList.remove('show');
-    }, { once: true });
+    if (!classicOutsideClickBound) {
+        classicOutsideClickBound = true;
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('#classic-card .quiz-search-wrapper')) return;
+            const activeDropdown = document.getElementById('classic-dropdown');
+            const activeInput = document.getElementById('classic-input');
+            activeDropdown?.classList.remove('show');
+            activeInput?.setAttribute('aria-expanded', 'false');
+        });
+    }
 }

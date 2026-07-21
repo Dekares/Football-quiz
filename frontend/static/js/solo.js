@@ -74,6 +74,8 @@ async function startRun() {
     runActive = true;
     document.getElementById('solo-setup').hidden = true;
     document.getElementById('solo-active-filter').hidden = false;
+    document.getElementById('solo-stats').hidden = false;
+    document.getElementById('solo-action-row').hidden = false;
     updateActiveFilter();
     await loadQuiz();
 }
@@ -111,7 +113,7 @@ function renderRecent() {
     }
     el.innerHTML = list.map(r => `
         <div class="recent-item">
-            <img src="${esc(r.image)}" onerror="this.src='${PLAYER_FALLBACK}'" alt="">
+            <img src="${esc(safeImageUrl(r.image))}" onerror="this.src='${PLAYER_FALLBACK}'" alt="">
             <span class="rg-name">${esc(r.name)}</span>
             <span class="rg-time">${relTime(r.ts)}</span>
             <span class="rg-mark ${r.correct ? 'ok' : 'no'}">${r.correct ? '✓' : '✕'}</span>
@@ -269,6 +271,9 @@ async function startSelectedRun() {
     if (!playerCount) return;
     localStorage.setItem('solo_league', quizLeague);
     localStorage.setItem('solo_recognition', quizRecognition);
+    trackEvent('solo_start', {
+        mode: 'solo', league: quizLeague, recognition: effectiveRecognition(),
+    });
     await startRun();
 }
 
@@ -280,6 +285,8 @@ function changeSoloSelection() {
     runTotal = 0;
     document.getElementById('solo-setup').hidden = false;
     document.getElementById('solo-active-filter').hidden = true;
+    document.getElementById('solo-stats').hidden = true;
+    document.getElementById('solo-action-row').hidden = true;
     document.getElementById('quiz-input-row').style.display = 'none';
     document.getElementById('quiz-lives').style.display = 'none';
     document.getElementById('quiz-hint-reveal').style.display = 'none';
@@ -353,6 +360,9 @@ function useHint() {
     const cards = hintCards();
     if (!currentQuiz || hintsUsed >= cards.length) return;
     hintsUsed += 1;
+    trackEvent('solo_hint', {
+        mode: 'solo', league: quizLeague, recognition: effectiveRecognition(), hints: hintsUsed,
+    });
     const box = document.getElementById('quiz-hint-reveal');
     box.style.display = 'flex';
     box.innerHTML = cards.slice(0, hintsUsed)
@@ -422,7 +432,7 @@ function renderQuizArea() {
                 <div class="info-code">NAT</div>
                 <div class="info-text">
                     <div class="info-label">${t('nationality')}</div>
-                    <div class="info-value">${flagHtml(currentQuiz.country, true)}${esc(currentQuiz.country || '?')}</div>
+                    <div class="info-value">${flagHtml(currentQuiz.country, true, currentQuiz.country_code)}${esc(currentQuiz.country || '?')}</div>
                 </div>
             </div>
         </div>
@@ -442,7 +452,7 @@ function renderQuizArea() {
         } else {
             html += `
                 <div class="timeline-item" style="${delay}">
-                    ${c.logo_url ? `<img src="${c.logo_url}" onerror="this.style.display='none'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : ''}
+                    ${safeImageUrl(c.logo_url) ? `<img src="${esc(safeImageUrl(c.logo_url))}" onerror="this.style.display='none'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : ''}
                     <div class="timeline-info"><div class="club-name">${esc(c.name)}</div></div>
                     <div class="club-years">${formatDate(c)}</div>
                 </div>`;
@@ -467,28 +477,45 @@ function setupQuizSearch() {
         clearTimeout(quizDebounce);
         selectedGuessId = null;
         const q = quizInput.value.trim();
-        if (q.length < 2) { quizDropdown.classList.remove('show'); return; }
+        if (q.length < 2) {
+            quizDropdown.classList.remove('show');
+            quizInput.setAttribute('aria-expanded', 'false');
+            return;
+        }
 
         quizDebounce = setTimeout(async () => {
-            const res = await fetch('/api/search-player?q=' + encodeURIComponent(q));
-            const players = await res.json();
+            let players;
+            try {
+                const res = await fetch('/api/search-player?q=' + encodeURIComponent(q));
+                if (!res.ok) throw new Error(`search failed: ${res.status}`);
+                players = await res.json();
+            } catch (_) {
+                if (quizInput.value.trim() === q) {
+                    quizDropdown.classList.remove('show');
+                    quizInput.setAttribute('aria-expanded', 'false');
+                }
+                return;
+            }
+            if (quizInput.value.trim() !== q) return;
             if (players.length === 0) {
                 quizDropdown.innerHTML = `<div style="padding:0.8rem;color:var(--text-dim)">${t('no_player')}</div>`;
             } else {
                 // Tahmin oyununda mevki/ülke gösterilmez (cevabı ele vermesin).
                 quizDropdown.innerHTML = players.map(p => `
-                    <div class="dropdown-player" data-id="${p.player_id}" data-name="${esc(p.name)}">
-                        <img src="${p.image_url || ''}" onerror="this.src='${PLAYER_FALLBACK}'" alt="">
+                    <div class="dropdown-player" role="option" aria-selected="false" data-id="${p.player_id}" data-name="${esc(p.name)}">
+                        <img src="${esc(safeImageUrl(p.image_url))}" onerror="this.src='${PLAYER_FALLBACK}'" alt="">
                         <div class="dp-info"><div class="dp-name">${esc(p.name)}</div></div>
                     </div>
                 `).join('');
             }
             quizDropdown.classList.add('show');
+            quizInput.setAttribute('aria-expanded', 'true');
             quizDropdown.querySelectorAll('.dropdown-player').forEach(item => {
                 item.addEventListener('click', () => {
                     selectedGuessId = parseInt(item.dataset.id);
                     quizInput.value = item.dataset.name;
                     quizDropdown.classList.remove('show');
+                    quizInput.setAttribute('aria-expanded', 'false');
                     submitGuess();
                 });
             });
@@ -496,7 +523,10 @@ function setupQuizSearch() {
     });
 
     document.addEventListener('click', (e) => {
-        if (!e.target.closest('.quiz-search-wrapper')) quizDropdown.classList.remove('show');
+        if (!e.target.closest('.quiz-search-wrapper')) {
+            quizDropdown.classList.remove('show');
+            quizInput.setAttribute('aria-expanded', 'false');
+        }
     });
 
     attachSearchKeys(quizInput, quizDropdown, submitGuess);
@@ -510,6 +540,7 @@ function submitGuess() {
     if (!guess) return;
 
     quizDropdown.classList.remove('show');
+    quizInput.setAttribute('aria-expanded', 'false');
 
     let isCorrect = false;
     if (selectedGuessId !== null) {
@@ -558,6 +589,14 @@ let lastResult = null;
 
 function showQuizResult(correct, recordInfo) {
     const p = currentQuiz;
+    trackEvent('solo_round_finish', {
+        mode: 'solo',
+        league: quizLeague,
+        recognition: effectiveRecognition(),
+        result: correct ? 'solved' : 'skipped',
+        hints: hintsUsed,
+        lives: quizLives,
+    });
     pushRecent(p, correct);
 
     document.getElementById('quiz-input-row').style.display = 'none';
@@ -586,7 +625,7 @@ function renderResultModal() {
     const { player: p, correct, recordInfo, league, recognition } = lastResult;
 
     const existing = document.getElementById('quiz-modal-backdrop');
-    if (existing) existing.remove();
+    if (existing) { deactivateDialog(existing); existing.remove(); }
 
     const stats = getSoloStats();
     const career = (p.clubs || []).filter(club => !club.is_retirement);
@@ -644,14 +683,14 @@ function renderResultModal() {
             <section class="rm-player-profile">
                 <div class="rm-photo-wrap">
                     <span class="rm-photo-fallback" aria-hidden="true">PLY</span>
-                    <img class="rm-photo" src="${p.image_url || ''}" onerror="this.style.display='none'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+                    <img class="rm-photo" src="${esc(safeImageUrl(p.image_url))}" onerror="this.style.display='none'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">
                 </div>
                 <div class="rm-player-copy">
                     <div class="rm-section-label">${t('result_answer_label')}</div>
                     <div class="rm-name">${esc(p.name)}</div>
                     <div class="rm-pills">
                         <span class="rm-pill">${esc(posText(p.position))}</span>
-                        <span class="rm-pill">${flagHtml(p.country, true)} ${esc(p.country || '?')}</span>
+                        <span class="rm-pill">${flagHtml(p.country, true, p.country_code)} ${esc(p.country || '?')}</span>
                     </div>
                 </div>
             </section>
@@ -688,11 +727,21 @@ function renderResultModal() {
             </div>
         </div>`;
     document.body.appendChild(backdrop);
+    activateDialog(backdrop, closeQuizModalAndNext);
 }
 
 // Koşu bitti kartı: bilemediğin oyuncu + en yüksek seri + toplam doğru + paylaş.
 function showGameOver() {
     const p = currentQuiz;
+    trackEvent('solo_run_finish', {
+        mode: 'solo',
+        league: quizLeague,
+        recognition: effectiveRecognition(),
+        result: 'lives_exhausted',
+        total: runTotal,
+        streak: runMax,
+        lives: 0,
+    });
     pushRecent(p, false);
     document.getElementById('quiz-input-row').style.display = 'none';
     document.getElementById('quiz-lives').style.display = 'none';
@@ -709,7 +758,7 @@ function renderGameOverModal() {
     if (!lastResult?.gameOver) return;
     const { player: p, runMax: mx, runTotal: tot } = lastResult;
     const existing = document.getElementById('quiz-modal-backdrop');
-    if (existing) existing.remove();
+    if (existing) { deactivateDialog(existing); existing.remove(); }
 
     const backdrop = document.createElement('div');
     backdrop.className = 'quiz-modal-backdrop';
@@ -719,7 +768,7 @@ function renderGameOverModal() {
             <div class="rm-check">&times;</div>
             <h2 class="rm-title">${t('multi_game_over')}</h2>
             <p class="rm-sub">${t('game_over_missed')}</p>
-            <img class="rm-photo" src="${p.image_url || ''}" onerror="this.style.display='none'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+            <img class="rm-photo" src="${esc(safeImageUrl(p.image_url))}" onerror="this.style.display='none'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">
             <div class="rm-name">${esc(p.name)}</div>
             <div class="rm-stats">
                 <div class="rm-stat">
@@ -735,11 +784,12 @@ function renderGameOverModal() {
             <button class="btn rm-share" onclick="shareRunResult()">${t('share_result')}</button>
         </div>`;
     document.body.appendChild(backdrop);
+    activateDialog(backdrop, restartRun);
 }
 
 function restartRun() {
     const b = document.getElementById('quiz-modal-backdrop');
-    if (b) b.remove();
+    if (b) { deactivateDialog(b); b.remove(); }
     lastResult = null;
     startRun();
 }
@@ -754,14 +804,14 @@ function shareRunResult() {
 
 function closeQuizModalAndNext() {
     const backdrop = document.getElementById('quiz-modal-backdrop');
-    if (backdrop) backdrop.remove();
+    if (backdrop) { deactivateDialog(backdrop); backdrop.remove(); }
     lastResult = null;
     loadQuiz();
 }
 
 function closeQuizModalAndChangeSelection() {
     const backdrop = document.getElementById('quiz-modal-backdrop');
-    if (backdrop) backdrop.remove();
+    if (backdrop) { deactivateDialog(backdrop); backdrop.remove(); }
     lastResult = null;
     changeSoloSelection();
 }

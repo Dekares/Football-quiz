@@ -35,11 +35,6 @@ function renderRoute() {
     routeListeners.forEach(fn => { try { fn(route); } catch (e) { console.error(e); } });
 }
 
-function navigate(hash) {
-    if (location.hash === hash) renderRoute();
-    else location.hash = hash;
-}
-
 window.addEventListener('hashchange', renderRoute);
 window.addEventListener('DOMContentLoaded', () => {
     applyLang();

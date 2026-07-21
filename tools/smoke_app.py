@@ -98,6 +98,18 @@ def check_database(path: Path) -> dict[str, object]:
         ).fetchone()
         assert daily is not None
         assert daily["day_number"] == daily_number(date.fromisoformat(today))
+        invalid_future_daily = _scalar(
+            conn,
+            """
+            SELECT COUNT(*)
+            FROM daily_challenges d
+            LEFT JOIN global_quiz_pool g
+              ON g.player_id = d.player_id AND g.recognition = 'known'
+            WHERE d.challenge_date > ? AND g.player_id IS NULL
+            """,
+            (today,),
+        )
+        assert invalid_future_daily == 0
         first_daily = conn.execute(
             """
             SELECT challenge_date,day_number FROM daily_challenges
@@ -121,6 +133,7 @@ def check_database(path: Path) -> dict[str, object]:
             "quiz_pool": quiz_counts,
             "recognition_pool": recognition_counts,
             "global_recognition_pool": global_recognition_counts,
+            "invalid_future_daily": invalid_future_daily,
             "realtime": realtime,
         }
     finally:

@@ -78,7 +78,7 @@ th{color:#9aa4b2;font-weight:600}
 .logo{width:20px;height:20px;object-fit:contain;vertical-align:middle;margin-right:6px}
 .empty{color:#9aa4b2;padding:24px}
 </style>
-<header><input id=q placeholder="Oyuncu adı yaz..." autofocus autocomplete=off></header>
+<header><input id=q placeholder="Oyuncu adı yaz..." autofocus autocomplete=off maxlength=80></header>
 <div class=wrap id=out></div>
 <script>
 const out=document.getElementById('out'),q=document.getElementById('q');
@@ -91,7 +91,7 @@ async function go(){
  const d=await r.json();
  if(!d.length){out.innerHTML='<div class=empty>Eşleşme yok.</div>';return}
  out.innerHTML=d.map(p=>`<div class=card>
-  <img class=face src="${p.image_url||''}" onerror="this.style.visibility='hidden'">
+  <img class=face src="${safeUrl(p.image_url)}" onerror="this.style.visibility='hidden'">
   <div>
    <h2>${esc(p.name)} ${p.is_legend?'⭐':''}</h2>
    <div class=meta>
@@ -101,12 +101,15 @@ async function go(){
     <b>Değer</b> ${fmt(p.market_value)} &nbsp; <b>Zirve</b> ${fmt(p.highest_market_value)}
    </div>
    ${p.clubs.length?`<table><tr><th>Kulüp</th><th>Lig</th><th>Başlangıç</th><th>Bitiş</th></tr>
-    ${p.clubs.map(c=>`<tr><td>${c.logo_url?`<img class=logo src="${c.logo_url}">`:''}${esc(c.name)}</td>
+    ${p.clubs.map(c=>`<tr><td>${safeUrl(c.logo_url)?`<img class=logo src="${safeUrl(c.logo_url)}">`:''}${esc(c.name)}</td>
      <td>${esc(c.league||'-')}</td><td>${esc(c.date_from||'-')}</td><td>${esc(c.date_to||'-')}</td></tr>`).join('')}
     </table>`:'<div class=meta>Kulüp kaydı yok.</div>'}
   </div></div>`).join('');
 }
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function safeUrl(value){
+ try{const u=new URL(String(value||''));return u.protocol==='https:'?esc(u.href):''}catch(_){return ''}
+}
 function fmt(n){return n?'€'+n.toLocaleString():'-'}
 </script>"""
 
@@ -118,7 +121,7 @@ class H(BaseHTTPRequestHandler):
     def do_GET(self):
         u = urlparse(self.path)
         if u.path == "/api":
-            q = (parse_qs(u.query).get("q") or [""])[0]
+            q = (parse_qs(u.query).get("q") or [""])[0].strip()[:80]
             body = json.dumps(lookup(q)).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")

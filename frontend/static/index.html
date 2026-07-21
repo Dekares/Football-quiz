@@ -8,7 +8,7 @@
     <meta name="google-adsense-account" content="ca-pub-5823826038472901">
 
     <!-- Tema: flash önlemek için CSS'ten önce data-theme'i ata -->
-    <script>(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
+    <script src="/static/js/theme-init.js"></script>
     <script src="/static/js/privacy-consent.js"></script>
 
     <!-- Google AdSense (Auto Ads — mobil/masaüstü responsive) -->
@@ -17,13 +17,10 @@
 
     <!-- Google Analytics (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z9DQBC8GYW"></script>
-    <script>
-      gtag('js', new Date());
-      gtag('config', 'G-Z9DQBC8GYW', { anonymize_ip: true });
-    </script>
+    <script src="/static/js/analytics-init.js"></script>
 
-    <title>Careerdle — Futbolcuyu Kariyerinden Tahmin Et | Günlük, Solo & Düello</title>
-    <meta name="description" content="Kariyer ve transfer geçmişine bakarak gizemli futbolcuyu bul. Her gün yeni Günün Futbolcusu bulmacası, solo futbolcu tahmin oyunu ve arkadaşlarınla 2-6 kişilik canlı düello. Ücretsiz, üyeliksiz.">
+    <title>Careerdle — Futbolcuyu Kariyerinden Tahmin Et | Günlük ve Solo</title>
+    <meta name="description" content="Kariyer ve transfer geçmişine bakarak gizemli futbolcuyu bul. Her gün yeni Günün Futbolcusu bulmacası ve lig bazlı solo futbolcu tahmin oyunu. Ücretsiz, üyeliksiz.">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
     <link rel="canonical" href="{{BASE_URL}}/">
 
@@ -31,7 +28,7 @@
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Careerdle">
     <meta property="og:title" content="Careerdle — Futbolcuyu Kariyerinden Tahmin Et">
-    <meta property="og:description" content="Kariyer geçmişine bakarak gizemli futbolcuyu bul. Günün Futbolcusu, solo tahmin ve canlı çok oyunculu düello. Ücretsiz, üyeliksiz.">
+    <meta property="og:description" content="Kariyer geçmişine bakarak gizemli futbolcuyu bul. Günün Futbolcusu ve lig bazlı solo tahmin. Ücretsiz, üyeliksiz.">
     <meta property="og:url" content="{{BASE_URL}}/">
     <meta property="og:image" content="{{BASE_URL}}/static/img/logo-koyu.png">
     <meta property="og:image:alt" content="Careerdle — futbolcu tahmin oyunu">
@@ -41,7 +38,7 @@
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Careerdle — Futbolcuyu Kariyerinden Tahmin Et">
-    <meta name="twitter:description" content="Kariyer geçmişine bakarak gizemli futbolcuyu bul. Solo ya da arkadaşlarınla canlı yarış.">
+    <meta name="twitter:description" content="Kariyer geçmişine bakarak gizemli futbolcuyu günlük veya lig bazlı solo modda bul.">
     <meta name="twitter:image" content="{{BASE_URL}}/static/img/logo-koyu.png">
     <meta name="twitter:image:alt" content="Careerdle — futbolcu tahmin oyunu">
 
@@ -79,7 +76,7 @@
                 "inLanguage": ["tr", "en"],
                 "isAccessibleForFree": true,
                 "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-                "description": "Her gün yeni Günün Futbolcusu bulmacası, solo futbolcu tahmin oyunu ve 2-6 kişilik canlı düello."
+                "description": "Her gün yeni Günün Futbolcusu bulmacası ve lig bazlı solo futbolcu tahmin oyunu."
             }
         ]
     }
@@ -92,11 +89,11 @@
         <noscript>
             <h1>Careerdle — Futbolcuyu Kariyerinden Tahmin Et</h1>
             <p>Kariyer ve transfer geçmişine bakarak gizemli futbolcuyu bul. Her gün yeni
-            "Günün Futbolcusu" bulmacası, solo futbolcu tahmin oyunu ve arkadaşlarınla
-            2-6 kişilik canlı düello. Oynamak için lütfen JavaScript'i etkinleştir.</p>
+            "Günün Futbolcusu" bulmacası ve liglere göre solo kariyer tahmin oyunu.
+            Oynamak için lütfen JavaScript'i etkinleştir.</p>
             <p lang="en">Guess the mystery footballer from their career and transfer history.
-            A new daily puzzle, a solo guessing game, and live multiplayer duels. Please
-            enable JavaScript to play.</p>
+            A new daily puzzle and a league-based solo career guessing game. Please enable
+            JavaScript to play.</p>
         </noscript>
 
         <!-- ===== GÜNLÜK TAHMİN (ana sayfa) ===== -->
@@ -104,7 +101,7 @@
             <!-- Arama motorları + ekran okuyucular için landing başlığı (görsel olarak gizli) -->
             <header class="visually-hidden">
                 <h1 data-i18n="seo_h1">Careerdle — Futbolcuyu kariyerinden tahmin et</h1>
-                <p data-i18n="seo_intro">Her gün yeni "Günün Futbolcusu" bulmacası, kariyer ve transfer geçmişine dayalı solo futbolcu tahmin oyunu ve arkadaşlarınla 2-6 kişilik canlı düello. Ücretsiz, üyeliksiz.</p>
+                <p data-i18n="seo_intro">Her gün yeni "Günün Futbolcusu" bulmacası ve kariyer geçmişine dayalı lig bazlı solo tahmin oyunu. Ücretsiz, üyeliksiz.</p>
             </header>
             <!-- Günün Futbolcusu — mockup 2-kolon editoryal düzen -->
             <div class="daily-layout">
@@ -203,7 +200,7 @@
                     </button>
                 </div>
 
-                <div class="solo-stats">
+                <div class="solo-stats" id="solo-stats" hidden aria-live="polite">
                     <div class="stat-card">
                         <div class="stat-meta">
                             <span class="stat-label" data-i18n="solo_streak">Seri</span>
@@ -239,13 +236,16 @@
 
                 <div class="guess-row" id="quiz-input-row" style="display:none">
                     <div class="search-wrapper quiz-search-wrapper">
-                        <input type="text" id="quiz-guess" data-i18n-placeholder="guess_placeholder" placeholder="Oyuncu adını yaz..." autocomplete="off">
-                        <div class="dropdown" id="quiz-player-dropdown"></div>
+                        <label class="visually-hidden" for="quiz-guess" data-i18n="guess_player_label">Oyuncu adı</label>
+                        <input type="text" id="quiz-guess" data-i18n-placeholder="guess_placeholder" placeholder="Oyuncu adını yaz..." autocomplete="off" maxlength="80"
+                               role="combobox" aria-autocomplete="list" aria-expanded="false"
+                               aria-controls="quiz-player-dropdown">
+                        <div class="dropdown" id="quiz-player-dropdown" role="listbox"></div>
                     </div>
                     <button class="btn btn-primary" onclick="submitGuess()" data-i18n="submit_guess">Tahmini Gönder</button>
                 </div>
 
-                <div class="action-row">
+                <div class="action-row" id="solo-action-row" hidden>
                     <button class="action-btn" id="hint-btn" onclick="useHint()" disabled>
                         <span data-i18n="hint">İpucu</span>
                         <span class="action-badge" id="hint-count">3</span>
@@ -302,8 +302,8 @@
                     <h3>Sorular nasıl hazırlanıyor?</h3>
                     <p>Veri doğrudan oyuna aktarılmaz. Önce oyuncu, kulüp, transfer ve piyasa
                     değeri kayıtları normalize edilir; geçersiz tarihler ve kimlik çakışmaları
-                    kontrol edilir. Kolay, orta ve zor havuzlar oyuncunun bilinirliği, kariyer
-                    çeşitliliği ve kulüp bağlantılarına göre ayrı ayrı oluşturulur.</p>
+                    kontrol edilir. Bilindik, Az Bilindik ve Bilinmedik havuzlar oyuncunun
+                    tanınırlığı, kariyer çeşitliliği ve kulüp bağlantılarına göre oluşturulur.</p>
                 </article>
                 <article>
                     <h3>Neden bazı kariyerler farklı görünebilir?</h3>
@@ -362,8 +362,8 @@
                     <h3>How are questions built?</h3>
                     <p>Source data is never copied straight into the game. Player, club, transfer
                     and valuation records are normalized and checked for invalid dates or identity
-                    conflicts. Difficulty pools are then built from career variety, recognition
-                    and club connections.</p>
+                    conflicts. Known, Less Known and Obscure pools are then built from career
+                    variety, recognition and club connections.</p>
                 </article>
                 <article>
                     <h3>Why can careers look complicated?</h3>
@@ -397,8 +397,6 @@
         </div>
     </section>
     {{SITE_FOOTER}}
-<div class="modal-backdrop" id="app-modal" style="display:none" onclick="if(event.target===this)closeAppModal()"></div>
-
     <script src="/static/js/common.js" defer></script>
     <script src="/static/js/solo.js" defer></script>
     <script src="/static/js/router.js" defer></script>

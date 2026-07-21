@@ -68,6 +68,22 @@ def build_daily_schedule(
             (DAILY_START_DATE.isoformat(),),
         )
     }
+    # Yayımlanmış geçmiş ve bugün değişmez. Ancak gelecekteki oyuncu
+    # artık aktif global bilindik havuzunda değilse o tarih yeniden planlanır.
+    invalid_future_dates = [
+        challenge_date
+        for challenge_date, row in existing.items()
+        if date.fromisoformat(challenge_date) > today
+        and int(row["player_id"]) not in known_players
+    ]
+    if invalid_future_dates:
+        source.executemany(
+            "DELETE FROM daily_challenges WHERE challenge_date = ?",
+            ((challenge_date,) for challenge_date in invalid_future_dates),
+        )
+        for challenge_date in invalid_future_dates:
+            existing.pop(challenge_date)
+
     usage = Counter(
         int(row["player_id"])
         for row in existing.values()
@@ -162,5 +178,6 @@ def build_daily_schedule(
         "end": max(existing) if existing else None,
         "scheduled": len(rows),
         "inserted": inserted,
+        "rescheduled": len(invalid_future_dates),
         "known_pool": len(known_players),
     }

@@ -5,7 +5,6 @@ logo/
 background/
 tools/
 data/sources/
-data/football_quiz.db
 data/transfermarkt_source.db
 data/*.db.bak-*
 data/*.db-wal

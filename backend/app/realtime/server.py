@@ -6,8 +6,8 @@ Tek bir AsyncServer + in-memory lobi state. FastAPI API uygulamasını sarmalar;
 böylece bu entrypoint hem geliştirmede (her şey tek process) hem de ayrı bir
 realtime servisinde (LB /socket.io/* trafiğini buraya yönlendirir) kullanılır.
 
-Çok-node'a çıkmak gerekirse: LB'de lobi koduna göre consistent-hash routing →
-her node kendi lobilerini in-memory sahiplenir, mesaj kuyruğu (Redis) gerekmez.
+Çok-node'a çıkmak gerekirse paylaşımlı Socket.IO manager ve lobi state'i
+gerekir. Mevcut in-memory yapı tek realtime process için tasarlanmıştır.
 """
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ from .handlers import register_handlers
 
 sio = socketio.AsyncServer(
     async_mode="asgi",
-    cors_allowed_origins=settings.cors_origins if settings.cors_origins != ["*"] else "*",
+    cors_allowed_origins=settings.cors_origins or None,
 )
 register_handlers(sio)
 

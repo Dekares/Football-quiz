@@ -311,6 +311,10 @@ class PipelineTests(unittest.TestCase):
             LIMIT 1
             """
         ).fetchone()
+        future_daily = game.execute(
+            "SELECT challenge_date,player_id FROM daily_challenges "
+            "ORDER BY challenge_date DESC LIMIT 1"
+        ).fetchone()
         self.assertEqual(tuple(first_daily[:2]), ("2026-07-01", 1))
         self.assertEqual(
             game.execute(
@@ -425,6 +429,13 @@ class PipelineTests(unittest.TestCase):
                 "SELECT player_id FROM daily_challenges WHERE challenge_date='2026-07-01'"
             ).fetchone()[0],
             scheduled_player,
+        )
+        self.assertNotEqual(
+            rebuilt.execute(
+                "SELECT player_id FROM daily_challenges WHERE challenge_date=?",
+                (future_daily["challenge_date"],),
+            ).fetchone()[0],
+            future_daily["player_id"],
         )
         rebuilt.close()
 

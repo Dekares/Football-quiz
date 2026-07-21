@@ -1,16 +1,15 @@
 # Careerdle
 
-Kulüp geçmişine bakarak gizemli futbolcuyu bul. Solo (kariyerden tahmin) ve
-2-6 kişilik gerçek zamanlı çok-kişilik modu (Harman 1v1 düellosu 2 kişilik).
+Kulüp geçmişine bakarak gizemli futbolcuyu bul. Yayındaki arayüzde Günün
+Futbolcusu ve lig/bilinirlik seçimli solo kariyer tahmini bulunur.
 Ana sayfada **Günün Futbolcusu**
 (LoLdle tarzı): ipucu yok; isim yaz, her tahminde milliyet/mevki/yaş/değer/kulüp/lig
 özellikleri 🟩/🟨/🟥 + ↑↓ ile kıyaslanır (🟨 kısmen: aynı kıta/lig/yakın sayı; kulüp
 hariç), daraltarak gizli oyuncuyu bul. Arama **tüm aktif** oyuncuları kapsar; gizli
 oyuncu ise daha **tanınmış** (zirve değeri yüksek) bir aktif oyuncudur.
 
-**Çok-kişilik modları:** `mc` (4 şıklı), `free` (serbest yazma), `duel` (oyuncular
-sırayla birer takım seçer → herkes ortak oyuncuyu yarışır; ilk doğru +1, tur anında
-biter, hedef puana ulaşan kazanır).
+Gerçek zamanlı `mc`, `free` ve `duel` backend'i deneysel olarak korunur; güncel
+frontend bu modları sunmaz ve üretim özelliği olarak tanıtılmaz.
 
 ## Mimari
 
@@ -101,12 +100,12 @@ komutlar ve zamanlama modeli için `data/pipeline/README.md` kullanılır.
   `deploy/Dockerfile.realtime` (tek node) + `deploy/nginx.conf` (statik / `/api/` /
   `/socket.io/` yönlendirme).
 
-### Çok-node realtime (Redis'siz)
+### Çok-node realtime
 
-Tek realtime node yetmezse, LB'de **lobi koduna göre consistent-hash routing**
-uygulanır: her node kendi lobilerini in-memory sahiplenir, node'lar arası broadcast
-gerekmez → mesaj kuyruğu (Redis) gerekmez. Restart dayanıklılığı için lobi state'i
-periyodik olarak diske snapshot'lanabilir.
+Realtime lobi durumu şu anda tek process belleğinde tutulur. Birden fazla realtime
+replica'ya geçişte Socket.IO mesaj yöneticisiyle birlikte ortak lobi/state deposu
+gerekir. Yalnız load balancer yönlendirmesi restart dayanıklılığı veya node'lar arası
+mesaj tutarlılığı sağlamaz.
 
 ## Konfig (env, önek `APP_`)
 
@@ -114,5 +113,21 @@ periyodik olarak diske snapshot'lanabilir.
 |----------|-----------|----------|
 | `APP_DB_PATH` | `data/football_quiz_v2.db` | Salt-okunur DB yolu |
 | `APP_DB_POOL_SIZE` | `8` | SQLite thread havuzu |
-| `APP_CORS_ORIGINS` | `["*"]` | İzinli origin'ler |
+| `APP_CORS_ORIGINS` | `[]` | Cross-origin istemci gerekiyorsa açıkça izin verilen origin'ler |
+| `APP_TRUSTED_HOSTS` | localhost, testserver, `*.onrender.com` | Kabul edilen HTTP Host değerleri |
+| `APP_PUBLIC_BASE_URL` | boş | Canonical URL ve sitemap için sabit HTTPS origin'i |
+| `APP_ENABLE_HSTS` | `true` | HTTPS cevaplarında HSTS başlığı |
 | `APP_SERVE_STATIC` | `true` | Statikleri Python'dan sun (prod: false) |
+
+Özel alan adı kullanırken örnek üretim değerleri:
+
+```powershell
+$env:APP_PUBLIC_BASE_URL = "https://careerdle.example"
+$env:APP_TRUSTED_HOSTS = '["careerdle.example","www.careerdle.example"]'
+```
+
+Reverse proxy yalnız güvenilen proxy IP'lerinden gelen forwarded header'ları Uvicorn'a
+iletmelidir. Genel internette `--forwarded-allow-ips="*"` kullanmayın.
+
+Yerel Transfermarkt API `8000` portunu kullandığı için Careerdle geliştirme sunucusu
+için örneklerde `9001` kullanılır.

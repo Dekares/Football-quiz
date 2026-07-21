@@ -14,7 +14,7 @@ LOBBY_CODE_LEN = 6
 MAX_PLAYERS_DEFAULT = 6
 MAX_PLAYERS_DUEL = 2
 MIN_PLAYERS = 2
-MAX_LOBBIES = 5000               # toplam aktif lobi tavanı (bellek DoS koruması)
+MAX_LOBBIES = 1000               # toplam aktif lobi tavanı (bellek DoS koruması)
 
 ROUND_DURATION_S = 20            # mc/free tur süresi
 DUEL_ROUND_DURATION_S = 45       # Harman 1v1: futbolcuyu bulma süresi (değiştirilebilir)
@@ -114,7 +114,7 @@ class Lobby:
     host_id: str
     players: dict[str, Player] = field(default_factory=dict)
     settings: dict[str, Any] = field(default_factory=lambda: dict(DEFAULT_SETTINGS))
-    phase: str = "WAITING"  # WAITING | PICKING | IN_ROUND | ROUND_RESULT | GAME_OVER
+    phase: str = "WAITING"  # WAITING | STARTING | PICKING | IN_ROUND | ROUND_RESULT | GAME_OVER
     round_no: int = 0
     current_round: Round | None = None
     recent_pairs: list[tuple[int, int]] = field(default_factory=list)  # son 10 tur
