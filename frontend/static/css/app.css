@@ -2189,6 +2189,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
     font-weight: 600;
     letter-spacing: 0.08em;
     cursor: pointer;
+    text-decoration: none;
     text-transform: uppercase;
 }
 
@@ -2300,6 +2301,113 @@ html, body { overflow-x: hidden; max-width: 100%; }
     .doc-contact-strip {
         grid-template-columns: minmax(0, 1fr);
     }
+}
+
+/* Completed Daily Player archive */
+.archive-page {
+    padding-bottom: 4rem;
+}
+.archive-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1px;
+    margin-top: 1.5rem;
+    background: var(--border);
+    border: 1px solid var(--border);
+}
+.archive-card {
+    min-width: 0;
+    padding: 1.25rem;
+    background: var(--surface);
+}
+.archive-card h2 {
+    margin: 0.35rem 0 0.55rem;
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.45rem;
+    letter-spacing: 0;
+}
+.archive-card h2 a,
+.archive-link {
+    color: var(--text);
+}
+.archive-card p {
+    margin: 0;
+    color: var(--text-dim);
+}
+.archive-date {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.archive-link {
+    display: inline-block;
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+.archive-card h2 a:hover,
+.archive-link:hover {
+    color: var(--accent);
+}
+.archive-detail-head {
+    padding: 3rem 0 1.25rem;
+    border-bottom: 3px solid var(--text);
+}
+.archive-intro {
+    max-width: 850px;
+    margin: 1.5rem 0;
+}
+.archive-facts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border: 1px solid var(--border);
+}
+.archive-facts span {
+    min-width: 0;
+    padding: 0.8rem;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    overflow-wrap: anywhere;
+}
+.archive-facts span + span {
+    border-left: 1px solid var(--border);
+}
+.archive-timeline {
+    max-width: 850px;
+    margin: 2rem 0;
+}
+.archive-timeline h2 {
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: 0;
+}
+.archive-timeline ol {
+    margin: 1rem 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--border);
+}
+.archive-period {
+    display: grid;
+    grid-template-columns: minmax(95px, 0.3fr) minmax(0, 1fr);
+    gap: 1rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--border);
+}
+.archive-period-years {
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+}
+.archive-empty {
+    padding: 2rem;
+    background: var(--surface);
+    color: var(--text-dim);
+}
+@media (max-width: 760px) {
+    .archive-grid { grid-template-columns: 1fr; }
+    .archive-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .archive-facts span:nth-child(3) { border-left: 0; border-top: 1px solid var(--border); }
+    .archive-facts span:nth-child(4) { border-top: 1px solid var(--border); }
 }
 
 /* ============================================================

@@ -745,3 +745,10 @@ function closeMobileNav() {
     }
     document.querySelector('.nav-burger')?.setAttribute('aria-expanded', 'false');
 }
+document.addEventListener('click', function (event) {
+    var control = event.target.closest('[data-shell-action]');
+    if (!control) return;
+    var action = window[control.dataset.shellAction];
+    if (typeof action !== 'function') return;
+    if (action.call(control) === false) event.preventDefault();
+});

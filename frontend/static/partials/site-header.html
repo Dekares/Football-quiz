@@ -34,34 +34,42 @@
             <span data-lang="tr">Veri Metodolojisi</span>
             <span data-lang="en" hidden>Data Methodology</span>
         </a>
+        <a href="/archive" data-shell-path="/archive">
+            <span data-lang="tr">Arşiv</span>
+            <span data-lang="en" hidden>Archive</span>
+        </a>
     </div>
 
     <div class="nav-right">
-        <button class="icon-btn theme-toggle" type="button" onclick="toggleTheme()" aria-label="Tema değiştir">&#9790;</button>
-        <button class="lang-toggle" type="button" onclick="toggleLang()" aria-label="Switch to English">EN</button>
-        <button class="icon-btn nav-burger" type="button" onclick="toggleMobileNav()" aria-label="Menü"
+        <button class="icon-btn theme-toggle" type="button" data-shell-action="toggleTheme" aria-label="Tema değiştir">&#9790;</button>
+        <button class="lang-toggle" type="button" data-shell-action="toggleLang" aria-label="Switch to English">EN</button>
+        <button class="icon-btn nav-burger" type="button" data-shell-action="toggleMobileNav" aria-label="Menü"
                 aria-controls="mobile-nav" aria-expanded="false">&#9776;</button>
     </div>
 </nav>
 
 <div class="mobile-nav" id="mobile-nav" aria-hidden="true">
-    <a href="/" onclick="closeMobileNav()">
+    <a href="/" data-shell-action="closeMobileNav">
         <span data-lang="tr">Günlük Tahmin</span>
         <span data-lang="en" hidden>Daily Guess</span>
     </a>
-    <a href="/#/solo" onclick="closeMobileNav()">
+    <a href="/#/solo" data-shell-action="closeMobileNav">
         <span data-lang="tr">Futbolcu Tahmin</span>
         <span data-lang="en" hidden>Guess Player</span>
     </a>
-    <a href="/about" onclick="closeMobileNav()">
+    <a href="/about" data-shell-action="closeMobileNav">
         <span data-lang="tr">Hakkında</span>
         <span data-lang="en" hidden>About</span>
     </a>
-    <a href="/methodology" onclick="closeMobileNav()">
+    <a href="/methodology" data-shell-action="closeMobileNav">
         <span data-lang="tr">Veri Metodolojisi</span>
         <span data-lang="en" hidden>Data Methodology</span>
     </a>
-    <a href="/contact" onclick="closeMobileNav()">
+    <a href="/archive" data-shell-action="closeMobileNav">
+        <span data-lang="tr">Günlük Arşiv</span>
+        <span data-lang="en" hidden>Daily Archive</span>
+    </a>
+    <a href="/contact" data-shell-action="closeMobileNav">
         <span data-lang="tr">İletişim</span>
         <span data-lang="en" hidden>Contact</span>
     </a>

@@ -4,7 +4,11 @@
 FROM python:3.11-slim-bookworm
 
 WORKDIR /app
-ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 APP_SERVE_STATIC=true
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    APP_SERVE_STATIC=true \
+    APP_PUBLIC_BASE_URL=https://careerdle.com \
+    APP_TRUSTED_HOSTS="[\"careerdle.com\",\"www.careerdle.com\"]"
 
 COPY backend/requirements.txt backend/requirements.txt
 RUN pip install -r backend/requirements.txt

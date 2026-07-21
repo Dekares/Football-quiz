@@ -31,7 +31,9 @@ frontend bu modları sunmaz ve üretim özelliği olarak tanıtılmaz.
   bağımsız `global_quiz_pool` ile tüm efsaneleri birleştirir.
 - **Günün Futbolcusu**: `01.07.2026` tarihinden başlayan kalıcı takvim kaynak DB'de
   saklanır. Eksik günler global **Bilindik** havuzundan planlanır; yayınlanmış cevaplar
-  sonraki build'lerde korunur. Seri/ilerleme istemcide `localStorage`'da tutulur.
+  sonraki build'lerde korunur. Tamamlanan günler sunucu tarafında oluşturulan
+  `/archive/YYYY-MM-DD` sayfalarında kariyer zaman çizelgesiyle yayımlanır; bugünün ve
+  geleceğin cevapları arşivden açılmaz. Seri/ilerleme istemcide `localStorage`'da tutulur.
 - **Realtime**: tek async process binlerce eşzamanlı oyunu taşır. Mesaj kuyruğu yok.
 
 ## Dizin yapısı
@@ -39,6 +41,7 @@ frontend bu modları sunmaz ve üretim özelliği olarak tanıtılmaz.
 ```
 backend/app/
   main.py            FastAPI fabrikası (api servisi entrypoint)
+  archive.py         tamamlanan günlük bulmacaların taranabilir içerik modeli
   config.py          ayarlar (APP_* env)
   text.py            isim normalizasyonu (API + build ortak)
   db.py              salt-okunur SQLite havuzu (run_in_executor)
@@ -97,7 +100,8 @@ komutlar ve zamanlama modeli için `data/pipeline/README.md` kullanılır.
 
 - **Mevcut üretim**: kök `Dockerfile`, Coolify üzerinde API, statik dosyalar ve
   Socket.IO'yu tek Uvicorn process'inden same-origin sunar. Coolify/Traefik domain,
-  TLS ve WebSocket yönlendirmesini yönetir.
+  TLS ve WebSocket yönlendirmesini yönetir. Docker imajı üretim canonical origin'i ve
+  güvenilen host listesini varsayılan olarak taşır.
 - **Ölçek (1M/gün)**: `deploy/Dockerfile.api` (N replica, statik CDN) +
   `deploy/Dockerfile.realtime` (tek node) + `deploy/nginx.conf` (statik / `/api/` /
   `/socket.io/` yönlendirme).
@@ -130,6 +134,11 @@ $env:APP_TRUSTED_HOSTS = '["careerdle.com","www.careerdle.com"]'
 
 Reverse proxy yalnız güvenilen proxy IP'lerinden gelen forwarded header'ları Uvicorn'a
 iletmelidir. Genel internette `--forwarded-allow-ips="*"` kullanmayın.
+
+AdSense kodu yalnız yayıncı içeriği taşıyan About ve Methodology sayfalarında yüklenir.
+Privacy sayfası reklam/CMP etiketi barındırmaz; gizlilik tercih bağlantısı kullanıcıyı
+ana sayfadaki Google Privacy & Messaging akışına götürür. Bu içerik sayfaları AdSense'in
+desteklediği nonce ve `strict-dynamic` tabanlı CSP ile sunulur.
 
 Yerel Transfermarkt API `8000` portunu kullandığı için Careerdle geliştirme sunucusu
 için örneklerde `9001` kullanılır.

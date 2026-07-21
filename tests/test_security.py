@@ -7,6 +7,8 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 from starlette.requests import Request
 
+from backend.app.config import settings
+from backend.app.daily import daily_today
 from backend.app.main import _client_ip, create_app
 from backend.app.country_data import country_data
 
@@ -41,6 +43,49 @@ class SecurityTests(unittest.TestCase):
         self.assertEqual(response.headers["x-frame-options"], "DENY")
         self.assertIn("frame-ancestors 'none'", response.headers["content-security-policy"])
         self.assertIn("camera=()", response.headers["permissions-policy"])
+
+    def test_content_pages_use_nonce_based_adsense_csp(self):
+        response = self.client.get("/about")
+        self.assertEqual(response.status_code, 200)
+        policy = response.headers["content-security-policy"]
+        self.assertIn("'strict-dynamic'", policy)
+        nonce = __import__("re").search(r"'nonce-([^']+)'", policy)
+        self.assertIsNotNone(nonce)
+        self.assertIn(f'nonce="{nonce.group(1)}"', response.text)
+
+    def test_public_origin_forces_https_metadata_and_www_redirect(self):
+        previous = settings.public_base_url
+        settings.public_base_url = "https://careerdle.com"
+        try:
+            client = TestClient(create_app(), follow_redirects=False)
+            response = client.get("/", headers={"Host": "careerdle.com"})
+            self.assertEqual(response.status_code, 200)
+            self.assertIn('href="https://careerdle.com/"', response.text)
+            self.assertIn("max-age=31536000", response.headers["strict-transport-security"])
+            redirect = client.get("/archive?from=test", headers={"Host": "www.careerdle.com"})
+            self.assertEqual(redirect.status_code, 308)
+            self.assertEqual(
+                redirect.headers["location"],
+                "https://careerdle.com/archive?from=test",
+            )
+        finally:
+            settings.public_base_url = previous
+
+    def test_archive_only_exposes_completed_challenges(self):
+        index = self.client.get("/archive")
+        self.assertEqual(index.status_code, 200)
+        self.assertIn("Günlük futbol", index.text)
+        with sqlite3.connect(settings.db_path) as connection:
+            completed_date = connection.execute(
+                "SELECT MAX(challenge_date) FROM daily_challenges WHERE challenge_date < ?",
+                (daily_today().isoformat(),),
+            ).fetchone()[0]
+        self.assertIsNotNone(completed_date)
+        completed = self.client.get(f"/archive/{completed_date}")
+        self.assertEqual(completed.status_code, 200)
+        self.assertIn("Kariyer zaman çizelgesi", completed.text)
+        current = self.client.get(f"/archive/{daily_today().isoformat()}")
+        self.assertEqual(current.status_code, 404)
 
     def test_client_ip_ignores_spoofed_forwarded_for(self):
         scope = {

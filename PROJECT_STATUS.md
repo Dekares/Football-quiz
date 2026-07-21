@@ -81,7 +81,7 @@ vardır. Kuyrukta bekleyen veya çalışan iş yoktur. Kaynak doğrulaması baş
 - Merkezi futbol konfederasyonu ve bayrak kodu eşlemesi; aktif 136 ülke kapsanıyor.
 - Non-root Docker kullanıcıları ve container healthcheck'leri.
 - Sabitlenmiş runtime/dev bağımlılıkları ve `pip-audit` kontrolü.
-- GitHub Actions: Python/JavaScript syntax, 31 test, DB smoke ve dependency audit.
+- GitHub Actions: Python/JavaScript syntax, 34 test, DB smoke ve dependency audit.
 
 ### Arayüz, erişilebilirlik ve kullanıcı devamlılığı
 
@@ -99,6 +99,12 @@ vardır. Kuyrukta bekleyen veya çalışan iş yoktur. Kaynak doğrulaması baş
 - Kişisel veri veya oyuncu adı taşımayan, Consent Mode'a bağlı olay ölçümü.
 - About, Methodology, Contact, Privacy ve Terms sayfaları; canonical, sitemap,
   robots.txt, ads.txt, AdSense kimliği ve Consent Mode v2 başlangıcı.
+- Tamamlanan Günün Futbolcusu kayıtları için sunucu tarafında oluşturulan günlük arşiv,
+  kariyer zaman çizelgesi ve sitemap URL'leri; bugünün cevabı arşivden açılmaz.
+- Coolify Docker imajında sabit HTTPS canonical origin, HSTS ve `www` ana domain
+  yönlendirmesi; içerik sayfalarında nonce/`strict-dynamic` tabanlı AdSense CSP.
+- Privacy, Terms, Contact ve oyun ekranında reklam scripti yoktur; AdSense kodu yalnız
+  özgün yayıncı içeriği taşıyan About ve Methodology sayfalarında yüklenir.
 
 ### Kod temizliği
 
@@ -114,8 +120,8 @@ vardır. Kuyrukta bekleyen veya çalışan iş yoktur. Kaynak doğrulaması baş
 
 ### Üretim ve AdSense
 
-- Coolify ortamında `APP_PUBLIC_BASE_URL=https://careerdle.com` ve
-  `APP_TRUSTED_HOSTS=["careerdle.com","www.careerdle.com"]` korunmalı.
+- Coolify Docker imajı `APP_PUBLIC_BASE_URL=https://careerdle.com` ve güvenilen hostları
+  varsayılan taşır; panel override'ları varsa aynı değerlerle tutulmalı.
 - AdSense tarafında alan adı ve `ads.txt` doğrulanmalı.
 - EEA/UK/İsviçre için Google sertifikalı CMP mesajı Funding Choices üzerinden
   yayınlanmalı. Repo içindeki Consent Mode başlangıcı tek başına CMP değildir.
@@ -150,6 +156,10 @@ vardır. Kuyrukta bekleyen veya çalışan iş yoktur. Kaynak doğrulaması baş
    kapanırsa oyun çalışır, yalnız görsel fallback gösterilir.
 6. AdSense onayı kodla garanti edilemez; içerik ve teknik sinyaller hazır olsa da son
    karar Google politika ve hesap incelemesidir.
+7. Oyuncu fotoğrafları ve kulüp armaları harici kaynaklardan gelir. Reklam yayını öncesi
+   kullanım lisansı/hukuki dayanak doğrulanmalı; feragat metni tek başına lisans değildir.
+8. Gizlilik politikasındaki veri sorumlusu kimliği, yayıncının paylaşmayı onayladığı gerçek
+   kişi veya tüzel kişi bilgileriyle tamamlanmalıdır.
 
 ## 5. Sonraki adımlar
 
@@ -162,7 +172,8 @@ vardır. Kuyrukta bekleyen veya çalışan iş yoktur. Kaynak doğrulaması baş
 5. Üretim gözlemlenebilirliği ve alarm eşikleri ekle.
 6. Realtime özelliğinin ürün kararını ver. Açılacaksa ortak state, frontend ve E2E;
    açılmayacaksa deneysel backend'i ayrı paket veya branch'e taşı.
-7. CSP inline handler temizliğini ayrı, görsel regresyon testli bir çalışma olarak yap.
+7. Reklam taşımayan oyun ekranındaki kalan inline handler'ları ayrı, görsel regresyon
+   testli bir çalışma olarak event delegation modeline taşı.
 8. Kullanım verisi yeterli olduğunda günlük tamamlama, solo tur devamı ve ertesi gün
    geri dönüş oranlarına göre mevcut iki modu iyileştir.
 
@@ -205,7 +216,7 @@ $env:APP_ENABLE_DOCS = "true"
 $js = rg --files frontend -g '*.js'
 foreach ($file in $js) { node --check $file }
 
-# 31 test
+# 34 test
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 
 # Kaynak veri kalite kontrolü

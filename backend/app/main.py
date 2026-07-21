@@ -6,17 +6,23 @@ Realtime (socket.io) ayrı servistir; bkz. backend/app/realtime/server.py.
 from __future__ import annotations
 
 from datetime import date
+from html import escape as html_escape
+import re
+import secrets
 from urllib.parse import urlsplit
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.responses import Response
 
+from .archive import get_entry, list_entries, render_archive_cards, render_archive_detail
 from .api import classic, health, quiz, search
 from .config import settings
+from .daily import daily_today
+from .db import query
 from .ratelimit import RateLimiter
 
 
@@ -35,9 +41,18 @@ def _public_base_url(request: Request) -> str:
         raise RuntimeError("APP_PUBLIC_BASE_URL must contain only scheme and host")
     return f"{parsed.scheme}://{parsed.netloc}".rstrip("/")
 
+
+def _is_public_https(request: Request) -> bool:
+    if request.url.scheme == "https":
+        return True
+    if not settings.public_base_url:
+        return False
+    return urlsplit(settings.public_base_url).scheme == "https"
+
 # Per-IP HTTP hız limiti. Asıl pahalı yol arama autocomplete'i (LIKE tarama);
 # insan kullanımı için bol, tarayıcı/abuse için dar.
 _api_limiter = RateLimiter(rate_per_sec=15, burst=30)
+_STRICT_CSP_PATHS = {"/about", "/methodology", "/contact", "/privacy", "/terms"}
 
 
 def _client_ip(request: Request) -> str:
@@ -79,6 +94,18 @@ def create_app() -> FastAPI:
 
     @app.middleware("http")
     async def _security_headers(request: Request, call_next):
+        request.state.csp_nonce = secrets.token_urlsafe(18)
+        if settings.public_base_url:
+            public = urlsplit(_public_base_url(request))
+            if (
+                request.url.hostname == "www.careerdle.com"
+                and public.hostname != "www.careerdle.com"
+            ):
+                target = f"{public.scheme}://{public.netloc}{request.url.path}"
+                if request.url.query:
+                    target += f"?{request.url.query}"
+                return RedirectResponse(target, status_code=308)
+
         response = await call_next(request)
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("X-Frame-Options", "DENY")
@@ -88,22 +115,38 @@ def create_app() -> FastAPI:
             "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
         )
         response.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin-allow-popups")
-        content_security_policy = (
-            "default-src 'self'; base-uri 'self'; object-src 'none'; "
-            "frame-ancestors 'none'; form-action 'self'; "
-            "script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com "
-            "https://www.googletagmanager.com https://www.google-analytics.com; "
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-            "font-src 'self' https://fonts.gstatic.com data:; "
-            "img-src 'self' data: https:; "
-            "connect-src 'self' https://www.google-analytics.com "
-            "https://region1.google-analytics.com; "
-            "frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com"
-        )
-        if request.url.scheme == "https":
+        if (
+            request.url.path in _STRICT_CSP_PATHS
+            or request.url.path == "/archive"
+            or request.url.path.startswith("/archive/")
+        ):
+            nonce = request.state.csp_nonce
+            content_security_policy = (
+                "default-src 'self'; base-uri 'none'; object-src 'none'; "
+                "frame-ancestors 'none'; form-action 'self'; "
+                f"script-src 'nonce-{nonce}' 'unsafe-inline' 'unsafe-eval' "
+                "'strict-dynamic' https: http:; "
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+                "font-src 'self' https://fonts.gstatic.com data:; "
+                "img-src 'self' data: https:; connect-src 'self' https:; "
+                "frame-src https:; media-src https:; worker-src blob: https:"
+            )
+        else:
+            content_security_policy = (
+                "default-src 'self'; base-uri 'self'; object-src 'none'; "
+                "frame-ancestors 'none'; form-action 'self'; "
+                "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com "
+                "https://www.google-analytics.com; "
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+                "font-src 'self' https://fonts.gstatic.com data:; "
+                "img-src 'self' data: https:; "
+                "connect-src 'self' https://www.google-analytics.com "
+                "https://region1.google-analytics.com"
+            )
+        if _is_public_https(request):
             content_security_policy += "; upgrade-insecure-requests"
         response.headers.setdefault("Content-Security-Policy", content_security_policy)
-        if settings.enable_hsts and request.url.scheme == "https":
+        if settings.enable_hsts and _is_public_https(request):
             response.headers.setdefault(
                 "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
             )
@@ -124,15 +167,23 @@ def create_app() -> FastAPI:
         static_dir = settings.static_dir
         app.mount("/static", RevalidateStaticFiles(directory=static_dir), name="static")
 
-        def _render_page(request: Request, filename: str) -> str:
+        def _render_page(
+            request: Request,
+            filename: str,
+            replacements: dict[str, str] | None = None,
+        ) -> str:
             html = (static_dir / filename).read_text(encoding="utf-8")
             header = (static_dir / "partials" / "site-header.html").read_text(encoding="utf-8")
             footer = (static_dir / "partials" / "site-footer.html").read_text(encoding="utf-8")
-            return (
+            rendered = (
                 html.replace("{{SITE_HEADER}}", header)
                 .replace("{{SITE_FOOTER}}", footer)
                 .replace("{{BASE_URL}}", _public_base_url(request))
             )
+            for placeholder, value in (replacements or {}).items():
+                rendered = rendered.replace(placeholder, value)
+            nonce = request.state.csp_nonce
+            return re.sub(r"<script(?![^>]*\bnonce=)", f'<script nonce="{nonce}"', rendered)
 
         @app.get("/", include_in_schema=False)
         async def index(request: Request) -> HTMLResponse:
@@ -145,8 +196,12 @@ def create_app() -> FastAPI:
                 headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
             )
 
-        def _serve_page(request: Request, filename: str) -> HTMLResponse:
-            html = _render_page(request, filename)
+        def _serve_page(
+            request: Request,
+            filename: str,
+            replacements: dict[str, str] | None = None,
+        ) -> HTMLResponse:
+            html = _render_page(request, filename, replacements)
             return HTMLResponse(html, headers={"Cache-Control": "no-cache"})
 
         @app.get("/privacy", include_in_schema=False)
@@ -169,11 +224,55 @@ def create_app() -> FastAPI:
         async def terms(request: Request) -> HTMLResponse:
             return _serve_page(request, "terms.html")
 
+        @app.get("/archive", include_in_schema=False)
+        async def archive_index(request: Request) -> HTMLResponse:
+            entries = await query(lambda conn: list_entries(conn, daily_today().isoformat()))
+            return _serve_page(
+                request,
+                "archive.html",
+                {
+                    "{{ARCHIVE_CARDS_TR}}": render_archive_cards(entries, "tr"),
+                    "{{ARCHIVE_CARDS_EN}}": render_archive_cards(entries, "en"),
+                },
+            )
+
+        @app.get("/archive/{challenge_date}", include_in_schema=False)
+        async def archive_detail(request: Request, challenge_date: str) -> HTMLResponse:
+            try:
+                date.fromisoformat(challenge_date)
+            except ValueError as exc:
+                raise HTTPException(status_code=404) from exc
+            result = await query(
+                lambda conn: get_entry(conn, challenge_date, daily_today().isoformat())
+            )
+            if not result:
+                raise HTTPException(status_code=404)
+            entry, periods = result
+            title = html_escape(entry.name)
+            description = html_escape(
+                f"{entry.name}: {entry.challenge_date} Careerdle Günün Futbolcusu cevabı "
+                "ve doğrulanmış kulüp kariyeri."
+            )
+            return _serve_page(
+                request,
+                "archive-detail.html",
+                {
+                    "{{ARCHIVE_TITLE}}": title,
+                    "{{ARCHIVE_DESCRIPTION}}": description,
+                    "{{ARCHIVE_DATE}}": entry.challenge_date,
+                    "{{ARCHIVE_DAY}}": str(entry.day_number),
+                    "{{ARCHIVE_DETAIL_TR}}": render_archive_detail(entry, periods, "tr"),
+                    "{{ARCHIVE_DETAIL_EN}}": render_archive_detail(entry, periods, "en"),
+                },
+            )
+
         @app.get("/robots.txt", include_in_schema=False)
         async def robots(request: Request) -> PlainTextResponse:
             base = _public_base_url(request)
             body = (
                 "User-agent: Mediapartners-Google\n"
+                "Allow: /\n\n"
+                "User-agent: Google-Display-Ads-Bot\n"
                 "Allow: /\n\n"
                 "User-agent: AdsBot-Google\n"
                 "Allow: /\n\n"
@@ -187,6 +286,14 @@ def create_app() -> FastAPI:
         @app.get("/sitemap.xml", include_in_schema=False)
         async def sitemap(request: Request) -> Response:
             base = _public_base_url(request)
+            archive_entries = await query(
+                lambda conn: list_entries(conn, daily_today().isoformat())
+            )
+            archive_urls = "".join(
+                f"  <url><loc>{base}/archive/{entry.challenge_date}</loc>"
+                f"<lastmod>{entry.challenge_date}</lastmod><priority>0.6</priority></url>\n"
+                for entry in archive_entries
+            )
             xml = (
                 '<?xml version="1.0" encoding="UTF-8"?>\n'
                 '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
@@ -198,9 +305,11 @@ def create_app() -> FastAPI:
                 "  </url>\n"
                 f"  <url><loc>{base}/about</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>\n"
                 f"  <url><loc>{base}/methodology</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>\n"
+                f"  <url><loc>{base}/archive</loc><changefreq>daily</changefreq><priority>0.8</priority></url>\n"
                 f"  <url><loc>{base}/contact</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>\n"
                 f"  <url><loc>{base}/privacy</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>\n"
                 f"  <url><loc>{base}/terms</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>\n"
+                f"{archive_urls}"
                 "</urlset>\n"
             )
             return Response(

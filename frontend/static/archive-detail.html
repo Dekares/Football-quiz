@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#f3efe6">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="google-adsense-account" content="ca-pub-5823826038472901">
+    <script src="/static/js/theme-init.js"></script>
+    <title>{{ARCHIVE_TITLE}} - Careerdle Günlük Arşivi</title>
+    <meta name="description" content="{{ARCHIVE_DESCRIPTION}}">
+    <link rel="canonical" href="{{BASE_URL}}/archive/{{ARCHIVE_DATE}}">
+    <meta name="robots" content="index, follow, max-snippet:-1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/app.css">
+    <link rel="icon" type="image/png" href="/static/img/logo-koyu.png" media="(prefers-color-scheme: light)">
+    <link rel="icon" type="image/png" href="/static/img/logo.png" media="(prefers-color-scheme: dark)">
+</head>
+<body class="doc-body">
+    {{SITE_HEADER}}
+    <main class="doc-page archive-page">
+        <header class="archive-detail-head">
+            <a class="doc-back" href="/archive">Arşiv / Archive</a>
+            <p class="doc-kicker">{{ARCHIVE_DATE}} · #{{ARCHIVE_DAY}}</p>
+            <h1 class="doc-title">{{ARCHIVE_TITLE}}</h1>
+        </header>
+        <article data-lang="tr">{{ARCHIVE_DETAIL_TR}}</article>
+        <article data-lang="en" hidden>{{ARCHIVE_DETAIL_EN}}</article>
+    </main>
+    {{SITE_FOOTER}}
+    <script src="/static/js/doc-page.js"></script>
+</body>
+</html>

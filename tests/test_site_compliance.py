@@ -15,6 +15,7 @@ PAGES = {
     "privacy.html": "/privacy",
     "methodology.html": "/methodology",
     "terms.html": "/terms",
+    "archive.html": "/archive",
 }
 
 
@@ -44,18 +45,21 @@ class SiteComplianceTests(unittest.TestCase):
                     raw,
                 )
                 self.assertIn('<meta name="referrer" content="strict-origin-when-cross-origin">', raw)
-                self.assertIn('<script src="/static/js/privacy-consent.js"></script>', raw)
                 self.assertIn(f'href="{{{{BASE_URL}}}}{route}"', raw)
                 self.assertIn('href="/privacy"', raw)
                 self.assertIn('href="/terms"', raw)
                 self.assertIn('href="/methodology"', raw)
 
-    def test_consent_defaults_precede_adsense(self):
-        index = read("index.html")
-        self.assertLess(
-            index.index("/static/js/privacy-consent.js"),
-            index.index("pagead2.googlesyndication.com"),
-        )
+    def test_consent_defaults_precede_adsense_and_stay_off_privacy_page(self):
+        for filename in ("about.html", "methodology.html"):
+            page = read(filename)
+            self.assertLess(
+                page.index("/static/js/privacy-consent.js"),
+                page.index("pagead2.googlesyndication.com"),
+            )
+        privacy = read("privacy.html")
+        self.assertNotIn("privacy-consent.js", privacy)
+        self.assertNotIn("pagead2.googlesyndication.com", privacy)
         consent = read("js/privacy-consent.js")
         for key in (
             "ad_storage",
@@ -75,10 +79,11 @@ class SiteComplianceTests(unittest.TestCase):
         self.assertGreater(words(read("privacy.html")), 1000)
 
     def test_adsense_identity_is_consistent(self):
-        index = read("index.html")
-        self.assertIn(f"client={PUBLISHER}", index)
+        self.assertIn(f"client={PUBLISHER}", read("about.html"))
+        self.assertNotIn("pagead2.googlesyndication.com", read("index.html"))
         main = (ROOT / "backend" / "app" / "main.py").read_text(encoding="utf-8")
         self.assertIn("google.com, pub-5823826038472901, DIRECT, f08c47fec0942fa0", main)
+        self.assertIn("Google-Display-Ads-Bot", main)
         self.assertIn('"/methodology"', main)
         self.assertIn('"/terms"', main)
 

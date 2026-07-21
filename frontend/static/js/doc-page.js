@@ -45,11 +45,20 @@ function closeMobileNav() {
 
 function markActiveShellLink() {
     document.querySelectorAll('[data-shell-path]').forEach(function (link) {
-        if (link.dataset.shellPath === location.pathname) {
+        if (link.dataset.shellPath === location.pathname ||
+                location.pathname.indexOf(link.dataset.shellPath + '/') === 0) {
             link.setAttribute('aria-current', 'page');
         }
     });
 }
+
+document.addEventListener('click', function (event) {
+    var control = event.target.closest('[data-shell-action]');
+    if (!control) return;
+    var action = window[control.dataset.shellAction];
+    if (typeof action !== 'function') return;
+    if (action.call(control) === false) event.preventDefault();
+});
 
 applyDocLang(localStorage.getItem('lang') || 'tr');
 applyTheme(document.documentElement.getAttribute('data-theme') || 'light');
