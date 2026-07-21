@@ -30,6 +30,8 @@ class Settings(BaseSettings):
         "localhost",
         "127.0.0.1",
         "testserver",
+        "careerdle.com",
+        "www.careerdle.com",
         "*.onrender.com",
     ]
 

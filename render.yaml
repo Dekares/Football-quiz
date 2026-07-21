@@ -15,6 +15,6 @@ services:
       - key: APP_SERVE_STATIC
         value: "true"
       - key: APP_TRUSTED_HOSTS
-        value: '["*.onrender.com"]'
+        value: '["careerdle.com","www.careerdle.com","*.onrender.com"]'
       - key: APP_PUBLIC_BASE_URL
-        sync: false
+        value: "https://careerdle.com"

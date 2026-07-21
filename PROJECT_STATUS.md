@@ -81,7 +81,7 @@ vardır. Kuyrukta bekleyen veya çalışan iş yoktur. Kaynak doğrulaması baş
 - Merkezi futbol konfederasyonu ve bayrak kodu eşlemesi; aktif 136 ülke kapsanıyor.
 - Non-root Docker kullanıcıları ve container healthcheck'leri.
 - Sabitlenmiş runtime/dev bağımlılıkları ve `pip-audit` kontrolü.
-- GitHub Actions: Python/JavaScript syntax, 30 test, DB smoke ve dependency audit.
+- GitHub Actions: Python/JavaScript syntax, 31 test, DB smoke ve dependency audit.
 
 ### Arayüz, erişilebilirlik ve kullanıcı devamlılığı
 
@@ -204,7 +204,7 @@ $env:APP_ENABLE_DOCS = "true"
 $js = rg --files frontend -g '*.js'
 foreach ($file in $js) { node --check $file }
 
-# 30 test
+# 31 test
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 
 # Kaynak veri kalite kontrolü

@@ -28,6 +28,12 @@ class SecurityTests(unittest.TestCase):
         response = self.client.get("/", headers={"Host": "attacker.example"})
         self.assertEqual(response.status_code, 400)
 
+    def test_production_hosts_are_trusted(self):
+        for host in ("careerdle.com", "www.careerdle.com"):
+            with self.subTest(host=host):
+                response = self.client.get("/api/health", headers={"Host": host})
+                self.assertEqual(response.status_code, 200)
+
     def test_security_headers_are_present(self):
         response = self.client.get("/api/health")
         self.assertEqual(response.status_code, 200)
