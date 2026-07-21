@@ -23,6 +23,6 @@ RUN groupadd --system careerdle && useradd --system --gid careerdle --home /app 
 USER careerdle
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=2)"
+    CMD python -c "import urllib.request; request = urllib.request.Request('http://127.0.0.1:8000/api/health', headers={'Host': 'careerdle.com'}); urllib.request.urlopen(request, timeout=2)"
 # $PORT verilirse Coolify port override'ını kullan, yoksa 8000.
 CMD ["sh", "-c", "uvicorn backend.app.realtime.server:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]
