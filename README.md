@@ -56,7 +56,7 @@ data/
   pipeline/           API ingest, normalize, validate ve atomik publish
   sources/legend_candidates.txt yalnız efsane arama kimlikleri (futbol verisi içermez)
 frontend/static/     index.html, css, js (bağımlılıksız vanilla JS)
-render.yaml          Render Blueprint (launch: tek servis, kök konum zorunlu)
+Dockerfile           Coolify tek-servis deploy (API + statik + Socket.IO)
 deploy/              Dockerfile.api, Dockerfile.realtime, nginx.conf (ölçek)
 ```
 
@@ -95,7 +95,9 @@ komutlar ve zamanlama modeli için `data/pipeline/README.md` kullanılır.
 
 ## Dağıtım
 
-- **Launch (basit)**: `render.yaml` — tek servis her şeyi same-origin sunar.
+- **Mevcut üretim**: kök `Dockerfile`, Coolify üzerinde API, statik dosyalar ve
+  Socket.IO'yu tek Uvicorn process'inden same-origin sunar. Coolify/Traefik domain,
+  TLS ve WebSocket yönlendirmesini yönetir.
 - **Ölçek (1M/gün)**: `deploy/Dockerfile.api` (N replica, statik CDN) +
   `deploy/Dockerfile.realtime` (tek node) + `deploy/nginx.conf` (statik / `/api/` /
   `/socket.io/` yönlendirme).
@@ -114,16 +116,16 @@ mesaj tutarlılığı sağlamaz.
 | `APP_DB_PATH` | `data/football_quiz_v2.db` | Salt-okunur DB yolu |
 | `APP_DB_POOL_SIZE` | `8` | SQLite thread havuzu |
 | `APP_CORS_ORIGINS` | `[]` | Cross-origin istemci gerekiyorsa açıkça izin verilen origin'ler |
-| `APP_TRUSTED_HOSTS` | localhost, testserver, `*.onrender.com` | Kabul edilen HTTP Host değerleri |
+| `APP_TRUSTED_HOSTS` | localhost, testserver, `careerdle.com`, `www.careerdle.com` | Kabul edilen HTTP Host değerleri |
 | `APP_PUBLIC_BASE_URL` | boş | Canonical URL ve sitemap için sabit HTTPS origin'i |
 | `APP_ENABLE_HSTS` | `true` | HTTPS cevaplarında HSTS başlığı |
 | `APP_SERVE_STATIC` | `true` | Statikleri Python'dan sun (prod: false) |
 
-Özel alan adı kullanırken örnek üretim değerleri:
+Coolify üretim ortamında önerilen değerler:
 
 ```powershell
-$env:APP_PUBLIC_BASE_URL = "https://careerdle.example"
-$env:APP_TRUSTED_HOSTS = '["careerdle.example","www.careerdle.example"]'
+$env:APP_PUBLIC_BASE_URL = "https://careerdle.com"
+$env:APP_TRUSTED_HOSTS = '["careerdle.com","www.careerdle.com"]'
 ```
 
 Reverse proxy yalnız güvenilen proxy IP'lerinden gelen forwarded header'ları Uvicorn'a

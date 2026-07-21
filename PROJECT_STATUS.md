@@ -114,7 +114,8 @@ vardır. Kuyrukta bekleyen veya çalışan iş yoktur. Kaynak doğrulaması baş
 
 ### Üretim ve AdSense
 
-- Gerçek alan adı için `APP_PUBLIC_BASE_URL` ve `APP_TRUSTED_HOSTS` girilmeli.
+- Coolify ortamında `APP_PUBLIC_BASE_URL=https://careerdle.com` ve
+  `APP_TRUSTED_HOSTS=["careerdle.com","www.careerdle.com"]` korunmalı.
 - AdSense tarafında alan adı ve `ads.txt` doğrulanmalı.
 - EEA/UK/İsviçre için Google sertifikalı CMP mesajı Funding Choices üzerinden
   yayınlanmalı. Repo içindeki Consent Mode başlangıcı tek başına CMP değildir.
@@ -153,8 +154,8 @@ vardır. Kuyrukta bekleyen veya çalışan iş yoktur. Kaynak doğrulaması baş
 ## 5. Sonraki adımlar
 
 1. Değişiklikleri gözden geçirip tek sürümlü commit olarak yayınla.
-2. Gerçek domain değişkenlerini Render'a gir, deploy sonrası canonical/sitemap/headers
-   kontrolünü gerçek HTTPS origin'inde tekrarla.
+2. Coolify'da kök ve `www` domainlerini aynı servise bağla; Let's Encrypt sertifikası
+   ile tercih edilen domaine yönlendirmeyi doğrula.
 3. Google CMP, domain ve `ads.txt` doğrulamalarını tamamla.
 4. Pipeline için zamanlanmış workflow ekle: `major-update -> validate -> publish ->
    smoke`; artifact değiştiğinde kontrollü deploy/restart uygula.

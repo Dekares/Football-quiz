@@ -32,7 +32,6 @@ class Settings(BaseSettings):
         "testserver",
         "careerdle.com",
         "www.careerdle.com",
-        "*.onrender.com",
     ]
 
     # Statikleri Python'dan servis et (dev: True, prod: CDN/nginx → False).
