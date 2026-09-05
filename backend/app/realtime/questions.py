@@ -5,6 +5,13 @@ import random
 import sqlite3
 from typing import Any
 
+CAREER_STATUS_WEIGHT = {
+    "regular": 0,
+    "active_star": 1,
+    "active_legend": 2,
+    "retired_legend": 2,
+}
+
 MAX_ANSWER_WORDS = 6  # serbest cevapta dikkate alınan azami kelime (sorgu maliyeti sınırı)
 
 
@@ -15,7 +22,7 @@ def _get_common_players(
     c.execute(
         """
         SELECT DISTINCT p.player_id, p.name, p.country_of_citizenship, p.position,
-               p.image_url, p.highest_market_value, p.is_legend
+               p.image_url, p.highest_market_value, p.career_status
         FROM player_clubs pc1
         JOIN player_clubs pc2 ON pc1.player_id = pc2.player_id
         JOIN players p ON p.player_id = pc1.player_id
@@ -31,7 +38,7 @@ def _get_common_players(
             "position": r[3],
             "image_url": r[4],
             "highest_market_value": r[5] or 0,
-            "is_legend": r[6] or 0,
+            "career_status": r[6],
         }
         for r in c.fetchall()
     ]
@@ -162,7 +169,10 @@ def build_question(
     # Tercihen yüksek değerli/efsane oyuncuyu seç (ama çeşitlilik için zaman zaman diğerleri)
     weighted = sorted(
         commons,
-        key=lambda p: (p["is_legend"], p["highest_market_value"]),
+        key=lambda p: (
+            CAREER_STATUS_WEIGHT.get(p["career_status"], 0),
+            p["highest_market_value"],
+        ),
         reverse=True,
     )
     # Üst %40 havuzundan rastgele
@@ -217,7 +227,13 @@ def pick_reveal_player(
     commons = _get_common_players(conn, club_a, club_b)
     if not commons:
         return None
-    best = max(commons, key=lambda p: (p["is_legend"], p["highest_market_value"]))
+    best = max(
+        commons,
+        key=lambda p: (
+            CAREER_STATUS_WEIGHT.get(p["career_status"], 0),
+            p["highest_market_value"],
+        ),
+    )
     return {
         "player_id": best["player_id"],
         "name": best["name"],

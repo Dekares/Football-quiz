@@ -1,6 +1,6 @@
 # Careerdle Proje Durumu
 
-Son güncelleme: **21 Temmuz 2026**
+Son güncelleme: **6 Eylül 2026**
 
 Bu belge çalışma ağacındaki uygulama, pipeline ve yayın veritabanı incelenerek
 hazırlanmıştır. Üretimde kullanılacak gerçek alan adı ve AdSense hesap işlemleri gibi
@@ -27,25 +27,29 @@ Aktif artifact: `data/football_quiz_v2.db`
 
 | Alan | Değer |
 |---|---:|
-| Build kimliği | `20260721-013929-06485908` |
-| Oyuncu | 6.898 |
-| Kulüp | 8.152 |
-| Kariyer dönemi | 56.580 |
+| Build kimliği | `20260906-000734-ff6684f9` |
+| Oyuncu | 7.794 |
+| Kulüp | 8.725 |
+| Kariyer dönemi | 64.310 |
 | Oyun havuzu | 13 |
-| Kulüp çifti | 1.312 |
-| Lig bazlı quiz kaydı | 6.162 |
-| Global quiz kaydı | 5.960 |
-| Global Bilindik | 477 |
-| Global Az Bilindik | 1.609 |
-| Global Bilinmedik | 3.874 |
-| Günlük meydan okuma | 386 |
+| Kulüp çifti | 1.542 |
+| Lig bazlı quiz kaydı | 6.176 |
+| Global quiz kaydı | 5.975 |
+| Global Bilindik | 149 |
+| Global Az Bilindik | 1.494 |
+| Global Bilinmedik | 4.332 |
+| Günlük meydan okuma | 433 |
+| Dünya Karması emekli ikonu | 94 |
+| Aktif yıldız | 182 |
+| Aktif efsane | 19 |
+| Emekli efsane | 201 |
 
-Günlük takvim `2026-07-01` ile `2027-07-21` arasını kapsar. Geçmiş ve bugünkü
-cevaplar değişmez; gelecekteki cevaplar oyuncu global Bilindik havuzundan çıkarsa
-yeniden planlanır.
+Günlük takvim `2026-07-01` ile `2027-09-06` arasını kapsar. Geçmiş ve bugünkü
+cevaplar değişmez; gelecek tarihler her yayında güncel global Bilindik havuzundan
+kronolojik olarak yeniden kurulur ve aynı oyuncu 60 gün içinde tekrarlanmaz.
 
-Canonical kaynak `data/transfermarkt_source.db` içinde 6.900 oyuncu, 8.234 kulüp,
-56.580 kariyer dönemi, 53.142 transfer, 109.280 piyasa değeri ve 21.522 ham snapshot
+Canonical kaynak `data/transfermarkt_source.db` içinde 7.796 oyuncu, 8.812 kulüp,
+64.310 kariyer dönemi, 60.686 transfer, 109.409 piyasa değeri ve 24.268 ham snapshot
 vardır. Kuyrukta bekleyen veya çalışan iş yoktur. Kaynak doğrulaması başarılıdır.
 
 ## 2. Tamamlanan özellikler
@@ -60,8 +64,19 @@ vardır. Kuyrukta bekleyen veya çalışan iş yoktur. Kaynak doğrulaması baş
 - Kesintiden devam eden idempotent iş kuyruğu ve TTL tabanlı güncelleme.
 - Transferlerden kronolojik kariyer dönemleri; dönüş transferleri ve emeklilik kaydı.
 - Aynı oyuncudaki birden fazla açık dönemi tek güncel kulübe indiren veri onarımı.
-- Gerçek Transfermarkt kimlikleri ve API verisiyle beslenen efsane havuzu.
-- Lig bazlı ve global `known`, `less_known`, `obscure` sıralamaları.
+- Gerçek Transfermarkt kimlikleri ve API verisiyle beslenen efsane havuzu; aynı adlı
+  oyuncularda sabit ID doğrulaması ve belirsiz arama sonuçlarının reddedilmesi.
+- Her build'de kariyer verisinden türetilen `regular`, `active_star`,
+  `active_legend` ve `retired_legend` ayrımı; zayıf lige geçen aktif efsanelerin
+  tarihsel kariyer ağırlığını koruyan sınıflandırma.
+- Zirve/güncel değer, üst düzey kulüp süresi ve kariyer uzunluğuna dayanan lig bazlı
+  ve global `known`, `less_known`, `obscure` sıralamaları.
+- Lig içi sıralama ile mutlak skoru birleştiren Bilindik havuzu; birinci kademe
+  liglerde en az yüzde 18 veya 55 puan, ikinci kademede en az yüzde 10 veya 50 puan.
+  Üst sınır havuzun üçte biri/160 oyuncudur; model bütün liglere uygulanır.
+- Dünya Karması'nda lig ve global sınıflandırmadan daha kolay olanını kullanan
+  dağılım; ayrıca yalnız 94 doğrulanmış emekli ikonun Bilindik seçimine katıldığı
+  ayrı `world_xi_legend_pool`.
 - Kalıcı günlük takvim; yayınlanmış cevapları koruyan gelecek yeniden planlama kuralı.
 - `<output>.new` üzerinde build, foreign key/kalite kontrolü ve atomik yayın.
 - Eski istemciler için `easy`, `medium`, `hard` uyumluluk alanları.
@@ -81,7 +96,7 @@ vardır. Kuyrukta bekleyen veya çalışan iş yoktur. Kaynak doğrulaması baş
 - Merkezi futbol konfederasyonu ve bayrak kodu eşlemesi; aktif 136 ülke kapsanıyor.
 - Non-root Docker kullanıcıları ve container healthcheck'leri.
 - Sabitlenmiş runtime/dev bağımlılıkları ve `pip-audit` kontrolü.
-- GitHub Actions: Python/JavaScript syntax, 34 test, DB smoke ve dependency audit.
+- GitHub Actions: Python/JavaScript syntax, 44 test, DB smoke ve dependency audit.
 
 ### Arayüz, erişilebilirlik ve kullanıcı devamlılığı
 
@@ -140,25 +155,26 @@ vardır. Kuyrukta bekleyen veya çalışan iş yoktur. Kaynak doğrulaması baş
 
 ## 4. Bilinen hatalar ve riskler
 
-1. Kaynak kuyrukta 10 `dead` iş vardır. Dört aktif oyuncunun transfer ve altı eski
-   efsanenin profil endpoint'i yerel Transfermarkt API'den HTTP 500 döndürmektedir.
-   Fallback verileri nedeniyle artifact doğrulaması ve oyun havuzu sağlamdır; altı
-   oyuncu profil yenilemesi beklemektedir.
-2. Realtime lobi durumu process belleğindedir. Process yeniden başlarsa aktif lobiler
+1. Kaynak kuyrukta 6 `dead` iş vardır. Bunlar eski efsane adaylarının yerel
+   Transfermarkt API'den HTTP 500 döndüren profil istekleridir. Aktif lig kapsamını
+   etkilemez; fallback verileri nedeniyle artifact doğrulaması ve oyun havuzu sağlamdır.
+2. Transfermarkt, MLS için istenen 2026 yarışma sezonunu 2025'e yönlendirmektedir;
+   2026 kulüp kadro sayfası henüz boş olduğu için MLS havuzu son dolu sezonu kullanır.
+3. Realtime lobi durumu process belleğindedir. Process yeniden başlarsa aktif lobiler
    kaybolur; çok node için ortak Socket.IO manager ve state deposu gerekir.
-3. Oyun DB'si `immutable=1` açılır. Yeni artifact yayınlandıktan sonra uygulama
+4. Oyun DB'si `immutable=1` açılır. Yeni artifact yayınlandıktan sonra uygulama
    process'i yeniden başlatılmalıdır.
-4. CSP, mevcut inline event handler'ları ve reklam entegrasyonu nedeniyle
+5. CSP, mevcut inline event handler'ları ve reklam entegrasyonu nedeniyle
    `script-src 'unsafe-inline'` içerir. Dinamik içerik escape edilir fakat uzun vadede
    handler'lar event delegation'a, üçüncü taraf scriptler nonce/hash modeline
    taşınmalıdır.
-5. Bayrak ve oyuncu/kulüp görselleri üçüncü taraf HTTPS kaynaklarından gelir. Kaynak
+6. Bayrak ve oyuncu/kulüp görselleri üçüncü taraf HTTPS kaynaklarından gelir. Kaynak
    kapanırsa oyun çalışır, yalnız görsel fallback gösterilir.
-6. AdSense onayı kodla garanti edilemez; içerik ve teknik sinyaller hazır olsa da son
+7. AdSense onayı kodla garanti edilemez; içerik ve teknik sinyaller hazır olsa da son
    karar Google politika ve hesap incelemesidir.
-7. Oyuncu fotoğrafları ve kulüp armaları harici kaynaklardan gelir. Reklam yayını öncesi
+8. Oyuncu fotoğrafları ve kulüp armaları harici kaynaklardan gelir. Reklam yayını öncesi
    kullanım lisansı/hukuki dayanak doğrulanmalı; feragat metni tek başına lisans değildir.
-8. Gizlilik politikasındaki veri sorumlusu kimliği, yayıncının paylaşmayı onayladığı gerçek
+9. Gizlilik politikasındaki veri sorumlusu kimliği, yayıncının paylaşmayı onayladığı gerçek
    kişi veya tüzel kişi bilgileriyle tamamlanmalıdır.
 
 ## 5. Sonraki adımlar
@@ -216,7 +232,7 @@ $env:APP_ENABLE_DOCS = "true"
 $js = rg --files frontend -g '*.js'
 foreach ($file in $js) { node --check $file }
 
-# 34 test
+# 44 test
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 
 # Kaynak veri kalite kontrolü
@@ -250,7 +266,7 @@ Yerel Transfermarkt API `http://localhost:8000` üzerinde çalışırken:
 
 ```powershell
 .\.venv\Scripts\python.exe -m data.pipeline major-update `
-  --tiers 1,2 --with-market-values --concurrency 8 `
+  --tiers 1,2 --concurrency 8 --request-interval 5.5 `
   --min-players 5400 --min-periods 50000
 ```
 
@@ -263,7 +279,7 @@ Kesilen işi sürdürmek için:
 ```powershell
 .\.venv\Scripts\python.exe -m data.pipeline status
 .\.venv\Scripts\python.exe -m data.pipeline work `
-  --base-url http://localhost:8000 --concurrency 8
+  --base-url http://localhost:8000 --concurrency 8 --request-interval 5.5
 ```
 
 Ardından `major-update` tekrar çalıştırılır. Publish sonrası uygulama yeniden

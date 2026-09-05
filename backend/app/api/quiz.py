@@ -21,6 +21,35 @@ DIFFICULTY_TO_RECOGNITION = {
 RETIREMENT_GAP_YEARS = 2
 MAX_EXCLUDE = 100
 
+WORLD_ACTIVE_KNOWN_SQL = """
+    SELECT player_id FROM global_quiz_pool WHERE recognition = 'known'
+    UNION
+    SELECT player_id FROM quiz_pool
+    WHERE competition_id != 'LEGENDS' AND recognition = 'known'
+"""
+WORLD_ACTIVE_LESS_KNOWN_SQL = """
+    SELECT g.player_id
+    FROM global_quiz_pool g
+    JOIN quiz_pool q ON q.player_id = g.player_id
+    WHERE q.competition_id != 'LEGENDS'
+      AND g.recognition != 'known'
+      AND q.recognition != 'known'
+      AND (g.recognition = 'less_known' OR q.recognition = 'less_known')
+"""
+WORLD_ACTIVE_OBSCURE_SQL = """
+    SELECT g.player_id
+    FROM global_quiz_pool g
+    JOIN quiz_pool q ON q.player_id = g.player_id
+    WHERE q.competition_id != 'LEGENDS'
+      AND g.recognition = 'obscure'
+      AND q.recognition = 'obscure'
+"""
+WORLD_ACTIVE_POOL_SQL = {
+    "known": WORLD_ACTIVE_KNOWN_SQL,
+    "less_known": WORLD_ACTIVE_LESS_KNOWN_SQL,
+    "obscure": WORLD_ACTIVE_OBSCURE_SQL,
+}
+
 
 def _parse_exclude(raw: str) -> list[int]:
     out: list[int] = []
@@ -40,12 +69,15 @@ def _pick_player_id(
     exclude: list[int],
 ) -> int | None:
     if league == "ALL":
-        selection_sql = """
-            SELECT player_id FROM global_quiz_pool WHERE recognition = ?
-            UNION
-            SELECT player_id FROM quiz_pool WHERE competition_id = 'LEGENDS'
-        """
-        selection_params: tuple[str, ...] = (recognition,)
+        if recognition == "known":
+            selection_sql = f"""
+                {WORLD_ACTIVE_KNOWN_SQL}
+                UNION
+                SELECT player_id FROM world_xi_legend_pool
+            """
+        else:
+            selection_sql = WORLD_ACTIVE_POOL_SQL[recognition]
+        selection_params = ()
     elif league == "LEGENDS":
         selection_sql = """
             SELECT player_id FROM quiz_pool WHERE competition_id = 'LEGENDS'
@@ -114,7 +146,7 @@ def _load_quiz(
     player = conn.execute(
         """
         SELECT player_id, name, country_of_citizenship, position, sub_position,
-               date_of_birth, image_url
+               date_of_birth, image_url, career_status
         FROM players
         WHERE player_id = ?
         """,
@@ -142,6 +174,7 @@ def _load_quiz(
         "sub_position": player["sub_position"],
         "date_of_birth": player["date_of_birth"],
         "image_url": player["image_url"],
+        "career_status": player["career_status"],
         "clubs": clubs,
         "league": league,
         "recognition": recognition,
@@ -196,21 +229,16 @@ def _quiz_options(conn: sqlite3.Connection) -> dict:
         item["counts"][row["recognition"]] = row["player_count"]
         item["total_count"] += row["player_count"]
     ordered = list(competitions.values())
-    all_counts = {key: 0 for key in VALID_RECOGNITIONS}
-    for row in conn.execute(
-        """
-        SELECT recognition, COUNT(*) AS player_count
-        FROM global_quiz_pool
-        GROUP BY recognition
-        """
-    ):
-        all_counts[row["recognition"]] = row["player_count"]
-    legend_count = int(conn.execute(
-        "SELECT COUNT(DISTINCT player_id) FROM quiz_pool WHERE competition_id='LEGENDS'"
-    ).fetchone()[0])
     world_counts = {
-        key: count + legend_count for key, count in all_counts.items()
+        recognition: int(conn.execute(
+            f"SELECT COUNT(*) FROM ({selection_sql})"
+        ).fetchone()[0])
+        for recognition, selection_sql in WORLD_ACTIVE_POOL_SQL.items()
     }
+    legend_count = int(conn.execute(
+        "SELECT COUNT(*) FROM world_xi_legend_pool"
+    ).fetchone()[0])
+    world_counts["known"] += legend_count
     return {
         "leagues": [{
             "id": "ALL",
@@ -220,7 +248,7 @@ def _quiz_options(conn: sqlite3.Connection) -> dict:
             "is_special": True,
             "uses_recognition": True,
             "counts": world_counts,
-            "total_count": sum(all_counts.values()) + legend_count,
+            "total_count": sum(world_counts.values()),
         }, *ordered],
         "recognitions": ["known", "less_known", "obscure"],
     }

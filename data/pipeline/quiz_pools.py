@@ -5,14 +5,32 @@ import json
 import re
 import sqlite3
 from collections import defaultdict
+from datetime import date
 from pathlib import Path
 from typing import Any
 
 
 CONFIG_PATH = Path(__file__).with_name("major_leagues.json")
 RECOGNITIONS = ("known", "less_known", "obscure")
-LEAGUE_BUCKET_RATIOS = (0.18, 0.32)
-GLOBAL_BUCKET_RATIOS = (0.08, 0.27)
+LEAGUE_BUCKET_RATIOS = (0.06, 0.30)
+GLOBAL_BUCKET_RATIOS = (0.025, 0.25)
+LEAGUE_KNOWN_RATIO_BY_TIER = {1: 0.18, 2: 0.10}
+LEAGUE_KNOWN_CAP = 160
+GLOBAL_KNOWN_CAP = 150
+ONE_CLUB_STAR_SCORE = 65
+ACTIVE_STAR_SCORE = 65
+ACTIVE_LEGEND_MIN_AGE = 32
+ACTIVE_LEGEND_MIN_CAREER_YEARS = 12
+ACTIVE_LEGEND_MIN_SCORE = 75
+ACTIVE_LEGEND_MIN_ELITE_YEARS = 8
+ACTIVE_LEGEND_HIGH_PEAK_VALUE = 100_000_000
+WORLD_XI_LEGEND_MIN_SCORE = 75
+HISTORIC_WORLD_XI_LEGEND_IDS = {
+    206, 1527, 3187, 3465, 3516, 3521, 3624, 4153, 4168, 5758,
+    5775, 5803, 5937, 7942, 8021, 8023, 8024, 8542, 12000, 17121,
+    22256, 35604, 42049, 70667, 72347, 74471, 80568, 101045,
+    117619, 117633, 229662,
+}
 LEGACY_DIFFICULTY = {
     "known": "easy",
     "less_known": "medium",
@@ -36,54 +54,100 @@ def recognition_score(
     max_club_prestige: int,
     meaningful_clubs: int,
     is_legend: bool,
+    *,
+    current_market_value: int | None = None,
+    elite_club_years: float = 0.0,
+    career_years: float = 0.0,
 ) -> int:
-    """Return a deterministic 0-100 prominence score.
+    """Return a deterministic 0-100 recognition score.
 
-    The score orders players both inside competitions and in the independent
-    global pool. Each scope applies its own rank ratios.
+    Peak value remains a useful signal, but exposure and longevity prevent a
+    newly expensive player from automatically outranking an established star.
     """
-    value = highest_market_value or 0
-    value_points = 2
+    peak_value = highest_market_value or 0
+    peak_points = 1
     for threshold, points in (
-        (80_000_000, 50),
-        (60_000_000, 45),
-        (40_000_000, 38),
-        (25_000_000, 30),
-        (15_000_000, 23),
-        (8_000_000, 16),
-        (3_000_000, 10),
-        (1_000_000, 6),
+        (150_000_000, 50),
+        (100_000_000, 47),
+        (80_000_000, 43),
+        (60_000_000, 38),
+        (50_000_000, 34),
+        (40_000_000, 30),
+        (30_000_000, 25),
+        (20_000_000, 19),
+        (12_000_000, 13),
+        (7_000_000, 8),
+        (3_000_000, 4),
     ):
-        if value >= threshold:
-            value_points = points
+        if peak_value >= threshold:
+            peak_points = points
             break
 
-    if max_club_prestige >= 20:
-        prestige_points = 25
-    elif max_club_prestige >= 10:
-        prestige_points = 18
-    elif max_club_prestige >= 5:
-        prestige_points = 12
-    elif max_club_prestige >= 2:
-        prestige_points = 6
+    current_value = current_market_value or 0
+    if current_value >= 100_000_000:
+        current_points = 8
+    elif current_value >= 60_000_000:
+        current_points = 6
+    elif current_value >= 35_000_000:
+        current_points = 4
+    elif current_value >= 15_000_000:
+        current_points = 2
     else:
-        prestige_points = 2
+        current_points = 0
+
+    if max_club_prestige >= 40:
+        prestige_points = 10
+    elif max_club_prestige >= 20:
+        prestige_points = 8
+    elif max_club_prestige >= 10:
+        prestige_points = 5
+    elif max_club_prestige >= 5:
+        prestige_points = 3
+    else:
+        prestige_points = 1
+
+    if elite_club_years >= 8:
+        exposure_points = 15
+    elif elite_club_years >= 5:
+        exposure_points = 12
+    elif elite_club_years >= 3:
+        exposure_points = 9
+    elif elite_club_years >= 1:
+        exposure_points = 5
+    elif elite_club_years > 0:
+        exposure_points = 2
+    else:
+        exposure_points = 0
+
+    if career_years >= 12:
+        longevity_points = 7
+    elif career_years >= 8:
+        longevity_points = 5
+    elif career_years >= 5:
+        longevity_points = 3
+    elif career_years >= 2:
+        longevity_points = 1
+    else:
+        longevity_points = 0
 
     if meaningful_clubs >= 7:
-        breadth_points = 10
-    elif meaningful_clubs >= 5:
-        breadth_points = 7
-    elif meaningful_clubs >= 3:
-        breadth_points = 4
-    else:
+        breadth_points = 3
+    elif meaningful_clubs >= 4:
         breadth_points = 2
+    elif meaningful_clubs >= 3:
+        breadth_points = 1
+    else:
+        breadth_points = 0
 
     return min(
         100,
-        value_points
+        peak_points
+        + current_points
         + prestige_points
+        + exposure_points
+        + longevity_points
         + breadth_points
-        + (25 if is_legend else 0),
+        + (20 if is_legend else 0),
     )
 
 
@@ -137,30 +201,97 @@ def _current_assignments(
     }
 
 
+def _covered_years(intervals: list[tuple[date, date]]) -> float:
+    if not intervals:
+        return 0.0
+    merged: list[list[date]] = []
+    for start, end in sorted(intervals):
+        if not merged or start > merged[-1][1]:
+            merged.append([start, end])
+        elif end > merged[-1][1]:
+            merged[-1][1] = end
+    return sum((end - start).days for start, end in merged) / 365.25
+
+
+def _age(date_of_birth: str | None, today: date | None = None) -> int | None:
+    if not date_of_birth:
+        return None
+    try:
+        born = date.fromisoformat(date_of_birth[:10])
+    except ValueError:
+        return None
+    today = today or date.today()
+    return today.year - born.year - (
+        (today.month, today.day) < (born.month, born.day)
+    )
+
+
+def classify_career_status(
+    metrics: dict[str, Any],
+    *,
+    is_active: bool,
+    today: date | None = None,
+) -> str:
+    """Separate current stars, active career legends and retired legends.
+
+    The active-legend rule deliberately requires several sustained-career
+    signals. A single high transfer value or one good season is insufficient.
+    """
+    if not is_active:
+        return "retired_legend" if metrics["is_legend"] else "regular"
+    if metrics["is_legend"]:
+        return "active_legend"
+
+    age = _age(metrics.get("date_of_birth"), today)
+    sustained_elite_career = bool(
+        age is not None
+        and age >= ACTIVE_LEGEND_MIN_AGE
+        and metrics["career_years"] >= ACTIVE_LEGEND_MIN_CAREER_YEARS
+        and metrics["score"] >= ACTIVE_LEGEND_MIN_SCORE
+        and (
+            metrics["elite_club_years"] >= ACTIVE_LEGEND_MIN_ELITE_YEARS
+            or metrics["highest_market_value"] >= ACTIVE_LEGEND_HIGH_PEAK_VALUE
+        )
+    )
+    if sustained_elite_career:
+        return "active_legend"
+    if metrics["score"] >= ACTIVE_STAR_SCORE:
+        return "active_star"
+    return "regular"
+
+
 def _player_metrics(game: sqlite3.Connection) -> dict[int, dict[str, Any]]:
     players = {
         row["player_id"]: {
             "player_id": row["player_id"],
             "name": row["name"],
+            "current_market_value": row["market_value"] or 0,
             "highest_market_value": row["highest_market_value"] or 0,
             "is_legend": bool(row["is_legend"]),
             "position": row["position"],
             "country": row["country_of_citizenship"],
+            "date_of_birth": row["date_of_birth"],
             "meaningful_clubs": 0,
             "max_prestige": 0,
+            "elite_club_years": 0.0,
+            "career_years": 0.0,
         }
         for row in game.execute(
             """
-            SELECT player_id, name, highest_market_value, is_legend, position,
-                   country_of_citizenship
+            SELECT player_id, name, market_value, highest_market_value, is_legend, position,
+                   country_of_citizenship, date_of_birth
             FROM players
             """
         )
     }
     seen_clubs: dict[int, set[int]] = defaultdict(set)
+    career_intervals: dict[int, list[tuple[date, date]]] = defaultdict(list)
+    elite_intervals: dict[int, list[tuple[date, date]]] = defaultdict(list)
+    today = date.today()
     for row in game.execute(
         """
-        SELECT pc.player_id, c.club_id, c.name, c.prestige_score
+        SELECT pc.player_id, pc.date_from, pc.date_to,
+               c.club_id, c.name, c.prestige_score
         FROM player_clubs pc JOIN clubs c ON c.club_id = pc.club_id
         """
     ):
@@ -169,29 +300,55 @@ def _player_metrics(game: sqlite3.Connection) -> dict[int, dict[str, Any]]:
             continue
         seen_clubs[row["player_id"]].add(row["club_id"])
         metrics["max_prestige"] = max(metrics["max_prestige"], row["prestige_score"])
+        if not row["date_from"]:
+            continue
+        try:
+            start = date.fromisoformat(row["date_from"][:10])
+            end = date.fromisoformat(row["date_to"][:10]) if row["date_to"] else today
+        except ValueError:
+            continue
+        if end <= start:
+            continue
+        career_intervals[row["player_id"]].append((start, end))
+        if row["prestige_score"] >= 20:
+            elite_intervals[row["player_id"]].append((start, end))
     for player_id, club_ids in seen_clubs.items():
         players[player_id]["meaningful_clubs"] = len(club_ids)
+        players[player_id]["career_years"] = _covered_years(career_intervals[player_id])
+        players[player_id]["elite_club_years"] = _covered_years(elite_intervals[player_id])
     for metrics in players.values():
         metrics["score"] = recognition_score(
             metrics["highest_market_value"],
             metrics["max_prestige"],
             metrics["meaningful_clubs"],
             metrics["is_legend"],
+            current_market_value=metrics["current_market_value"],
+            elite_club_years=metrics["elite_club_years"],
+            career_years=metrics["career_years"],
         )
     return players
 
 
 def _eligible(metrics: dict[str, Any], *, legend: bool = False) -> bool:
+    if not metrics["position"] or not metrics["country"]:
+        return False
+    if legend:
+        return metrics["meaningful_clubs"] >= 1
     return bool(
-        metrics["position"]
-        and metrics["country"]
-        and metrics["meaningful_clubs"] >= (1 if legend else 2)
+        metrics["meaningful_clubs"] >= 2
+        or (
+            metrics["meaningful_clubs"] == 1
+            and metrics["score"] >= ONE_CLUB_STAR_SCORE
+        )
     )
 
 
 def _ranked_buckets(
     players: list[dict[str, Any]],
     ratios: tuple[float, float] = LEAGUE_BUCKET_RATIOS,
+    known_cap: int | None = LEAGUE_KNOWN_CAP,
+    known_min_score: int | None = None,
+    known_min_count: int = 1,
 ) -> dict[str, list[dict[str, Any]]]:
     ranked = sorted(
         players,
@@ -206,6 +363,12 @@ def _ranked_buckets(
     if total < 3:
         return {"known": ranked, "less_known": [], "obscure": []}
     known_count = max(1, round(total * ratios[0]))
+    if known_min_score is not None:
+        qualified = sum(item["score"] >= known_min_score for item in ranked)
+        known_count = max(known_count, known_min_count, qualified)
+    if known_cap is not None:
+        known_count = min(known_count, known_cap)
+    known_count = min(known_count, max(1, total // 3), total - 2)
     less_count = max(1, round(total * ratios[1]))
     if known_count + less_count >= total:
         less_count = max(1, total - known_count - 1)
@@ -253,12 +416,44 @@ def build_quiz_pools(
             grouped[competition_id].append(player)
 
     active_ids = set(assignments)
+    status_rows = []
+    for player_id, player in metrics.items():
+        player["career_status"] = classify_career_status(
+            player,
+            is_active=player_id in active_ids,
+        )
+        status_rows.append((player["career_status"], player_id))
+    game.executemany(
+        "UPDATE players SET career_status = ? WHERE player_id = ?",
+        status_rows,
+    )
     legends = [
         player for player_id, player in metrics.items()
         if player["is_legend"] and player_id not in active_ids and _eligible(player, legend=True)
     ]
     if legends:
         grouped["LEGENDS"] = legends
+
+    world_xi_legends = sorted(
+        (
+            player for player in legends
+            if player["score"] >= WORLD_XI_LEGEND_MIN_SCORE
+            or player["player_id"] in HISTORIC_WORLD_XI_LEGEND_IDS
+        ),
+        key=lambda player: (
+            -player["score"],
+            -player["highest_market_value"],
+            player["name"].casefold(),
+            player["player_id"],
+        ),
+    )
+    game.executemany(
+        "INSERT INTO world_xi_legend_pool VALUES (?,?,?)",
+        (
+            (player["player_id"], player["score"], rank)
+            for rank, player in enumerate(world_xi_legends, 1)
+        ),
+    )
 
     for index, item in enumerate(config):
         competition_id = item["competition_id"]
@@ -284,8 +479,20 @@ def build_quiz_pools(
 
     pool_rows = []
     report: dict[str, Any] = {}
+    league_config = {item["competition_id"]: item for item in config}
     for competition_id, league_players in grouped.items():
-        buckets = _ranked_buckets(league_players)
+        item = league_config.get(competition_id)
+        if item is None:
+            buckets = _ranked_buckets(league_players)
+        else:
+            tier = int(item["tier"])
+            tier_one = tier == 1
+            buckets = _ranked_buckets(
+                league_players,
+                ratios=(LEAGUE_KNOWN_RATIO_BY_TIER[tier], LEAGUE_BUCKET_RATIOS[1]),
+                known_min_score=55 if tier_one else 50,
+                known_min_count=30 if tier_one else 5,
+            )
         report[competition_id] = {"total": len(league_players), "counts": {}}
         for recognition in RECOGNITIONS:
             bucket = buckets[recognition]
@@ -313,7 +520,11 @@ def build_quiz_pools(
         for player_id in assignments
         if player_id in metrics and _eligible(metrics[player_id])
     ]
-    global_buckets = _ranked_buckets(global_players, GLOBAL_BUCKET_RATIOS)
+    global_buckets = _ranked_buckets(
+        global_players,
+        GLOBAL_BUCKET_RATIOS,
+        GLOBAL_KNOWN_CAP,
+    )
     global_rows = []
     global_report = {"total": len(global_players), "counts": {}}
     for recognition in RECOGNITIONS:
@@ -340,5 +551,6 @@ def build_quiz_pools(
         "competitions": len(competition_rows),
         "pool_rows": len(pool_rows),
         "global_pool_rows": len(global_rows),
+        "world_xi_legends": len(world_xi_legends),
         "report": report,
     }

@@ -72,6 +72,8 @@ def _normalize_open_periods(
     starts = sorted({
         period["date_from"] for period in periods if period["date_from"] is not None
     })
+    if current_joined_on is not None:
+        starts = sorted(set(starts) | {current_joined_on})
     normalized: list[dict[str, Any]] = []
     unresolved: list[dict[str, Any]] = []
     for period in periods:

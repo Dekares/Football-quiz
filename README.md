@@ -28,7 +28,9 @@ frontend bu modları sunmaz ve üretim özelliği olarak tanıtılmaz.
   Bilinmedik** havuzları build anında `quiz_pool`'a yazılır. API'den gerçek kimlik,
   profil ve transfer verisi alınan oyuncular ayrı `Kariyer Efsaneleri` havuzunda
   tutulur; bu seçimde bilinirlik filtresi gösterilmez. **Dünya Karması** seçimi,
-  bağımsız `global_quiz_pool` ile tüm efsaneleri birleştirir.
+  aktif oyuncular için lig ve global bilinirlik sınıflarından daha kolay olanı
+  kullanır. Doğrulanmış ve ayrıca seçilmiş ikonik emekli oyuncular yalnız Bilindik
+  seviyesine eklenir.
 - **Günün Futbolcusu**: `01.07.2026` tarihinden başlayan kalıcı takvim kaynak DB'de
   saklanır. Eksik günler global **Bilindik** havuzundan planlanır; yayınlanmış cevaplar
   sonraki build'lerde korunur. Tamamlanan günler sunucu tarafında oluşturulan
@@ -57,7 +59,7 @@ data/
   football_quiz_v2.db  doğrulanmış oyun artifact'i (salt-okunur)
   transfermarkt_source.db canonical kaynak, snapshot ve kalıcı iş kuyruğu (gitignore)
   pipeline/           API ingest, normalize, validate ve atomik publish
-  sources/legend_candidates.txt yalnız efsane arama kimlikleri (futbol verisi içermez)
+  sources/legend_candidates.txt efsane kimlikleri; aynı adlı oyuncularda sabit Transfermarkt ID'si
 frontend/static/     index.html, css, js (bağımlılıksız vanilla JS)
 Dockerfile           Coolify tek-servis deploy (API + statik + Socket.IO)
 deploy/              Dockerfile.api, Dockerfile.realtime, nginx.conf (ölçek)
@@ -83,11 +85,12 @@ otomatik hesaplanır; başarısız işler tekrar denenebilir ve tamamlanan istek
 TTL dolmadan yeniden çağrılmaz.
 
 ```powershell
-python -m data.pipeline major-update --tiers 1,2 --with-market-values `
-  --concurrency 8 --min-players 5400 --min-periods 50000
+python -m data.pipeline major-update --tiers 1,2 --concurrency 8 `
+  --request-interval 5.5 --min-players 5400 --min-periods 50000
 python -m data.pipeline repair
 python -m data.pipeline legend-update --base-url http://localhost:8000
-python -m data.pipeline work --base-url http://localhost:8000 --concurrency 8
+python -m data.pipeline work --base-url http://localhost:8000 --concurrency 8 `
+  --request-interval 5.5
 python -m data.pipeline validate
 python -m tools.smoke_app --db data/football_quiz_v2.db
 ```

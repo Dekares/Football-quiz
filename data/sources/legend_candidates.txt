@@ -1,4 +1,5 @@
-# Curated identities only. Profiles, clubs, dates and market values come from the API.
+# Curated identities only. Use Name|Transfermarkt ID for ambiguous names.
+# Profiles, clubs, dates and market values always come from the API.
 Ronaldinho
 Zinedine Zidane
 Thierry Henry
@@ -68,7 +69,7 @@ Fabio Cannavaro
 Alessandro Nesta
 Franco Baresi
 Franz Beckenbauer
-Carlos Alberto
+Carlos Alberto Torres|229662
 Ashley Cole
 Patrice Evra
 Vincent Kompany
@@ -84,7 +85,7 @@ Lucio
 Maicon
 Dani Alves
 Eric Abidal
-Rafael Marquez
+Rafa Marquez|2904
 Branislav Ivanovic
 Sol Campbell
 Gael Clichy
@@ -152,7 +153,7 @@ Jean-Pierre Papin
 Hristo Stoichkov
 Romario
 Bebeto
-Adriano
+Adriano|5876
 Robin van Persie
 Ruud Krol
 Mario Kempes
@@ -161,7 +162,6 @@ Henrik Larsson
 Dimitar Berbatov
 Samuel Kuffour
 Nwankwo Kanu
-Yakubu
 Emmanuel Adebayor
 Milan Baros
 Jan Koller

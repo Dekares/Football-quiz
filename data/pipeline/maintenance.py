@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import math
 import sqlite3
+from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import quote
 
@@ -153,19 +154,42 @@ def repair_snapshots(conn: sqlite3.Connection) -> dict[str, dict[str, int]]:
     }
 
 
-def load_legend_candidates(source_path: str | Path) -> list[str]:
-    """Read one display/search name per line; comments and blank lines are ignored."""
-    names: list[str] = []
+@dataclass(frozen=True)
+class LegendCandidate:
+    name: str
+    player_id: int | None = None
+
+
+def load_legend_candidates(source_path: str | Path) -> list[LegendCandidate]:
+    """Read ``name`` or ``name|Transfermarkt ID`` identity records."""
+    candidates: list[LegendCandidate] = []
     seen: set[str] = set()
+    seen_ids: set[int] = set()
     for raw in Path(source_path).read_text(encoding="utf-8").splitlines():
-        name = raw.split("#", 1)[0].strip()
+        record = raw.split("#", 1)[0].strip()
+        if not record:
+            continue
+        parts = [part.strip() for part in record.split("|")]
+        if len(parts) > 2 or not parts[0]:
+            raise ValueError(f"Invalid legend identity record: {raw!r}")
+        name = parts[0]
+        player_id = None
+        if len(parts) == 2 and parts[1]:
+            if not parts[1].isdigit():
+                raise ValueError(f"Invalid Transfermarkt player ID for {name!r}")
+            player_id = int(parts[1])
         key = normalize_text(name)
-        if name and key not in seen:
-            names.append(name)
-            seen.add(key)
-    if not names:
+        if key in seen:
+            raise ValueError(f"Duplicate legend candidate: {name!r}")
+        if player_id is not None and player_id in seen_ids:
+            raise ValueError(f"Duplicate legend player ID: {player_id}")
+        candidates.append(LegendCandidate(name, player_id))
+        seen.add(key)
+        if player_id is not None:
+            seen_ids.add(player_id)
+    if not candidates:
         raise ValueError("Legend candidate list is empty")
-    return names
+    return candidates
 
 
 def _search_position(value: str | None) -> str | None:
@@ -182,14 +206,20 @@ def _search_position(value: str | None) -> str | None:
 
 
 def _resolved_search_player(
-    name: str, results: list[dict]
+    name: str,
+    results: list[dict],
+    expected_player_id: int | None = None,
 ) -> tuple[int, str, str | None, list[str]] | None:
     wanted = normalize_text(name)
     matches = [item for item in results if normalize_text(item.get("name")) == wanted]
-    if not matches:
+    if expected_player_id is not None:
+        matches = [
+            item for item in matches
+            if str(item.get("id") or "") == str(expected_player_id)
+        ]
+    # An unpinned ambiguous name is unsafe: never trust search-result order.
+    if len(matches) != 1:
         return None
-    # Transfermarkt orders search results by relevance. Re-sorting exact-name
-    # matches can prefer a lesser namesake merely because their club says Retired.
     player_id = matches[0].get("id")
     if player_id is None or not str(player_id).isdigit():
         return None
@@ -202,30 +232,39 @@ def _resolved_search_player(
 
 
 def _remove_legacy_manual_legends(
-    conn: sqlite3.Connection, resolved_ids: set[int]
+    conn: sqlite3.Connection,
+    resolved_ids: set[int],
+    stale_registry_ids: set[int] | None = None,
 ) -> dict[str, int]:
-    """Remove the synthetic 9xxxxxx players created by the retired JSON importer."""
+    """Remove obsolete legend identities that are not used by live game data."""
     rows = conn.execute(
         """
         SELECT player_id FROM players
         WHERE is_legend = 1 AND player_id BETWEEN 9000000 AND 9999999
         """
     ).fetchall()
-    candidates = [int(row["player_id"]) for row in rows if row["player_id"] not in resolved_ids]
+    candidates = {
+        int(row["player_id"])
+        for row in rows
+        if row["player_id"] not in resolved_ids
+    }
+    candidates.update((stale_registry_ids or set()) - resolved_ids)
     removed = blocked = 0
-    for player_id in candidates:
+    for player_id in sorted(candidates):
         referenced = conn.execute(
             """
             SELECT
               EXISTS(SELECT 1 FROM club_rosters WHERE player_id=?) OR
-              EXISTS(SELECT 1 FROM transfers WHERE player_id=?) OR
               EXISTS(SELECT 1 FROM daily_challenges WHERE player_id=?)
             """,
-            (player_id, player_id, player_id),
+            (player_id, player_id),
         ).fetchone()[0]
         if referenced:
             blocked += 1
             continue
+        # Transfer rows fetched through a bad identity are derived data, not a
+        # reason to keep that identity alive. Other player-owned rows cascade.
+        conn.execute("DELETE FROM transfers WHERE player_id = ?", (player_id,))
         conn.execute("DELETE FROM players WHERE player_id = ?", (player_id,))
         removed += 1
     return {"legacy_removed": removed, "legacy_blocked": blocked}
@@ -241,12 +280,20 @@ def sync_legends(
     minimum_resolution_ratio: float = 0.80,
 ) -> dict[str, object]:
     """Resolve curated names to real Transfermarkt IDs and enqueue API enrichment."""
-    names = load_legend_candidates(source_path)
+    candidates = load_legend_candidates(source_path)
+    names = [candidate.name for candidate in candidates]
     now = utcnow()
+    previous_registry_ids = {
+        int(row["player_id"])
+        for row in conn.execute(
+            "SELECT player_id FROM legend_registry WHERE player_id IS NOT NULL"
+        )
+    }
     resolved: dict[str, tuple[int, str, str | None, list[str]]] = {}
     unresolved: list[str] = []
 
-    for name in names:
+    for candidate in candidates:
+        name = candidate.name
         cached = conn.execute(
             """
             SELECT player_id, resolved_name FROM legend_registry
@@ -261,22 +308,35 @@ def sync_legends(
             if cached and cached["player_id"] is not None
             else None
         )
-        if cached_match and not refresh:
+        cached_matches_pin = bool(
+            cached_match
+            and (
+                candidate.player_id is None
+                or cached_match[0] == candidate.player_id
+            )
+        )
+        if (
+            cached_matches_pin
+            and not refresh
+        ):
+            assert cached_match is not None
             resolved[name] = cached_match
             continue
         try:
             response = client.get(f"/players/search/{quote(name, safe='')}")
         except ApiError:
-            if cached_match:
+            if cached_matches_pin:
+                assert cached_match is not None
                 resolved[name] = cached_match
             else:
                 unresolved.append(name)
             continue
-        match = _resolved_search_player(name, list(response.payload.get("results") or []))
+        match = _resolved_search_player(
+            name,
+            list(response.payload.get("results") or []),
+            candidate.player_id,
+        )
         if match is None:
-            if cached_match:
-                resolved[name] = cached_match
-                continue
             unresolved.append(name)
             conn.execute(
                 """
@@ -320,7 +380,16 @@ def sync_legends(
         )
 
     resolved_ids = {item[0] for item in resolved.values()}
-    cleanup = _remove_legacy_manual_legends(conn, resolved_ids)
+    name_placeholders = ",".join("?" for _ in names)
+    conn.execute(
+        f"DELETE FROM legend_registry WHERE candidate_name NOT IN ({name_placeholders})",
+        names,
+    )
+    cleanup = _remove_legacy_manual_legends(
+        conn,
+        resolved_ids,
+        previous_registry_ids - resolved_ids,
+    )
     conn.execute("UPDATE players SET is_legend = 0 WHERE is_legend = 1")
     for player_id, resolved_name, _position, _nationalities in resolved.values():
         _upsert_player_stub(conn, player_id, resolved_name)

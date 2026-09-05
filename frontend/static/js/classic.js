@@ -323,6 +323,9 @@ function openRevealModal(r) {
         `<span class="rm-pill">${flagHtml(r.country, true, r.country_code) || ''} ${esc(r.country || '?')}</span>`,
         `<span class="rm-pill">${esc(posText(r.position))}</span>`,
         r.club_name ? `<span class="rm-pill">${esc(r.club_name)}</span>` : '',
+        r.career_status && r.career_status !== 'regular'
+            ? `<span class="rm-pill">${esc(t(`career_status_${r.career_status}`))}</span>`
+            : '',
     ].join('');
     const backdrop = document.createElement('div');
     backdrop.className = 'quiz-modal-backdrop';

@@ -191,28 +191,111 @@ def current_player_ids(conn: sqlite3.Connection, leagues: list[dict[str, Any]]) 
     return [int(row["player_id"]) for row in rows]
 
 
+def reconcile_current_rosters(
+    conn: sqlite3.Connection,
+    leagues: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Use the freshly discovered roster as the current-club authority."""
+    changed: list[int] = []
+    missing_profiles: list[int] = []
+    assignments: dict[int, tuple[int, str]] = {}
+    for league in leagues:
+        rows = conn.execute(
+            """
+            SELECT cr.player_id, cr.club_id, cr.discovered_at
+            FROM club_rosters cr
+            JOIN competition_clubs cc
+              ON cc.club_id=cr.club_id AND cc.season_id=cr.season_id
+            WHERE cc.competition_id=? AND cr.season_id=?
+            """,
+            (league["competition_id"], league["season_id"]),
+        ).fetchall()
+        for row in rows:
+            candidate = (int(row["club_id"]), row["discovered_at"] or "")
+            previous = assignments.get(int(row["player_id"]))
+            if previous is None or candidate[1] > previous[1]:
+                assignments[int(row["player_id"])] = candidate
+
+    now = utcnow()
+    for player_id, (club_id, _) in assignments.items():
+        player = conn.execute(
+            "SELECT current_club_id,profile_loaded FROM players WHERE player_id=?",
+            (player_id,),
+        ).fetchone()
+        if player is None:
+            continue
+        if player["current_club_id"] != club_id:
+            changed.append(player_id)
+        if not player["profile_loaded"]:
+            missing_profiles.append(player_id)
+        conn.execute(
+            "UPDATE players SET current_club_id=?,is_retired=0,retired_since=NULL,updated_at=? "
+            "WHERE player_id=?",
+            (club_id, now, player_id),
+        )
+    conn.commit()
+    return {
+        "assignments": len(assignments),
+        "changed_player_ids": changed,
+        "missing_profile_ids": missing_profiles,
+    }
+
+
 def prepare_players(
     conn: sqlite3.Connection,
     player_ids: list[int],
     refresh_days: dict[str, int],
     force: bool,
     include_market_values: bool,
+    profile_player_ids: list[int] | None = None,
+    transfer_player_ids: list[int] | None = None,
+    market_value_player_ids: list[int] | None = None,
 ) -> dict[str, int]:
-    endpoints = [
-        ("player_profile", 30),
-        ("player_transfers", 40),
-    ]
+    endpoint_players = {
+        "player_profile": profile_player_ids if profile_player_ids is not None else player_ids,
+        "player_transfers": transfer_player_ids if transfer_player_ids is not None else player_ids,
+    }
     if include_market_values:
-        endpoints.append(("player_market_value", 50))
-    counts = {endpoint: 0 for endpoint, _ in endpoints}
-    for player_id in player_ids:
-        for endpoint, priority in endpoints:
+        endpoint_players["player_market_value"] = (
+            market_value_player_ids if market_value_player_ids is not None else player_ids
+        )
+    priorities = {"player_profile": 30, "player_transfers": 40, "player_market_value": 50}
+    counts = {endpoint: 0 for endpoint in endpoint_players}
+    for endpoint, selected_ids in endpoint_players.items():
+        for player_id in selected_ids:
             counts[endpoint] += int(enqueue_if_stale(
-                conn, endpoint, "player", player_id, {}, priority,
+                conn, endpoint, "player", player_id, {}, priorities[endpoint],
                 int(refresh_days[endpoint]), force,
             ))
     conn.commit()
     return counts
+
+
+def restrict_pending_player_jobs(
+    conn: sqlite3.Connection,
+    allowed: dict[str, list[int]],
+) -> dict[str, int]:
+    """Defer roster-seeded detail jobs outside an incremental update's scope."""
+    deferred: dict[str, int] = {}
+    now = utcnow()
+    for endpoint in ("player_profile", "player_transfers", "player_market_value"):
+        player_ids = sorted(set(allowed.get(endpoint, [])))
+        params: list[Any] = [now, now, endpoint]
+        exclusion = ""
+        if player_ids:
+            exclusion = f" AND CAST(entity_id AS INTEGER) NOT IN ({','.join('?' for _ in player_ids)})"
+            params.extend(player_ids)
+        deferred[endpoint] = conn.execute(
+            """
+            UPDATE crawl_jobs
+            SET status='completed',completed_at=COALESCE(completed_at,?),
+                leased_at=NULL,last_error=NULL,updated_at=?
+            WHERE endpoint=? AND status IN ('pending','retry')
+            """ + exclusion,
+            params,
+        ).rowcount
+    conn.commit()
+    return deferred
 
 
 def update_major_leagues(
@@ -255,6 +338,12 @@ def update_major_leagues(
 
         player_ids = current_player_ids(conn, leagues)
         result["current_players"] = len(player_ids)
+        roster_sync = reconcile_current_rosters(conn, leagues)
+        result["roster_sync"] = {
+            "assignments": roster_sync["assignments"],
+            "changed_players": len(roster_sync["changed_player_ids"]),
+            "missing_profiles": len(roster_sync["missing_profile_ids"]),
+        }
         if discovery_only:
             result["validation"] = validate_source(conn)
             return result
@@ -275,9 +364,38 @@ def update_major_leagues(
             ]
             player_ids = sorted(set(player_ids) | set(legend_ids))
 
+        if force:
+            profile_ids = transfer_ids = market_value_ids = player_ids
+        else:
+            profile_ids = roster_sync["missing_profile_ids"]
+            transfer_ids = sorted(set(profile_ids) | set(roster_sync["changed_player_ids"]))
+            market_value_ids = profile_ids
         detail_jobs = prepare_players(
-            conn, player_ids, refresh_days, force, include_market_values
+            conn,
+            player_ids,
+            refresh_days,
+            force,
+            include_market_values,
+            profile_ids,
+            transfer_ids,
+            market_value_ids,
         )
+        result["detail_jobs_deferred"] = restrict_pending_player_jobs(
+            conn,
+            {
+                "player_profile": profile_ids,
+                "player_transfers": transfer_ids,
+                "player_market_value": market_value_ids if include_market_values else [],
+            },
+        )
+        detail_jobs = {
+            endpoint: int(conn.execute(
+                "SELECT COUNT(*) FROM crawl_jobs WHERE endpoint=? "
+                "AND status IN ('pending','retry')",
+                (endpoint,),
+            ).fetchone()[0])
+            for endpoint in detail_jobs
+        }
         result["detail_jobs_prepared"] = detail_jobs
         detail_total = sum(detail_jobs.values())
         result["detail_jobs"] = run_worker(

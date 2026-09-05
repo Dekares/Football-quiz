@@ -11,8 +11,10 @@ from urllib.request import Request, urlopen
 
 from backend.app.realtime.matchmaking import pick_club_pair
 from backend.app.realtime.questions import build_question
+from backend.app.api.quiz import _quiz_options
 from backend.app.daily import DAILY_START_DATE, daily_number, daily_today
 from backend.app.text import normalize_text
+from data.pipeline.daily import DAILY_KNOWN_POOL_SIZE, RECENT_PLAYER_WINDOW
 
 
 def _scalar(
@@ -37,8 +39,36 @@ def check_database(path: Path) -> dict[str, object]:
             "pairs": _scalar(conn, "SELECT COUNT(*) FROM club_pair_stats"),
             "competitions": _scalar(conn, "SELECT COUNT(*) FROM competitions"),
             "daily_challenges": _scalar(conn, "SELECT COUNT(*) FROM daily_challenges"),
+            "world_xi_legends": _scalar(conn, "SELECT COUNT(*) FROM world_xi_legend_pool"),
         }
         assert all(counts.values())
+        career_status_counts = {
+            status: _scalar(
+                conn,
+                "SELECT COUNT(*) FROM players WHERE career_status = ?",
+                (status,),
+            )
+            for status in (
+                "regular", "active_star", "active_legend", "retired_legend"
+            )
+        }
+        assert all(career_status_counts.values())
+        assert _scalar(
+            conn,
+            """
+            SELECT COUNT(*) FROM global_quiz_pool g
+            JOIN players p ON p.player_id = g.player_id
+            WHERE p.career_status = 'retired_legend'
+            """,
+        ) == 0
+        assert _scalar(
+            conn,
+            """
+            SELECT COUNT(*) FROM world_xi_legend_pool w
+            JOIN players p ON p.player_id = w.player_id
+            WHERE p.career_status != 'retired_legend'
+            """,
+        ) == 0
         quiz_counts: dict[str, int] = {}
         realtime: dict[str, dict[str, object]] = {}
         for difficulty in ("easy", "medium", "hard"):
@@ -76,6 +106,12 @@ def check_database(path: Path) -> dict[str, object]:
                 (recognition,),
             )
             assert global_recognition_counts[recognition] > 0
+        world_option = _quiz_options(conn)["leagues"][0]
+        world_recognition_counts = world_option["counts"]
+        assert sum(world_recognition_counts.values()) == world_option["total_count"]
+        assert world_option["total_count"] == (
+            sum(global_recognition_counts.values()) + counts["world_xi_legends"]
+        )
         overlap = _scalar(
             conn,
             """
@@ -104,12 +140,28 @@ def check_database(path: Path) -> dict[str, object]:
             SELECT COUNT(*)
             FROM daily_challenges d
             LEFT JOIN global_quiz_pool g
-              ON g.player_id = d.player_id AND g.recognition = 'known'
+              ON g.player_id = d.player_id
+             AND g.recognition = 'known'
+             AND g.rank_global <= ?
             WHERE d.challenge_date > ? AND g.player_id IS NULL
             """,
-            (today,),
+            (DAILY_KNOWN_POOL_SIZE, today),
         )
         assert invalid_future_daily == 0
+        repeated_future_daily = _scalar(
+            conn,
+            """
+            SELECT COUNT(*)
+            FROM daily_challenges earlier
+            JOIN daily_challenges later
+              ON later.player_id = earlier.player_id
+             AND later.challenge_date > earlier.challenge_date
+             AND later.challenge_date <= date(earlier.challenge_date, ?)
+            WHERE later.challenge_date > ?
+            """,
+            (f"+{RECENT_PLAYER_WINDOW} days", today),
+        )
+        assert repeated_future_daily == 0
         first_daily = conn.execute(
             """
             SELECT challenge_date,day_number FROM daily_challenges
@@ -133,7 +185,10 @@ def check_database(path: Path) -> dict[str, object]:
             "quiz_pool": quiz_counts,
             "recognition_pool": recognition_counts,
             "global_recognition_pool": global_recognition_counts,
+            "world_recognition_pool": world_recognition_counts,
             "invalid_future_daily": invalid_future_daily,
+            "repeated_future_daily": repeated_future_daily,
+            "career_status": career_status_counts,
             "realtime": realtime,
         }
     finally:
@@ -169,6 +224,7 @@ def check_http(base_url: str) -> dict[str, object]:
     all_leagues = next(item for item in options["leagues"] if item["id"] == "ALL")
     premier = next(item for item in options["leagues"] if item["id"] == "GB1")
     assert all(all_leagues["counts"][key] > 0 for key in ("known", "less_known", "obscure"))
+    assert sum(all_leagues["counts"].values()) == all_leagues["total_count"]
     assert all(premier["counts"][key] > 0 for key in ("known", "less_known", "obscure"))
     quizzes = {}
     global_quizzes = {}
@@ -179,6 +235,11 @@ def check_http(base_url: str) -> dict[str, object]:
             {"league": "ALL", "recognition": recognition},
         )
         assert global_quiz.get("player_id") and len(global_quiz.get("clubs") or []) >= 2
+        assert global_quiz.get("career_status") in {
+            "regular", "active_star", "active_legend", "retired_legend"
+        }
+        if recognition != "known":
+            assert global_quiz["career_status"] != "retired_legend"
         assert global_quiz["league"] == "ALL"
         assert global_quiz["recognition"] == recognition
         global_quizzes[recognition] = global_quiz["name"]
@@ -196,6 +257,9 @@ def check_http(base_url: str) -> dict[str, object]:
     assert classic["day"] == daily_number(date.fromisoformat(classic["date"]))
     reveal = _get(base_url, "/api/classic/reveal")
     assert classic.get("day") is not None and reveal.get("player", {}).get("player_id")
+    assert reveal["player"].get("career_status") in {
+        "regular", "active_star", "active_legend"
+    }
     guess = _get(
         base_url,
         "/api/classic/guess",

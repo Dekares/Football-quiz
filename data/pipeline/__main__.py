@@ -49,6 +49,7 @@ def build_parser() -> argparse.ArgumentParser:
     work.add_argument("--concurrency", type=int, default=2)
     work.add_argument("--timeout", type=float, default=30.0)
     work.add_argument("--retries", type=int, default=2)
+    work.add_argument("--request-interval", type=float, default=0.0)
 
     crawl = sub.add_parser("crawl", help="seed and process jobs in one command")
     crawl.add_argument("--competitions", required=True)
@@ -58,6 +59,7 @@ def build_parser() -> argparse.ArgumentParser:
     crawl.add_argument("--limit", type=int, default=None)
     crawl.add_argument("--concurrency", type=int, default=2)
     crawl.add_argument("--timeout", type=float, default=30.0)
+    crawl.add_argument("--request-interval", type=float, default=0.0)
 
     sub.add_parser("derive", help="derive player club periods from transfer facts")
     sub.add_parser("repair", help="restore fields from stored roster snapshots")
@@ -67,6 +69,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     legends.add_argument("--base-url", default="http://localhost:8000")
     legends.add_argument("--timeout", type=float, default=30.0)
+    legends.add_argument("--request-interval", type=float, default=0.0)
     legends.add_argument("--refresh", action="store_true")
     legends.add_argument("--refresh-details", action="store_true")
     sub.add_parser("validate", help="run canonical database quality gates")
@@ -89,6 +92,7 @@ def build_parser() -> argparse.ArgumentParser:
     major.add_argument("--base-url", default="http://localhost:8000")
     major.add_argument("--concurrency", type=int, default=2)
     major.add_argument("--timeout", type=float, default=60.0)
+    major.add_argument("--request-interval", type=float, default=0.0)
     major.add_argument("--force", action="store_true")
     major.add_argument("--with-market-values", action="store_true")
     major.add_argument("--discovery-only", action="store_true")
@@ -121,7 +125,12 @@ def main(argv: list[str] | None = None) -> int:
                 )
             conn.close()
             conn = None
-            client = ApiClient(args.base_url, timeout=args.timeout, retries=getattr(args, "retries", 2))
+            client = ApiClient(
+                args.base_url,
+                timeout=args.timeout,
+                retries=getattr(args, "retries", 2),
+                min_interval=args.request_interval,
+            )
             result = run_worker(args.db, client, args.limit, args.concurrency)
             check = initialize(args.db)
             try:
@@ -136,7 +145,11 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "legend-update":
             _print(sync_legends(
                 conn,
-                ApiClient(args.base_url, timeout=args.timeout),
+                ApiClient(
+                    args.base_url,
+                    timeout=args.timeout,
+                    min_interval=args.request_interval,
+                ),
                 args.source,
                 refresh=args.refresh,
                 refresh_details=args.refresh_details,
@@ -158,7 +171,11 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "major-update":
             conn.close()
             conn = None
-            client = ApiClient(args.base_url, timeout=args.timeout)
+            client = ApiClient(
+                args.base_url,
+                timeout=args.timeout,
+                min_interval=args.request_interval,
+            )
             _print(update_major_leagues(
                 args.db,
                 client,

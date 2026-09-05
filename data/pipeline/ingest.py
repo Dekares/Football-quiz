@@ -243,7 +243,7 @@ def ingest_club_players(conn: sqlite3.Connection, job: dict[str, Any], payload: 
                 position = COALESCE(position, ?),
                 foot = COALESCE(foot, ?),
                 height_in_cm = COALESCE(height_in_cm, ?),
-                current_market_value = COALESCE(current_market_value, ?),
+                current_market_value = COALESCE(?, current_market_value),
                 updated_at = ?
             WHERE player_id = ?
             """,

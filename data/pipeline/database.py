@@ -134,7 +134,9 @@ def complete_job(conn: sqlite3.Connection, job_id: int) -> None:
 def fail_job(conn: sqlite3.Connection, job: dict[str, Any], exc: Exception) -> None:
     now = utcnow()
     attempts = int(job["attempts"])
-    is_dead = attempts >= int(job["max_attempts"])
+    status = getattr(exc, "status", None)
+    permanent_client_error = status in {400, 401, 404, 405, 410, 422}
+    is_dead = permanent_client_error or attempts >= int(job["max_attempts"])
     delay = min(3600, 2 ** min(attempts, 10))
     available = (datetime.now(timezone.utc) + timedelta(seconds=delay)).isoformat(timespec="seconds")
     message = str(exc)[:2000]

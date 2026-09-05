@@ -40,7 +40,11 @@ CREATE TABLE players (
     height_in_cm INTEGER,
     country_of_birth TEXT,
     city_of_birth TEXT,
-    international_goals INTEGER
+    international_goals INTEGER,
+    career_status TEXT NOT NULL DEFAULT 'regular'
+        CHECK (career_status IN (
+            'regular', 'active_star', 'active_legend', 'retired_legend'
+        ))
 );
 
 CREATE TABLE clubs (
@@ -105,6 +109,12 @@ CREATE TABLE global_quiz_pool (
     PRIMARY KEY (recognition, player_id)
 );
 
+CREATE TABLE world_xi_legend_pool (
+    player_id INTEGER PRIMARY KEY REFERENCES players(player_id),
+    recognition_score INTEGER NOT NULL,
+    rank_world_xi INTEGER NOT NULL UNIQUE
+);
+
 CREATE TABLE daily_challenges (
     challenge_date TEXT PRIMARY KEY,
     day_number INTEGER NOT NULL UNIQUE CHECK (day_number >= 1),
@@ -126,6 +136,7 @@ CREATE INDEX idx_clubs_name ON clubs(name COLLATE NOCASE);
 CREATE INDEX idx_alias ON club_aliases(alias COLLATE NOCASE);
 CREATE INDEX idx_alias_search ON club_aliases(search_alias);
 CREATE INDEX idx_players_search ON players(search_name);
+CREATE INDEX idx_players_career_status ON players(career_status);
 CREATE INDEX idx_pair_difficulty ON club_pair_stats(min_prestige, common_count);
 CREATE INDEX idx_quiz_pool_filter
     ON quiz_pool(competition_id, recognition, rank_in_league);
@@ -184,9 +195,12 @@ def _insert_players(source: sqlite3.Connection, game: sqlite3.Connection) -> int
             row["current_market_value"], row["highest_market_value"], None,
             row["is_legend"], normalize_text(row["name"]), row["sub_position"] or row["position"],
             row["foot"], row["height_in_cm"], row["country_of_birth"],
-            row["city_of_birth"], None,
+            row["city_of_birth"], None, "regular",
         ))
-    game.executemany("INSERT INTO players VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", values)
+    game.executemany(
+        "INSERT INTO players VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        values,
+    )
     return len(values)
 
 
@@ -363,6 +377,7 @@ def publish_game_db(
         stats["competitions"] = pool_stats["competitions"]
         stats["quiz_pool"] = pool_stats["pool_rows"]
         stats["global_quiz_pool"] = pool_stats["global_pool_rows"]
+        stats["world_xi_legends"] = pool_stats["world_xi_legends"]
         stats["daily_challenges"] = build_daily_schedule(
             source,
             game,

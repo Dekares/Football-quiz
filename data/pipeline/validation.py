@@ -7,6 +7,7 @@ from typing import Any
 from backend.app.daily import DAILY_START_DATE, daily_today
 
 from .database import queue_counts
+from .daily import DAILY_KNOWN_POOL_SIZE, RECENT_PLAYER_WINDOW
 
 
 def validate_source(conn: sqlite3.Connection) -> dict[str, Any]:
@@ -132,6 +133,16 @@ def validate_game_db(
         ),
         "daily_challenges": scalar("SELECT COUNT(*) FROM daily_challenges"),
         "competitions": scalar("SELECT COUNT(*) FROM competitions"),
+        "active_stars": scalar(
+            "SELECT COUNT(*) FROM players WHERE career_status = 'active_star'"
+        ),
+        "active_legends": scalar(
+            "SELECT COUNT(*) FROM players WHERE career_status = 'active_legend'"
+        ),
+        "retired_legends": scalar(
+            "SELECT COUNT(*) FROM players WHERE career_status = 'retired_legend'"
+        ),
+        "world_xi_legends": scalar("SELECT COUNT(*) FROM world_xi_legend_pool"),
     }
     errors: list[str] = []
     warnings: list[str] = []
@@ -144,6 +155,12 @@ def validate_game_db(
         errors.append(f"periods={counts['periods']} < min_periods={min_periods}")
     if counts["daily_challenges"] == 0:
         errors.append("daily_challenges=0")
+    for key in (
+        "active_stars", "active_legends", "retired_legends", "world_xi_legends"
+    ):
+        if counts[key] == 0:
+            message = f"{key}=0"
+            (errors if strict else warnings).append(message)
     for key in (
         "pool_known", "pool_less_known", "pool_obscure",
         "global_pool_known", "global_pool_less_known", "global_pool_obscure",
@@ -234,6 +251,36 @@ def validate_game_db(
     )
     if missing_global_pool_players:
         errors.append(f"missing_global_pool_players={missing_global_pool_players}")
+    invalid_retired_legend_status = scalar(
+        """
+        SELECT COUNT(*)
+        FROM quiz_pool q JOIN players p ON p.player_id = q.player_id
+        WHERE q.competition_id = 'LEGENDS'
+          AND p.career_status != 'retired_legend'
+        """
+    )
+    if invalid_retired_legend_status:
+        errors.append(
+            f"invalid_retired_legend_status={invalid_retired_legend_status}"
+        )
+    retired_in_active_pool = scalar(
+        """
+        SELECT COUNT(*)
+        FROM global_quiz_pool g JOIN players p ON p.player_id = g.player_id
+        WHERE p.career_status = 'retired_legend'
+        """
+    )
+    if retired_in_active_pool:
+        errors.append(f"retired_legends_in_active_pool={retired_in_active_pool}")
+    invalid_world_xi_legends = scalar(
+        """
+        SELECT COUNT(*)
+        FROM world_xi_legend_pool w JOIN players p ON p.player_id = w.player_id
+        WHERE p.career_status != 'retired_legend'
+        """
+    )
+    if invalid_world_xi_legends:
+        errors.append(f"invalid_world_xi_legends={invalid_world_xi_legends}")
     invalid_daily_numbers = scalar(
         """
         SELECT COUNT(*) FROM daily_challenges
@@ -261,6 +308,35 @@ def validate_game_db(
         errors.append("invalid_daily_challenge_start")
     today = daily_today()
     required_end = today.isoformat()
+    invalid_future_daily = scalar(
+        """
+        SELECT COUNT(*)
+        FROM daily_challenges d
+        LEFT JOIN global_quiz_pool g
+          ON g.player_id = d.player_id
+         AND g.recognition = 'known'
+         AND g.rank_global <= ?
+        WHERE d.challenge_date > ? AND g.player_id IS NULL
+        """,
+        (DAILY_KNOWN_POOL_SIZE, required_end),
+    )
+    if invalid_future_daily:
+        errors.append(f"invalid_future_daily={invalid_future_daily}")
+    repeated_future_daily = scalar(
+        """
+        SELECT COUNT(*)
+        FROM daily_challenges earlier
+        JOIN daily_challenges later
+          ON later.player_id = earlier.player_id
+         AND later.challenge_date > earlier.challenge_date
+         AND later.challenge_date <= date(earlier.challenge_date, ?)
+        WHERE later.challenge_date > ?
+        """,
+        (f"+{RECENT_PLAYER_WINDOW} days", required_end),
+    )
+    if repeated_future_daily:
+        message = f"repeated_future_daily={repeated_future_daily}"
+        (errors if strict else warnings).append(message)
     future_end = f"+30 days"
     scheduled_next_30 = scalar(
         """

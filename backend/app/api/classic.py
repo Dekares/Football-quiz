@@ -60,7 +60,7 @@ def _player_facts(conn: sqlite3.Connection, player_id: int) -> dict[str, Any] | 
     güncel kulüp (en son katıldığı) ve o kulübün ligi."""
     p = conn.execute(
         "SELECT player_id, name, country_of_citizenship, date_of_birth, position, "
-        "image_url, market_value FROM players WHERE player_id = ?",
+        "image_url, market_value, career_status FROM players WHERE player_id = ?",
         (player_id,),
     ).fetchone()
     if not p:
@@ -87,6 +87,7 @@ def _player_facts(conn: sqlite3.Connection, player_id: int) -> dict[str, Any] | 
         "position": p["position"],
         "age": _age(p["date_of_birth"]),
         "value": p["market_value"] or 0,
+        "career_status": p["career_status"],
         "club_id": club["club_id"] if club else None,
         "club_name": club["name"] if club else None,
         "league": club["league"] if club else None,
@@ -229,5 +230,6 @@ async def classic_reveal(response: Response) -> dict[str, Any]:
             "country_code": secret["country_code"],
             "position": secret["position"],
             "club_name": secret["club_name"],
+            "career_status": secret["career_status"],
         }
     }

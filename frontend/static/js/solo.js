@@ -691,6 +691,9 @@ function renderResultModal() {
                     <div class="rm-pills">
                         <span class="rm-pill">${esc(posText(p.position))}</span>
                         <span class="rm-pill">${flagHtml(p.country, true, p.country_code)} ${esc(p.country || '?')}</span>
+                        ${p.career_status && p.career_status !== 'regular'
+                            ? `<span class="rm-pill">${esc(t(`career_status_${p.career_status}`))}</span>`
+                            : ''}
                     </div>
                 </div>
             </section>

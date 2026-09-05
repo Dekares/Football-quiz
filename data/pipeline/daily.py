@@ -19,6 +19,7 @@ from .database import utcnow
 
 SCHEDULE_AHEAD_DAYS = 365
 RECENT_PLAYER_WINDOW = 60
+DAILY_KNOWN_POOL_SIZE = 75
 
 
 def _date_range(start: date, end: date):
@@ -49,7 +50,10 @@ def build_daily_schedule(
             SELECT player_id, recognition_score
             FROM global_quiz_pool
             WHERE recognition = 'known'
-            """
+            ORDER BY rank_global
+            LIMIT ?
+            """,
+            (DAILY_KNOWN_POOL_SIZE,),
         )
     }
     if not known_players:
@@ -68,13 +72,12 @@ def build_daily_schedule(
             (DAILY_START_DATE.isoformat(),),
         )
     }
-    # Yayımlanmış geçmiş ve bugün değişmez. Ancak gelecekteki oyuncu
-    # artık aktif global bilindik havuzunda değilse o tarih yeniden planlanır.
+    # Published history and today stay immutable. Future dates are rebuilt in
+    # chronological order so pool changes cannot leave short-range repeats.
     invalid_future_dates = [
         challenge_date
-        for challenge_date, row in existing.items()
+        for challenge_date in existing
         if date.fromisoformat(challenge_date) > today
-        and int(row["player_id"]) not in known_players
     ]
     if invalid_future_dates:
         source.executemany(
