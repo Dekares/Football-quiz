@@ -1,12 +1,27 @@
-/* Google Consent Mode v2 defaults. A Google-certified CMP must update these choices. */
+/* Google Consent Mode v2 defaults. A Google-certified CMP updates protected regions. */
 (function () {
     window.dataLayer = window.dataLayer || [];
     window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+
+    // Analytics runs normally elsewhere. Regions that require prior consent
+    // stay denied until the site's certified CMP sends a consent update.
+    window.gtag('consent', 'default', {
+        ad_storage: 'denied',
+        analytics_storage: 'granted',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied'
+    });
     window.gtag('consent', 'default', {
         ad_storage: 'denied',
         analytics_storage: 'denied',
         ad_user_data: 'denied',
         ad_personalization: 'denied',
+        region: [
+            'AT', 'BE', 'BG', 'CH', 'CY', 'CZ', 'DE', 'DK', 'EE', 'ES',
+            'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IS', 'IT', 'LI',
+            'LT', 'LU', 'LV', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO', 'SE',
+            'SI', 'SK'
+        ],
         wait_for_update: 2000
     });
     window.gtag('set', 'ads_data_redaction', true);

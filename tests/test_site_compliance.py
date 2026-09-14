@@ -50,7 +50,19 @@ class SiteComplianceTests(unittest.TestCase):
                 self.assertIn('href="/terms"', raw)
                 self.assertIn('href="/methodology"', raw)
 
-    def test_consent_defaults_precede_adsense_and_stay_off_privacy_page(self):
+    def test_analytics_and_consent_are_consistent_on_every_page(self):
+        tracked_pages = (*PAGES, "archive-detail.html")
+        measurement_id = "G-Z9DQBC8GYW"
+        for filename in tracked_pages:
+            page = read(filename)
+            consent_position = page.index("/static/js/privacy-consent.js")
+            tag_position = page.index(
+                f"https://www.googletagmanager.com/gtag/js?id={measurement_id}"
+            )
+            init_position = page.index("/static/js/analytics-init.js")
+            self.assertLess(consent_position, tag_position)
+            self.assertLess(tag_position, init_position)
+
         for filename in ("about.html", "methodology.html"):
             page = read(filename)
             self.assertLess(
@@ -58,17 +70,15 @@ class SiteComplianceTests(unittest.TestCase):
                 page.index("pagead2.googlesyndication.com"),
             )
         privacy = read("privacy.html")
-        self.assertNotIn("privacy-consent.js", privacy)
         self.assertNotIn("pagead2.googlesyndication.com", privacy)
         consent = read("js/privacy-consent.js")
-        for key in (
-            "ad_storage",
-            "analytics_storage",
-            "ad_user_data",
-            "ad_personalization",
-        ):
+        for key in ("ad_storage", "ad_user_data", "ad_personalization"):
             self.assertRegex(consent, rf"{key}:\s*'denied'")
+        self.assertRegex(consent, r"analytics_storage:\s*'granted'")
+        self.assertRegex(consent, r"analytics_storage:\s*'denied'")
+        self.assertIn("region:", consent)
         self.assertIn("googlefc.showRevocationMessage", consent)
+        self.assertIn(measurement_id, read("js/analytics-init.js"))
 
     def test_site_has_substantial_visible_publisher_content(self):
         self.assertIn('class="editorial-content"', read("index.html"))
