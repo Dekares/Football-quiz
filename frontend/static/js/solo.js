@@ -407,9 +407,22 @@ async function loadQuiz() {
     }
 
     renderQuizArea();
+    alignQuizViewport();
     if (window.matchMedia('(min-width: 769px) and (pointer: fine)').matches) {
-        document.getElementById('quiz-guess').focus();
+        document.getElementById('quiz-guess').focus({ preventScroll: true });
     }
+}
+
+function alignQuizViewport() {
+    const dashMain = document.querySelector('#page-solo .dash-main');
+    if (!dashMain) return;
+
+    const bottomGap = 24;
+    const dashBottom = window.scrollY + dashMain.getBoundingClientRect().bottom;
+    window.scrollTo({
+        top: Math.max(0, dashBottom - window.innerHeight + bottomGap),
+        behavior: 'auto',
+    });
 }
 
 // #quiz-area içeriğini (mevki/milliyet paneli + kariyer zaman çizelgesi) currentQuiz'den

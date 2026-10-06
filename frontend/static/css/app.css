@@ -220,7 +220,6 @@ h1 {
 .solo-setup {
     margin-bottom: 1.3rem;
     padding: 0.85rem 0 1rem;
-    border-top: 3px solid var(--text);
     border-bottom: 1px solid var(--border);
 }
 .solo-setup[hidden],
@@ -1300,6 +1299,7 @@ nav {
     max-width: none; width: 100%; margin: 0; text-align: left;
     animation: none;
 }
+.daily-card:has(.dropdown.show) { overflow: visible; z-index: 20; }
 
 .daily-band {
     display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 0.8rem;
@@ -1745,6 +1745,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
     line-height: 0.9;
     text-align: left;
     text-transform: uppercase;
+    overflow-wrap: anywhere;
     animation: none;
     -webkit-text-fill-color: currentColor;
 }
@@ -1770,6 +1771,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
 
 .doc-button {
     display: inline-flex;
+    min-width: 0;
     min-height: 42px;
     align-items: center;
     justify-content: center;
@@ -1780,6 +1782,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
     font-size: 0.78rem;
     font-weight: 600;
     letter-spacing: 0.08em;
+    overflow-wrap: anywhere;
     text-decoration: none;
     text-transform: uppercase;
 }
@@ -1809,6 +1812,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
 
 .doc-score-head {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     gap: 1rem;
     padding: 0.8rem 1rem;
@@ -1998,6 +2002,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
     font-weight: 700;
     letter-spacing: 0;
     line-height: 1.1;
+    overflow-wrap: anywhere;
     text-transform: uppercase;
 }
 
@@ -2033,6 +2038,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
 .doc-section a {
     color: var(--vermilion);
     font-weight: 600;
+    overflow-wrap: anywhere;
     text-underline-offset: 0.2em;
 }
 
@@ -2109,11 +2115,13 @@ html, body { overflow-x: hidden; max-width: 100%; }
 
 .doc-rail a {
     display: flex;
+    min-width: 0;
     justify-content: space-between;
     gap: 1rem;
     padding: 0.75rem 0;
     color: var(--text);
     font-weight: 600;
+    overflow-wrap: anywhere;
     text-decoration: none;
 }
 
@@ -2163,10 +2171,13 @@ html, body { overflow-x: hidden; max-width: 100%; }
 }
 
 .doc-contact-strip a {
+    min-width: 0;
+    max-width: 100%;
     color: var(--text);
     font-family: var(--display-font);
     font-size: 1rem;
     overflow-wrap: anywhere;
+    word-break: break-word;
     text-decoration: none;
 }
 

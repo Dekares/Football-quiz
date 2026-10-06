@@ -84,7 +84,7 @@ class SiteComplianceTests(unittest.TestCase):
         self.assertIn('class="editorial-content"', read("index.html"))
         self.assertGreater(words(read("index.html")), 850)
         self.assertGreater(words(read("about.html")), 600)
-        self.assertGreater(words(read("methodology.html")), 900)
+        self.assertGreater(words(read("methodology.html")), 650)
         self.assertGreater(words(read("terms.html")), 650)
         self.assertGreater(words(read("privacy.html")), 1000)
 
