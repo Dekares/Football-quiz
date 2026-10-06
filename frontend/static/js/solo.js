@@ -415,12 +415,15 @@ async function loadQuiz() {
 
 function alignQuizViewport() {
     const dashMain = document.querySelector('#page-solo .dash-main');
-    if (!dashMain) return;
+    const inputRow = document.getElementById('quiz-input-row');
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    const target = isMobile ? inputRow : dashMain;
+    if (!target) return;
 
-    const bottomGap = 24;
-    const dashBottom = window.scrollY + dashMain.getBoundingClientRect().bottom;
+    const bottomGap = isMobile ? 16 : 24;
+    const targetBottom = window.scrollY + target.getBoundingClientRect().bottom;
     window.scrollTo({
-        top: Math.max(0, dashBottom - window.innerHeight + bottomGap),
+        top: Math.max(0, targetBottom - window.innerHeight + bottomGap),
         behavior: 'auto',
     });
 }
